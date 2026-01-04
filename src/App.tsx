@@ -6,6 +6,8 @@ import Header from './components/Header';
 
 // Pages
 import Login from './pages/Login';
+import CompanySelection from './pages/CompanySelection';
+import CompanyOnboarding from './pages/CompanyOnboarding';
 import ManagerDashboard from './pages/manager/Dashboard';
 import KPISetting from './pages/manager/KPISetting';
 import ManagerKPIReview from './pages/manager/KPIReview';
@@ -29,6 +31,9 @@ import MeetingScheduler from './pages/manager/MeetingScheduler';
 import AcknowledgedKPIs from './pages/shared/AcknowledgedKPIs';
 import CompletedReviews from './pages/shared/CompletedReviews';
 import Notifications from './pages/shared/Notifications';
+import EmployeePerformance from './pages/hr/EmployeePerformance';
+import SuperAdminDashboard from './pages/superadmin/SuperAdminDashboard';
+import Employees from './pages/shared/Employees';
 
 // Protected Route Component
 const ProtectedRoute: React.FC<{ children: React.ReactNode; allowedRoles?: string[] }> = ({
@@ -75,6 +80,29 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+      <Route path="/select-company" element={<CompanySelection />} />
+      
+      {/* Super Admin Routes */}
+      <Route
+        path="/super-admin/dashboard"
+        element={
+          <ProtectedRoute allowedRoles={['super_admin']}>
+            <Layout>
+              <SuperAdminDashboard />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/onboard"
+        element={
+          <ProtectedRoute allowedRoles={['super_admin']}>
+            <Layout>
+              <CompanyOnboarding />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
       
       {/* Manager Routes */}
       <Route
@@ -387,6 +415,56 @@ function AppRoutes() {
           <ProtectedRoute allowedRoles={['hr']}>
             <Layout>
               <DepartmentDashboard />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/manager/departments"
+        element={
+          <ProtectedRoute allowedRoles={['manager']}>
+            <Layout>
+              <DepartmentDashboard />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/hr/employee-performance/:employeeId"
+        element={
+          <ProtectedRoute allowedRoles={['hr']}>
+            <Layout>
+              <EmployeePerformance />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/hr/employees"
+        element={
+          <ProtectedRoute allowedRoles={['hr']}>
+            <Layout>
+              <Employees />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/manager/employees"
+        element={
+          <ProtectedRoute allowedRoles={['manager']}>
+            <Layout>
+              <Employees />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/employees"
+        element={
+          <ProtectedRoute allowedRoles={['hr', 'manager', 'super_admin']}>
+            <Layout>
+              <Employees />
             </Layout>
           </ProtectedRoute>
         }

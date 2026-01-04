@@ -25,6 +25,7 @@ interface ReminderSetting {
 interface DailyReminderSetting {
   send_daily_reminders: boolean;
   days_before_meeting: number;
+  cc_emails?: string;
 }
 
 const Settings: React.FC = () => {
@@ -34,6 +35,7 @@ const Settings: React.FC = () => {
   const [dailyReminderSetting, setDailyReminderSetting] = useState<DailyReminderSetting>({
     send_daily_reminders: false,
     days_before_meeting: 3,
+    cc_emails: '',
   });
   const [hrEmailNotifications, setHrEmailNotifications] = useState<boolean>(true);
   const [loading, setLoading] = useState(true);
@@ -52,9 +54,38 @@ const Settings: React.FC = () => {
         api.get('/settings/hr-email-notifications').catch(() => ({ data: { setting: { receive_email_notifications: true } } })),
       ]);
 
-      setPeriodSettings(periodsRes.data.settings || []);
+      // Backend now returns dates in YYYY-MM-DD format using PostgreSQL to_char
+      // So we can use them directly without any timezone conversion
+      const formattedSettings = (periodsRes.data.settings || []).map((setting: PeriodSetting) => {
+        console.log('📅 [FRONTEND] Received setting from backend:', {
+          id: setting.id,
+          original_start: setting.start_date,
+          original_end: setting.end_date,
+          start_date_type: typeof setting.start_date,
+          end_date_type: typeof setting.end_date
+        });
+        
+        // Backend returns dates as plain YYYY-MM-DD strings via PostgreSQL to_char
+        // Just ensure they're strings (should already be)
+        const startDate = setting.start_date ? String(setting.start_date).split('T')[0] : '';
+        const endDate = setting.end_date ? String(setting.end_date).split('T')[0] : '';
+        
+        console.log('📅 [FRONTEND] Using dates directly:', {
+          formatted_start: startDate,
+          formatted_end: endDate
+        });
+        
+        return {
+          ...setting,
+          start_date: startDate,
+          end_date: endDate,
+        };
+      });
+      
+      console.log('📋 [FRONTEND] Final formatted settings:', formattedSettings);
+      setPeriodSettings(formattedSettings);
       setReminderSettings(remindersRes.data.settings || []);
-      setDailyReminderSetting(dailyRes.data.setting || { send_daily_reminders: false, days_before_meeting: 3 });
+      setDailyReminderSetting(dailyRes.data.setting || { send_daily_reminders: false, days_before_meeting: 3, cc_emails: '' });
       setHrEmailNotifications(emailNotifRes.data.setting?.receive_email_notifications !== false);
     } catch (error) {
       console.error('Error fetching settings:', error);
@@ -64,15 +95,61 @@ const Settings: React.FC = () => {
   };
 
   const handleSavePeriodSetting = async (setting: PeriodSetting, index: number) => {
+    console.log('📝 [FRONTEND] Saving period setting:', {
+      index,
+      setting,
+      start_date: setting.start_date,
+      end_date: setting.end_date,
+      start_date_type: typeof setting.start_date,
+      end_date_type: typeof setting.end_date
+    });
+
+    // Validate required fields
+    if (!setting.start_date || !setting.end_date) {
+      console.error('❌ [FRONTEND] Missing date fields:', { start_date: setting.start_date, end_date: setting.end_date });
+      alert('Please enter both start date and end date');
+      return;
+    }
+
+    // Ensure dates are in YYYY-MM-DD format (date inputs return this format, but double-check)
+    const formattedSetting = {
+      ...setting,
+      start_date: setting.start_date.includes('T') ? setting.start_date.split('T')[0] : setting.start_date,
+      end_date: setting.end_date.includes('T') ? setting.end_date.split('T')[0] : setting.end_date,
+    };
+
+    console.log('📤 [FRONTEND] Sending to backend:', formattedSetting);
+
     setSaving(true);
     try {
-      const response = await api.post('/settings/period-settings', setting);
+      const response = await api.post('/settings/period-settings', formattedSetting);
+      console.log('✅ [FRONTEND] Response received:', response.data);
+      
+      const savedSetting = response.data.setting;
+      console.log('📥 [FRONTEND] Saved setting from backend:', savedSetting);
+      
+      // Ensure dates are in YYYY-MM-DD format for date inputs
+      const formattedDates = {
+        start_date: savedSetting.start_date ? (savedSetting.start_date.split('T')[0] || savedSetting.start_date) : '',
+        end_date: savedSetting.end_date ? (savedSetting.end_date.split('T')[0] || savedSetting.end_date) : '',
+      };
+      
+      console.log('📅 [FRONTEND] Formatted dates:', formattedDates);
+      
       const updated = [...periodSettings];
-      updated[index] = response.data.setting;
+      updated[index] = {
+        ...savedSetting,
+        ...formattedDates,
+      };
+      
+      console.log('💾 [FRONTEND] Updated period settings array:', updated);
       setPeriodSettings(updated);
-    } catch (error) {
-      console.error('Error saving period setting:', error);
-      alert('Error saving period setting');
+      alert('Period setting saved successfully!');
+    } catch (error: any) {
+      console.error('❌ [FRONTEND] Error saving period setting:', error);
+      console.error('❌ [FRONTEND] Error response:', error.response?.data);
+      console.error('❌ [FRONTEND] Error status:', error.response?.status);
+      alert(error.response?.data?.error || error.response?.data?.details || 'Error saving period setting');
     } finally {
       setSaving(false);
     }
@@ -517,23 +594,48 @@ const Settings: React.FC = () => {
               </div>
 
               {dailyReminderSetting.send_daily_reminders && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Start sending daily reminders X days before meeting
-                  </label>
-                  <input
-                    type="number"
-                    value={dailyReminderSetting.days_before_meeting}
-                    onChange={(e) => {
-                      setDailyReminderSetting({
-                        ...dailyReminderSetting,
-                        days_before_meeting: parseInt(e.target.value) || 3,
-                      });
-                    }}
-                    className="border border-gray-300 rounded px-3 py-2 w-32"
-                    min="1"
-                  />
-                </div>
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Start sending daily reminders X days after meeting is due
+                    </label>
+                    <input
+                      type="number"
+                      value={dailyReminderSetting.days_before_meeting}
+                      onChange={(e) => {
+                        setDailyReminderSetting({
+                          ...dailyReminderSetting,
+                          days_before_meeting: parseInt(e.target.value) || 3,
+                        });
+                      }}
+                      className="border border-gray-300 rounded px-3 py-2 w-32"
+                      min="1"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Note: Daily reminders are sent AFTER the meeting date has passed. This number indicates how many days after the due date to start sending reminders.
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      CC Email Addresses (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      value={dailyReminderSetting.cc_emails || ''}
+                      onChange={(e) => {
+                        setDailyReminderSetting({
+                          ...dailyReminderSetting,
+                          cc_emails: e.target.value,
+                        });
+                      }}
+                      placeholder="e.g., hr.assistant@company.com, admin@company.com"
+                      className="border border-gray-300 rounded px-3 py-2 w-full"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Enter comma-separated email addresses to CC on daily reminder emails (e.g., HR assistants)
+                    </p>
+                  </div>
+                </>
               )}
 
               <button

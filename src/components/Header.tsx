@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { FiSearch, FiBell, FiMenu, FiX, FiLogOut, FiUser } from 'react-icons/fi';
+import { FiSearch, FiBell, FiMenu, FiX, FiLogOut, FiUser, FiHome } from 'react-icons/fi';
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -22,11 +22,12 @@ const Header: React.FC<HeaderProps> = ({
   showSearch = true,
   actionButton,
 }) => {
-  const { user, logout } = useAuth();
+  const { user, logout, companies, hasMultipleCompanies, selectedCompany, selectCompany } = useAuth();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showCompanyMenu, setShowCompanyMenu] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -75,6 +76,58 @@ const Header: React.FC<HeaderProps> = ({
 
           {/* Right side */}
           <div className="flex items-center space-x-3">
+            {/* Company Selector (if multiple companies) */}
+            {hasMultipleCompanies && companies.length > 0 && (
+              <div className="relative">
+                <button
+                  onClick={() => setShowCompanyMenu(!showCompanyMenu)}
+                  className="flex items-center space-x-2 px-3 py-2 rounded-lg hover:bg-gray-100 border border-gray-200"
+                >
+                  <FiHome className="text-lg text-gray-700" />
+                  <span className="hidden md:block text-sm font-medium text-gray-700">
+                    {selectedCompany?.name || 'Select Company'}
+                  </span>
+                </button>
+
+                {showCompanyMenu && (
+                  <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+                    <div className="p-2">
+                      <div className="px-3 py-2 border-b border-gray-200">
+                        <p className="text-xs font-semibold text-gray-500 uppercase">Switch Company</p>
+                      </div>
+                      {companies.map((company) => (
+                        <button
+                          key={company.id}
+                          onClick={async () => {
+                            try {
+                              await selectCompany(company.id);
+                              setShowCompanyMenu(false);
+                              window.location.reload(); // Reload to refresh data
+                            } catch (error) {
+                              console.error('Failed to switch company:', error);
+                            }
+                          }}
+                          className={`w-full flex items-center justify-between px-3 py-2 text-sm rounded-lg transition-colors ${
+                            selectedCompany?.id === company.id
+                              ? 'bg-purple-50 text-purple-700'
+                              : 'text-gray-700 hover:bg-gray-100'
+                          }`}
+                        >
+                          <div className="flex items-center space-x-2">
+                            <FiHome className="text-lg" />
+                            <span>{company.name}</span>
+                          </div>
+                          {selectedCompany?.id === company.id && (
+                            <span className="text-purple-600">✓</span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Notifications */}
             <div className="relative">
               <button
@@ -172,12 +225,13 @@ const Header: React.FC<HeaderProps> = ({
           </div>
           
           {/* Click outside to close menus */}
-          {(showNotifications || showUserMenu) && (
+          {(showNotifications || showUserMenu || showCompanyMenu) && (
             <div
               className="fixed inset-0 z-40"
               onClick={() => {
                 setShowNotifications(false);
                 setShowUserMenu(false);
+                setShowCompanyMenu(false);
               }}
             />
           )}

@@ -20,24 +20,37 @@ const Login: React.FC = () => {
     setLoading(true);
 
     try {
+      let result;
       if (loginMethod === 'email') {
         if (!email || !password) {
           setError('Email and password are required');
           setLoading(false);
           return;
         }
-        await loginWithEmail(email, password);
+        result = await loginWithEmail(email, password);
       } else {
         if (!payrollNumber || !nationalId) {
           setError('Payroll number and National ID are required');
           setLoading(false);
           return;
         }
-        await login(payrollNumber, nationalId, password);
+        result = await login(payrollNumber, nationalId, password);
       }
       
       // Redirect based on role
       const user = JSON.parse(localStorage.getItem('user') || '{}');
+      
+      if (user.role === 'super_admin') {
+        navigate('/super-admin/dashboard');
+        return;
+      }
+      
+      // If user has multiple companies, redirect to company selection
+      if (result.hasMultipleCompanies) {
+        navigate('/select-company');
+        return;
+      }
+      
       if (user.role === 'manager') {
         navigate('/manager/dashboard');
       } else if (user.role === 'employee') {

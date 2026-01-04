@@ -5,7 +5,7 @@ import api from '../../services/api';
 import { KPI } from '../../types';
 import SignatureField from '../../components/SignatureField';
 import DatePicker from '../../components/DatePicker';
-import { FiArrowLeft, FiSave, FiSend, FiStar } from 'react-icons/fi';
+import { FiArrowLeft, FiSave, FiSend } from 'react-icons/fi';
 
 const SelfRating: React.FC = () => {
   const { kpiId } = useParams<{ kpiId: string }>();
@@ -18,12 +18,47 @@ const SelfRating: React.FC = () => {
   const [comments, setComments] = useState<{ [key: number]: string }>({});
   const [employeeSignature, setEmployeeSignature] = useState('');
   const [reviewDate, setReviewDate] = useState<Date | null>(new Date());
+  const [ratingOptions, setRatingOptions] = useState<Array<{ rating_value: number; label: string; description?: string }>>([]);
 
   useEffect(() => {
+    console.log('🔄 [SelfRating] Component mounted/updated, kpiId:', kpiId);
     if (kpiId) {
       fetchKPI();
     }
+    fetchRatingOptions();
   }, [kpiId]);
+
+  const fetchRatingOptions = async () => {
+    try {
+      console.log('🔍 [SelfRating] Fetching rating options from API...');
+      const response = await api.get('/rating-options');
+      console.log('✅ [SelfRating] Rating options response:', response.data);
+      const options = response.data.rating_options || [];
+      console.log('📋 [SelfRating] Setting rating options:', options);
+      setRatingOptions(options);
+      
+      // If no options returned, use fallback
+      if (options.length === 0) {
+        console.warn('⚠️ [SelfRating] No rating options returned, using fallback');
+        const fallbackOptions = [
+          { rating_value: 1.00, label: 'Below Expectation' },
+          { rating_value: 1.25, label: 'Meets Expectation' },
+          { rating_value: 1.50, label: 'Exceeds Expectation' },
+        ];
+        setRatingOptions(fallbackOptions);
+      }
+    } catch (error) {
+      console.error('❌ [SelfRating] Error fetching rating options:', error);
+      // Fallback to default options if API fails
+      const fallbackOptions = [
+        { rating_value: 1.00, label: 'Below Expectation' },
+        { rating_value: 1.25, label: 'Meets Expectation' },
+        { rating_value: 1.50, label: 'Exceeds Expectation' },
+      ];
+      console.log('🔄 [SelfRating] Using fallback rating options:', fallbackOptions);
+      setRatingOptions(fallbackOptions);
+    }
+  };
 
   const fetchKPI = async () => {
     try {
@@ -85,12 +120,15 @@ const SelfRating: React.FC = () => {
                 legacyRatings[item.id] = existingReview.employee_rating || 0;
                 legacyComments[item.id] = existingReview.employee_comment || '';
               });
-              setRatings(legacyRatings);
-              setComments(legacyComments);
-            }
-          }
-          
-          setEmployeeSignature(existingReview.employee_signature || '');
+          setRatings(legacyRatings);
+          setComments(legacyComments);
+        }
+      }
+      
+      // DO NOT pre-fill signature from acknowledgement - self-rating needs separate signature
+      // Only set signature if it's from a previous self-rating submission (which shouldn't happen, but handle it)
+      // For new self-rating, signature should be empty
+      setEmployeeSignature('');
         }
       } catch (error) {
         // No existing review
@@ -103,7 +141,10 @@ const SelfRating: React.FC = () => {
   };
 
   const handleRatingChange = (itemId: number, value: number) => {
-    setRatings({ ...ratings, [itemId]: value });
+    console.log('📝 [SelfRating] Rating changed for item:', itemId, 'New value:', value, 'Type:', typeof value);
+    const newRatings = { ...ratings, [itemId]: value };
+    console.log('📊 [SelfRating] Updated ratings state:', newRatings);
+    setRatings(newRatings);
   };
 
   const handleCommentChange = (itemId: number, value: string) => {
@@ -124,11 +165,11 @@ const SelfRating: React.FC = () => {
 
     const allRated = kpi.items.every((item) => {
       const rating = ratings[item.id];
-      return rating && rating >= 1 && rating <= 5;
+      return rating && (rating === 1.00 || rating === 1.25 || rating === 1.50);
     });
 
     if (!allRated) {
-      alert('Please provide a rating between 1 and 5 for all KPI items');
+      alert('Please provide a rating (1.00, 1.25, or 1.50) for all KPI items');
       return;
     }
 
@@ -141,6 +182,13 @@ const SelfRating: React.FC = () => {
     const itemRatings = kpi.items.map((item) => ratings[item.id] || 0);
     const averageRating = itemRatings.reduce((sum, rating) => sum + rating, 0) / itemRatings.length;
 
+    // Round average to nearest allowed rating value (1.00, 1.25, or 1.50)
+    // This ensures the value matches the database constraint
+    const allowedRatings = [1.00, 1.25, 1.50];
+    const roundedRating = allowedRatings.reduce((prev, curr) => 
+      Math.abs(curr - averageRating) < Math.abs(prev - averageRating) ? curr : prev
+    );
+
     // Store item-level data as JSON in comment field
     const itemData = {
       items: kpi.items.map((item) => ({
@@ -149,12 +197,13 @@ const SelfRating: React.FC = () => {
         comment: comments[item.id] || '',
       })),
       average_rating: averageRating,
+      rounded_rating: roundedRating,
     };
 
     setSaving(true);
     try {
       await api.post(`/kpi-review/${kpiId}/self-rating`, {
-        employee_rating: Math.round(averageRating * 10) / 10, // Round to 1 decimal
+        employee_rating: roundedRating, // Use rounded value that matches constraint (1.00, 1.25, or 1.50)
         employee_comment: JSON.stringify(itemData),
         employee_signature: employeeSignature,
         review_period: kpi?.period || 'quarterly',
@@ -174,13 +223,7 @@ const SelfRating: React.FC = () => {
     return <div className="p-6">Loading...</div>;
   }
 
-  const ratingOptions = [
-    { value: 1, label: '1 - Below Expectations' },
-    { value: 2, label: '2 - Partially Meets' },
-    { value: 3, label: '3 - Meets Expectations' },
-    { value: 4, label: '4 - Exceeds Expectations' },
-    { value: 5, label: '5 - Outstanding' },
-  ];
+  // Rating options are now fetched from database
 
   // Calculate average rating and completion
   const calculateAverageRating = () => {
@@ -192,7 +235,10 @@ const SelfRating: React.FC = () => {
 
   const calculateCompletion = () => {
     if (!kpi?.items || kpi.items.length === 0) return 0;
-    const ratedCount = kpi.items.filter((item) => ratings[item.id] && ratings[item.id] >= 1 && ratings[item.id] <= 5).length;
+    const ratedCount = kpi.items.filter((item) => {
+      const rating = ratings[item.id];
+      return rating && (rating === 1.00 || rating === 1.25 || rating === 1.50);
+    }).length;
     return Math.round((ratedCount / kpi.items.length) * 100);
   };
 
@@ -242,7 +288,7 @@ const SelfRating: React.FC = () => {
       <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
         <h3 className="font-semibold text-blue-900 mb-3">Self-Rating Instructions</h3>
         <ul className="space-y-2 text-sm text-blue-800 list-disc list-inside">
-          <li>Please rate your performance against each KPI using a scale of 1-5 (1 = Below Expectations, 5 = Exceeds Expectations)</li>
+          <li>Please rate your performance against each KPI using the rating scale: 1.00 (Below Expectation), 1.25 (Meets Expectation), or 1.50 (Exceeds Expectation)</li>
           <li>Provide honest and accurate self-assessments based on your actual achievements during this quarter</li>
           <li>Add comments to explain your rating, highlight achievements, or note any challenges faced</li>
           <li>Your self-rating will be reviewed by your manager during the KPI review meeting</li>
@@ -268,8 +314,11 @@ const SelfRating: React.FC = () => {
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">KPI TITLE</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">KPI DESCRIPTION</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">CURRENT PERFORMANCE STATUS</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">TARGET VALUE</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">EXPECTED COMPLETION DATE</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">MEASURE UNIT</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">GOAL WEIGHT</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">SELF RATING *</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">EMPLOYEE COMMENT</th>
               </tr>
@@ -291,7 +340,17 @@ const SelfRating: React.FC = () => {
                         <p className="text-sm text-gray-700">{item.description || 'N/A'}</p>
                       </td>
                       <td className="px-6 py-4">
+                        <p className="text-sm text-gray-900">{item.current_performance_status || 'N/A'}</p>
+                      </td>
+                      <td className="px-6 py-4">
                         <p className="font-semibold text-gray-900">{item.target_value || 'N/A'}</p>
+                      </td>
+                      <td className="px-6 py-4">
+                        <p className="text-sm text-gray-700">
+                          {item.expected_completion_date 
+                            ? new Date(item.expected_completion_date).toLocaleDateString() 
+                            : 'N/A'}
+                        </p>
                       </td>
                       <td className="px-6 py-4">
                         <span className="inline-flex items-center px-2 py-1 rounded bg-blue-100 text-blue-700 text-sm">
@@ -299,34 +358,43 @@ const SelfRating: React.FC = () => {
                         </span>
                       </td>
                       <td className="px-6 py-4">
+                        <p className="text-sm text-gray-700">{item.goal_weight || item.measure_criteria || 'N/A'}</p>
+                      </td>
+                      <td className="px-6 py-4">
                         <div className="space-y-2">
                           <select
-                            value={itemRating}
-                            onChange={(e) => handleRatingChange(item.id, parseInt(e.target.value))}
+                            value={itemRating || 0}
+                            onChange={(e) => {
+                              const selectedValue = parseFloat(e.target.value);
+                              console.log('🔄 [SelfRating] Select changed - Raw value:', e.target.value, 'Parsed:', selectedValue);
+                              handleRatingChange(item.id, selectedValue);
+                            }}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
                           >
                             <option value={0}>Select rating</option>
-                            {ratingOptions.map((opt) => (
-                              <option key={opt.value} value={opt.value}>
-                                {opt.value} - {opt.label.split(' - ')[1]}
-                              </option>
-                            ))}
+                            {ratingOptions.map((opt) => {
+                              const optValue = parseFloat(String(opt.rating_value));
+                              return (
+                                <option key={opt.rating_value} value={optValue}>
+                                  {opt.rating_value} - {opt.label}
+                                </option>
+                              );
+                            })}
                           </select>
-                          <div className="flex items-center space-x-1">
-                            {[1, 2, 3, 4, 5].map((star) => (
-                              <FiStar
-                                key={star}
-                                className={`w-5 h-5 ${
-                                  star <= itemRating
-                                    ? 'text-yellow-400 fill-current'
-                                    : 'text-gray-300'
-                                }`}
-                              />
-                            ))}
-                            {itemRating > 0 && (
-                              <span className="ml-2 text-sm text-gray-600">{itemRating}/5</span>
-                            )}
-                          </div>
+                          {itemRating > 0 && (
+                            <div className="mt-1">
+                              <span className="text-sm font-semibold text-gray-900">
+                                {(() => {
+                                  const ratingValue = parseFloat(String(itemRating));
+                                  console.log('📊 [SelfRating] Displaying rating label for value:', ratingValue);
+                                  if (Math.abs(ratingValue - 1.00) < 0.01) return 'Below Expectation';
+                                  if (Math.abs(ratingValue - 1.25) < 0.01) return 'Meets Expectation';
+                                  if (Math.abs(ratingValue - 1.50) < 0.01) return 'Exceeds Expectation';
+                                  return `${itemRating}`;
+                                })()}
+                              </span>
+                            </div>
+                          )}
                         </div>
                       </td>
                       <td className="px-6 py-4">
@@ -355,7 +423,13 @@ const SelfRating: React.FC = () => {
                     <p className="text-sm text-gray-700">{kpi.description || 'N/A'}</p>
                   </td>
                   <td className="px-6 py-4">
+                    <p className="text-sm text-gray-900">N/A</p>
+                  </td>
+                  <td className="px-6 py-4">
                     <p className="font-semibold text-gray-900">{kpi.target_value || 'N/A'}</p>
+                  </td>
+                  <td className="px-6 py-4">
+                    <p className="text-sm text-gray-700">N/A</p>
                   </td>
                   <td className="px-6 py-4">
                     <span className="inline-flex items-center px-2 py-1 rounded bg-blue-100 text-blue-700 text-sm">
@@ -363,34 +437,42 @@ const SelfRating: React.FC = () => {
                     </span>
                   </td>
                   <td className="px-6 py-4">
+                    <p className="text-sm text-gray-700">{kpi.measure_criteria || 'N/A'}</p>
+                  </td>
+                  <td className="px-6 py-4">
                     <div className="space-y-2">
                       <select
                         value={ratings[0] || 0}
-                        onChange={(e) => handleRatingChange(0, parseInt(e.target.value))}
+                        onChange={(e) => {
+                          const selectedValue = parseFloat(e.target.value);
+                          console.log('🔄 [SelfRating] Legacy select changed - Raw value:', e.target.value, 'Parsed:', selectedValue);
+                          handleRatingChange(0, selectedValue);
+                        }}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
                       >
                         <option value={0}>Select rating</option>
-                        {ratingOptions.map((opt) => (
-                          <option key={opt.value} value={opt.value}>
-                            {opt.value} - {opt.label.split(' - ')[1]}
-                          </option>
-                        ))}
+                        {ratingOptions.map((opt) => {
+                          const optValue = parseFloat(String(opt.rating_value));
+                          return (
+                            <option key={opt.rating_value} value={optValue}>
+                              {opt.rating_value} - {opt.label}
+                            </option>
+                          );
+                        })}
                       </select>
-                      <div className="flex items-center space-x-1">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <FiStar
-                            key={star}
-                            className={`w-5 h-5 ${
-                              star <= (ratings[0] || 0)
-                                ? 'text-yellow-400 fill-current'
-                                : 'text-gray-300'
-                            }`}
-                          />
-                        ))}
-                        {ratings[0] > 0 && (
-                          <span className="ml-2 text-sm text-gray-600">{ratings[0]}/5</span>
-                        )}
-                      </div>
+                      {ratings[0] > 0 && (
+                        <div className="mt-1">
+                          <span className="text-sm font-semibold text-gray-900">
+                            {(() => {
+                              const ratingValue = parseFloat(String(ratings[0]));
+                              if (Math.abs(ratingValue - 1.00) < 0.01) return 'Below Expectation';
+                              if (Math.abs(ratingValue - 1.25) < 0.01) return 'Meets Expectation';
+                              if (Math.abs(ratingValue - 1.50) < 0.01) return 'Exceeds Expectation';
+                              return `${ratings[0]}`;
+                            })()}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </td>
                   <td className="px-6 py-4">
@@ -416,21 +498,20 @@ const SelfRating: React.FC = () => {
               <div>
                 <p className="text-sm text-gray-600">Average Self-Rating:</p>
                 <div className="flex items-center space-x-2 mt-1">
-                  <div className="flex items-center space-x-1">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <FiStar
-                        key={star}
-                        className={`w-4 h-4 ${
-                          star <= Math.round(averageRating)
-                            ? 'text-yellow-400 fill-current'
-                            : 'text-gray-300'
-                        }`}
-                      />
-                    ))}
-                  </div>
                   <span className="text-sm font-semibold text-gray-900">
-                    {averageRating > 0 ? `${averageRating.toFixed(1)}/5.0` : '0.0/5.0'}
+                    {averageRating > 0 ? `${averageRating.toFixed(2)}` : '0.00'}
                   </span>
+                  {averageRating > 0 && (
+                    <span className="text-xs text-gray-500">
+                      {(() => {
+                        const avg = parseFloat(String(averageRating));
+                        if (Math.abs(avg - 1.00) < 0.01) return '(Below Expectation)';
+                        if (Math.abs(avg - 1.25) < 0.01) return '(Meets Expectation)';
+                        if (Math.abs(avg - 1.50) < 0.01) return '(Exceeds Expectation)';
+                        return '';
+                      })()}
+                    </span>
+                  )}
                 </div>
               </div>
               <div>

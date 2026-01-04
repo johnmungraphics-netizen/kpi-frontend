@@ -205,9 +205,11 @@ const HRKPIDetails: React.FC = () => {
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase sticky left-0 bg-gray-50 z-10">#</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase min-w-[200px]">KPI TITLE</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase min-w-[250px]">DESCRIPTION</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase min-w-[150px]">CURRENT PERFORMANCE STATUS</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase min-w-[120px]">TARGET VALUE</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase min-w-[120px]">EXPECTED COMPLETION DATE</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase min-w-[120px]">MEASURE UNIT</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase min-w-[150px]">MEASURE CRITERIA</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase min-w-[150px]">GOAL WEIGHT</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase min-w-[180px]">EMPLOYEE SELF RATING</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase min-w-[200px]">EMPLOYEE COMMENT</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase min-w-[180px]">MANAGER RATING</th>
@@ -235,7 +237,17 @@ const HRKPIDetails: React.FC = () => {
                             <p className="text-sm text-gray-700">{item.description || 'N/A'}</p>
                           </td>
                           <td className="px-4 py-4">
+                            <p className="text-sm text-gray-900">{item.current_performance_status || 'N/A'}</p>
+                          </td>
+                          <td className="px-4 py-4">
                             <p className="text-sm text-gray-900">{item.target_value || 'N/A'}</p>
+                          </td>
+                          <td className="px-4 py-4">
+                            <p className="text-sm text-gray-700">
+                              {item.expected_completion_date 
+                                ? new Date(item.expected_completion_date).toLocaleDateString() 
+                                : 'N/A'}
+                            </p>
                           </td>
                           <td className="px-4 py-4">
                             <span className="inline-flex items-center px-2 py-1 rounded bg-blue-100 text-blue-700 text-sm">
@@ -243,31 +255,34 @@ const HRKPIDetails: React.FC = () => {
                             </span>
                           </td>
                           <td className="px-4 py-4">
-                            <p className="text-sm text-gray-700">{item.measure_criteria || 'N/A'}</p>
+                            <p className="text-sm text-gray-700">{item.goal_weight || item.measure_criteria || 'N/A'}</p>
                           </td>
                           <td className="px-4 py-4">
                             {review && review.employee_rating ? (
                               <div className="space-y-1">
                                 <div className="flex items-center space-x-2">
-                                  <div className="flex items-center space-x-1">
-                                    {[1, 2, 3, 4, 5].map((star) => (
-                                      <FiStar
-                                        key={star}
-                                        className={`w-4 h-4 ${
-                                          star <= empRating
-                                            ? 'text-yellow-400 fill-current'
-                                            : 'text-gray-300'
-                                        }`}
-                                      />
-                                    ))}
-                                  </div>
                                   <span className="text-sm font-semibold text-gray-900">
-                                    {empRating > 0 ? `${empRating}/5` : 'N/A'}
+                                    {(() => {
+                                      const rating = typeof empRating === 'number' 
+                                        ? empRating 
+                                        : parseFloat(String(empRating || '0'));
+                                      return isNaN(rating) ? '0.00' : rating.toFixed(2);
+                                    })()}
                                   </span>
+                                  {(() => {
+                                    const rating = typeof empRating === 'number' 
+                                      ? empRating 
+                                      : parseFloat(String(empRating || '0'));
+                                    return !isNaN(rating) && rating > 0 ? (
+                                      <span className="text-xs text-gray-500 ml-1">
+                                        ({rating === 1.00 ? 'Below' : rating === 1.25 ? 'Meets' : rating === 1.50 ? 'Exceeds' : ''} Expectation)
+                                      </span>
+                                    ) : null;
+                                  })()}
                                 </div>
-                                {review.employee_signed_at && (
+                                {review.employee_self_rating_signed_at && (
                                   <p className="text-xs text-gray-500">
-                                    {new Date(review.employee_signed_at).toLocaleDateString()}
+                                    {new Date(review.employee_self_rating_signed_at).toLocaleDateString()}
                                   </p>
                                 )}
                               </div>
@@ -286,25 +301,28 @@ const HRKPIDetails: React.FC = () => {
                             {review && review.manager_rating ? (
                               <div className="space-y-1">
                                 <div className="flex items-center space-x-2">
-                                  <div className="flex items-center space-x-1">
-                                    {[1, 2, 3, 4, 5].map((star) => (
-                                      <FiStar
-                                        key={star}
-                                        className={`w-4 h-4 ${
-                                          star <= mgrRating
-                                            ? 'text-yellow-400 fill-current'
-                                            : 'text-gray-300'
-                                        }`}
-                                      />
-                                    ))}
-                                  </div>
                                   <span className="text-sm font-semibold text-gray-900">
-                                    {mgrRating > 0 ? `${mgrRating}/5` : 'N/A'}
+                                    {(() => {
+                                      const rating = typeof mgrRating === 'number' 
+                                        ? mgrRating 
+                                        : parseFloat(String(mgrRating || '0'));
+                                      return isNaN(rating) ? '0.00' : rating.toFixed(2);
+                                    })()}
                                   </span>
+                                  {(() => {
+                                    const rating = typeof mgrRating === 'number' 
+                                      ? mgrRating 
+                                      : parseFloat(String(mgrRating || '0'));
+                                    return !isNaN(rating) && rating > 0 ? (
+                                      <span className="text-xs text-gray-500 ml-1">
+                                        ({rating === 1.00 ? 'Below' : rating === 1.25 ? 'Meets' : rating === 1.50 ? 'Exceeds' : ''} Expectation)
+                                      </span>
+                                    ) : null;
+                                  })()}
                                 </div>
-                                {review.manager_signed_at && (
+                                {review.manager_review_signed_at && (
                                   <p className="text-xs text-gray-500">
-                                    {new Date(review.manager_signed_at).toLocaleDateString()}
+                                    {new Date(review.manager_review_signed_at).toLocaleDateString()}
                                   </p>
                                 )}
                               </div>
@@ -335,7 +353,13 @@ const HRKPIDetails: React.FC = () => {
                         <p className="text-sm text-gray-700">{kpi.description || 'N/A'}</p>
                       </td>
                       <td className="px-4 py-4">
+                        <p className="text-sm text-gray-900">N/A</p>
+                      </td>
+                      <td className="px-4 py-4">
                         <p className="text-sm text-gray-900">{kpi.target_value || 'N/A'}</p>
+                      </td>
+                      <td className="px-4 py-4">
+                        <p className="text-sm text-gray-700">N/A</p>
                       </td>
                       <td className="px-4 py-4">
                         <span className="inline-flex items-center px-2 py-1 rounded bg-blue-100 text-blue-700 text-sm">
@@ -410,9 +434,19 @@ const HRKPIDetails: React.FC = () => {
                                 const rating = typeof review.manager_rating === 'number' 
                                   ? review.manager_rating 
                                   : parseFloat(review.manager_rating || '0');
-                                return isNaN(rating) ? '0.0' : rating.toFixed(1);
-                              })()}/5
+                                return isNaN(rating) ? '0.00' : rating.toFixed(2);
+                              })()}
                             </span>
+                            {(() => {
+                              const rating = typeof review.manager_rating === 'number' 
+                                ? review.manager_rating 
+                                : parseFloat(review.manager_rating || '0');
+                              return !isNaN(rating) && rating > 0 ? (
+                                <span className="text-xs text-gray-500 ml-1">
+                                  ({rating === 1.00 ? 'Below' : rating === 1.25 ? 'Meets' : rating === 1.50 ? 'Exceeds' : ''} Expectation)
+                                </span>
+                              ) : null;
+                            })()}
                           </div>
                         ) : (
                           <span className="text-sm text-gray-500">Not reviewed</span>
@@ -433,6 +467,115 @@ const HRKPIDetails: React.FC = () => {
           );
         })()}
         
+        {/* Final Rating Calculation */}
+        {review && review.manager_rating && kpi.items && kpi.items.length > 0 && (() => {
+          // Parse manager ratings from JSON
+          let managerItemRatings: { [key: number]: number } = {};
+          try {
+            const mgrData = JSON.parse(review.manager_comment || '{}');
+            if (mgrData.items && Array.isArray(mgrData.items)) {
+              mgrData.items.forEach((item: any) => {
+                if (item.item_id) {
+                  managerItemRatings[item.item_id] = parseFloat(item.rating) || 0;
+                }
+              });
+            }
+          } catch {
+            // Not JSON, use legacy format
+          }
+
+          // Calculate final rating: Σ(manager_rating * goal_weight)
+          let finalRating = 0;
+          let totalWeight = 0;
+          const itemCalculations = kpi.items.map((item: any) => {
+            const mgrRating = managerItemRatings[item.id] || 0;
+            // Parse goal_weight as percentage (e.g., "40%" or "0.4" or "40")
+            let weight = 0;
+            if (item.goal_weight) {
+              const weightStr = String(item.goal_weight).trim();
+              if (weightStr.endsWith('%')) {
+                weight = parseFloat(weightStr.replace('%', '')) / 100;
+              } else {
+                weight = parseFloat(weightStr);
+                // If weight > 1, assume it's a percentage (e.g., 40 means 40%)
+                if (weight > 1) {
+                  weight = weight / 100;
+                }
+              }
+            }
+            const contribution = mgrRating * weight;
+            finalRating += contribution;
+            totalWeight += weight;
+            return {
+              item_id: item.id,
+              title: item.title,
+              manager_rating: mgrRating,
+              goal_weight: weight,
+              contribution: contribution,
+            };
+          });
+
+          const getRatingLabel = (rating: number): string => {
+            if (rating >= 1.40) return 'Exceeds Expectation';
+            if (rating >= 1.15) return 'Meets Expectation';
+            return 'Below Expectation';
+          };
+
+          return (
+            <div className="mt-6 p-6 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border-2 border-purple-200">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Final Performance Rating</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <div className="bg-white rounded-lg p-4 border border-gray-200">
+                  <p className="text-sm text-gray-600 mb-1">Final Score</p>
+                  <p className="text-3xl font-bold text-purple-600">{finalRating.toFixed(2)}</p>
+                  <p className="text-xs text-gray-500 mt-1">{getRatingLabel(finalRating)}</p>
+                </div>
+                <div className="bg-white rounded-lg p-4 border border-gray-200">
+                  <p className="text-sm text-gray-600 mb-1">Total Weight</p>
+                  <p className="text-2xl font-semibold text-gray-900">{(totalWeight * 100).toFixed(0)}%</p>
+                </div>
+                <div className="bg-white rounded-lg p-4 border border-gray-200">
+                  <p className="text-sm text-gray-600 mb-1">KPI Items</p>
+                  <p className="text-2xl font-semibold text-gray-900">{kpi.items.length}</p>
+                </div>
+              </div>
+              <div className="mt-4">
+                <p className="text-sm font-medium text-gray-700 mb-2">Calculation Breakdown:</p>
+                <div className="bg-white rounded-lg p-4 border border-gray-200 max-h-48 overflow-y-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-gray-200">
+                        <th className="text-left py-2 px-2">KPI Item</th>
+                        <th className="text-right py-2 px-2">Manager Rating</th>
+                        <th className="text-right py-2 px-2">Goal Weight</th>
+                        <th className="text-right py-2 px-2">Contribution</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {itemCalculations.map((calc: any, idx: number) => (
+                        <tr key={calc.item_id} className="border-b border-gray-100">
+                          <td className="py-2 px-2 text-gray-700">{calc.title || `Item ${idx + 1}`}</td>
+                          <td className="py-2 px-2 text-right font-semibold">{calc.manager_rating.toFixed(2)}</td>
+                          <td className="py-2 px-2 text-right">{(calc.goal_weight * 100).toFixed(0)}%</td>
+                          <td className="py-2 px-2 text-right font-semibold text-purple-600">{calc.contribution.toFixed(2)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot>
+                      <tr className="border-t-2 border-gray-300 font-semibold">
+                        <td className="py-2 px-2">Total</td>
+                        <td className="py-2 px-2 text-right">-</td>
+                        <td className="py-2 px-2 text-right">{(totalWeight * 100).toFixed(0)}%</td>
+                        <td className="py-2 px-2 text-right text-purple-600">{finalRating.toFixed(2)}</td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+
         {/* Overall Manager Comments */}
         {review && review.overall_manager_comment && (
           <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">

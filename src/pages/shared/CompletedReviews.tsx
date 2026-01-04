@@ -45,7 +45,7 @@ const CompletedReviews: React.FC = () => {
     return matchesType && matchesSearch;
   });
 
-  const getReviewStatus = (kpi: any): { status: string; color: string } => {
+  const getReviewStatus = (): { status: string; color: string } => {
     // All KPIs on this page are review completed
     return {
       status: 'KPI Review Completed',
@@ -143,7 +143,7 @@ const CompletedReviews: React.FC = () => {
                 </tr>
               ) : (
                 completedKPIs.map((kpi) => {
-                  const statusInfo = getReviewStatus(kpi);
+                  const statusInfo = getReviewStatus();
                   const reviewId = (kpi as any).review_id;
                   return (
                     <tr key={kpi.id} className="hover:bg-gray-50">
@@ -213,6 +213,18 @@ const CompletedReviews: React.FC = () => {
                             <FiEye className="text-sm" />
                             <span>View</span>
                           </button>
+                          {user?.role === 'hr' && (
+                            <button
+                              onClick={() => {
+                                navigate(`/hr/employee-performance/${kpi.employee_id}`);
+                              }}
+                              className="flex items-center space-x-1 text-green-600 hover:text-green-700 font-medium text-sm"
+                              title="View Employee Performance"
+                            >
+                              <FiUser className="text-sm" />
+                              <span>Performance</span>
+                            </button>
+                          )}
                           {(kpi as any).pdf_generated && (
                             <button
                               onClick={() => {

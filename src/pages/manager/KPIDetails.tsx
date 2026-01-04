@@ -156,9 +156,11 @@ const ManagerKPIDetails: React.FC = () => {
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">#</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">KPI TITLE</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">DESCRIPTION</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">CURRENT PERFORMANCE STATUS</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">TARGET VALUE</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">EXPECTED COMPLETION DATE</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">MEASURE UNIT</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">MEASURE CRITERIA</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">GOAL WEIGHT</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
@@ -175,13 +177,23 @@ const ManagerKPIDetails: React.FC = () => {
                       <p className="text-sm text-gray-700">{item.description || 'N/A'}</p>
                     </td>
                     <td className="px-6 py-4">
+                      <p className="text-sm text-gray-900">{item.current_performance_status || 'N/A'}</p>
+                    </td>
+                    <td className="px-6 py-4">
                       <p className="text-sm text-gray-900">{item.target_value || 'N/A'}</p>
+                    </td>
+                    <td className="px-6 py-4">
+                      <p className="text-sm text-gray-700">
+                        {item.expected_completion_date 
+                          ? new Date(item.expected_completion_date).toLocaleDateString() 
+                          : 'N/A'}
+                      </p>
                     </td>
                     <td className="px-6 py-4">
                       <p className="text-sm text-gray-700">{item.measure_unit || 'N/A'}</p>
                     </td>
                     <td className="px-6 py-4">
-                      <p className="text-sm text-gray-700">{item.measure_criteria || 'N/A'}</p>
+                      <p className="text-sm text-gray-700">{item.goal_weight || item.measure_criteria || 'N/A'}</p>
                     </td>
                   </tr>
                 ))
@@ -198,7 +210,13 @@ const ManagerKPIDetails: React.FC = () => {
                     <p className="text-sm text-gray-700">{kpi.description || 'N/A'}</p>
                   </td>
                   <td className="px-6 py-4">
+                    <p className="text-sm text-gray-900">N/A</p>
+                  </td>
+                  <td className="px-6 py-4">
                     <p className="text-sm text-gray-900">{kpi.target_value || 'N/A'}</p>
+                  </td>
+                  <td className="px-6 py-4">
+                    <p className="text-sm text-gray-700">N/A</p>
                   </td>
                   <td className="px-6 py-4">
                     <p className="text-sm text-gray-700">{kpi.measure_unit || 'N/A'}</p>

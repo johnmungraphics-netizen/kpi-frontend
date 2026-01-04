@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import api from '../../services/api';
-import { User, KPI } from '../../types';
+import { User } from '../../types';
 import SignatureField from '../../components/SignatureField';
 import DatePicker from '../../components/DatePicker';
 import { FiArrowLeft, FiSave, FiSend, FiEye } from 'react-icons/fi';
@@ -13,21 +13,47 @@ const KPISetting: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [kpiRows, setKpiRows] = useState([
-    { title: '', description: '', target_value: '', measure_unit: '', measure_criteria: '' },
-    { title: '', description: '', target_value: '', measure_unit: '', measure_criteria: '' },
-    { title: '', description: '', target_value: '', measure_unit: '', measure_criteria: '' },
+    { title: '', description: '', current_performance_status: '', target_value: '', expected_completion_date: '', measure_unit: '', goal_weight: '' },
+    { title: '', description: '', current_performance_status: '', target_value: '', expected_completion_date: '', measure_unit: '', goal_weight: '' },
+    { title: '', description: '', current_performance_status: '', target_value: '', expected_completion_date: '', measure_unit: '', goal_weight: '' },
   ]);
   const [period, setPeriod] = useState<'quarterly' | 'yearly'>('quarterly');
   const [quarter, setQuarter] = useState('Q1');
   const [year, setYear] = useState(new Date().getFullYear());
   const [meetingDate, setMeetingDate] = useState<Date | null>(new Date());
   const [managerSignature, setManagerSignature] = useState('');
+  const [availablePeriods, setAvailablePeriods] = useState<any[]>([]);
+  const [selectedPeriodSetting, setSelectedPeriodSetting] = useState<any>(null);
 
   useEffect(() => {
     if (employeeId) {
       fetchEmployee();
     }
+    fetchAvailablePeriods();
   }, [employeeId]);
+
+  const fetchAvailablePeriods = async () => {
+    try {
+      const response = await api.get('/settings/available-periods');
+      setAvailablePeriods(response.data.periods || []);
+      
+      // Set default to first active quarterly period if available
+      const quarterlyPeriods = response.data.periods?.filter((p: any) => p.period_type === 'quarterly' && p.is_active) || [];
+      if (quarterlyPeriods.length > 0) {
+        const firstPeriod = quarterlyPeriods[0];
+        setPeriod('quarterly');
+        setQuarter(firstPeriod.quarter || 'Q1');
+        setYear(firstPeriod.year);
+        // Set meeting date to start_date if available
+        if (firstPeriod.start_date) {
+          setMeetingDate(new Date(firstPeriod.start_date));
+        }
+        setSelectedPeriodSetting(firstPeriod);
+      }
+    } catch (error) {
+      console.error('Error fetching available periods:', error);
+    }
+  };
 
   const fetchEmployee = async () => {
     try {
@@ -80,9 +106,11 @@ const KPISetting: React.FC = () => {
         kpi_items: validKpiRows.map(kpi => ({
           title: kpi.title,
           description: kpi.description,
+          current_performance_status: kpi.current_performance_status,
           target_value: kpi.target_value,
+          expected_completion_date: kpi.expected_completion_date || null,
           measure_unit: kpi.measure_unit,
-          measure_criteria: kpi.measure_criteria,
+          goal_weight: kpi.goal_weight,
         })),
       });
 
@@ -210,21 +238,34 @@ const KPISetting: React.FC = () => {
               <select
                 value={period}
                 onChange={(e) => {
-                  setPeriod(e.target.value as 'quarterly' | 'yearly');
-                  if (e.target.value === 'quarterly') {
-                    setKpiRows([
-                      { title: '', description: '', target_value: '', measure_unit: '', measure_criteria: '' },
-                      { title: '', description: '', target_value: '', measure_unit: '', measure_criteria: '' },
-                      { title: '', description: '', target_value: '', measure_unit: '', measure_criteria: '' },
-                    ]);
-                  } else {
-                    setKpiRows([
-                      { title: '', description: '', target_value: '', measure_unit: '', measure_criteria: '' },
-                      { title: '', description: '', target_value: '', measure_unit: '', measure_criteria: '' },
-                      { title: '', description: '', target_value: '', measure_unit: '', measure_criteria: '' },
-                      { title: '', description: '', target_value: '', measure_unit: '', measure_criteria: '' },
-                      { title: '', description: '', target_value: '', measure_unit: '', measure_criteria: '' },
-                    ]);
+                  const newPeriod = e.target.value as 'quarterly' | 'yearly';
+                  setPeriod(newPeriod);
+                  
+                  // Find first available period of selected type
+                  const periodsOfType = availablePeriods.filter((p: any) => p.period_type === newPeriod && p.is_active);
+                  if (periodsOfType.length > 0) {
+                    const firstPeriod = periodsOfType[0];
+                    if (newPeriod === 'quarterly') {
+                      setQuarter(firstPeriod.quarter || 'Q1');
+                      setKpiRows([
+                        { title: '', description: '', current_performance_status: '', target_value: '', expected_completion_date: '', measure_unit: '', goal_weight: '' },
+                        { title: '', description: '', current_performance_status: '', target_value: '', expected_completion_date: '', measure_unit: '', goal_weight: '' },
+                        { title: '', description: '', current_performance_status: '', target_value: '', expected_completion_date: '', measure_unit: '', goal_weight: '' },
+                      ]);
+                    } else {
+                      setKpiRows([
+                        { title: '', description: '', current_performance_status: '', target_value: '', expected_completion_date: '', measure_unit: '', goal_weight: '' },
+                        { title: '', description: '', current_performance_status: '', target_value: '', expected_completion_date: '', measure_unit: '', goal_weight: '' },
+                        { title: '', description: '', current_performance_status: '', target_value: '', expected_completion_date: '', measure_unit: '', goal_weight: '' },
+                        { title: '', description: '', current_performance_status: '', target_value: '', expected_completion_date: '', measure_unit: '', goal_weight: '' },
+                        { title: '', description: '', current_performance_status: '', target_value: '', expected_completion_date: '', measure_unit: '', goal_weight: '' },
+                      ]);
+                    }
+                    setYear(firstPeriod.year);
+                    if (firstPeriod.start_date) {
+                      setMeetingDate(new Date(firstPeriod.start_date));
+                    }
+                    setSelectedPeriodSetting(firstPeriod);
                   }
                 }}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
@@ -236,19 +277,96 @@ const KPISetting: React.FC = () => {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Review Quarter *
+                {period === 'quarterly' ? 'Review Quarter *' : 'Review Year *'}
               </label>
-              <select
-                value={quarter}
-                onChange={(e) => setQuarter(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-              >
-                <option value="Q1">Q1 2024 (Jan - Mar)</option>
-                <option value="Q2">Q2 2024 (Apr - Jun)</option>
-                <option value="Q3">Q3 2024 (Jul - Sep)</option>
-                <option value="Q4">Q4 2024 (Oct - Dec)</option>
-              </select>
-              <p className="text-xs text-gray-500 mt-1">Choose the review period</p>
+              {period === 'quarterly' ? (
+                <select
+                  value={quarter}
+                  onChange={(e) => {
+                    const selectedQuarter = e.target.value;
+                    setQuarter(selectedQuarter);
+                    
+                    // Find the period setting for this quarter and year
+                    const periodSetting = availablePeriods.find(
+                      (p: any) => p.period_type === 'quarterly' && 
+                                  p.quarter === selectedQuarter && 
+                                  p.year === year &&
+                                  p.is_active
+                    );
+                    
+                    if (periodSetting) {
+                      setSelectedPeriodSetting(periodSetting);
+                      if (periodSetting.start_date) {
+                        setMeetingDate(new Date(periodSetting.start_date));
+                      }
+                    }
+                  }}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                >
+                  <option value="">Select Quarter</option>
+                  {availablePeriods
+                    .filter((p: any) => p.period_type === 'quarterly' && p.year === year && p.is_active)
+                    .sort((a: any, b: any) => {
+                      const qOrder: { [key: string]: number } = { 'Q1': 1, 'Q2': 2, 'Q3': 3, 'Q4': 4 };
+                      return (qOrder[a.quarter] || 0) - (qOrder[b.quarter] || 0);
+                    })
+                    .map((periodSetting: any) => {
+                      const startDate = periodSetting.start_date ? new Date(periodSetting.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
+                      const endDate = periodSetting.end_date ? new Date(periodSetting.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
+                      return (
+                        <option key={`${periodSetting.quarter}-${periodSetting.year}`} value={periodSetting.quarter}>
+                          {periodSetting.quarter} {periodSetting.year} {startDate && endDate ? `(${startDate} - ${endDate})` : ''}
+                        </option>
+                      );
+                    })}
+                </select>
+              ) : (
+                <select
+                  value={year}
+                  onChange={(e) => {
+                    const selectedYear = parseInt(e.target.value);
+                    setYear(selectedYear);
+                    
+                    // Find the period setting for this year
+                    const periodSetting = availablePeriods.find(
+                      (p: any) => p.period_type === 'yearly' && 
+                                  p.year === selectedYear &&
+                                  p.is_active
+                    );
+                    
+                    if (periodSetting) {
+                      setSelectedPeriodSetting(periodSetting);
+                      if (periodSetting.start_date) {
+                        setMeetingDate(new Date(periodSetting.start_date));
+                      }
+                    }
+                  }}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                >
+                  <option value="">Select Year</option>
+                  {Array.from(new Set(availablePeriods
+                    .filter((p: any) => p.period_type === 'yearly' && p.is_active)
+                    .map((p: any) => p.year)))
+                    .sort((a: number, b: number) => b - a)
+                    .map((y: number) => {
+                      const periodSetting = availablePeriods.find(
+                        (p: any) => p.period_type === 'yearly' && p.year === y && p.is_active
+                      );
+                      const startDate = periodSetting?.start_date ? new Date(periodSetting.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
+                      const endDate = periodSetting?.end_date ? new Date(periodSetting.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
+                      return (
+                        <option key={y} value={y}>
+                          {y} {startDate && endDate ? `(${startDate} - ${endDate})` : ''}
+                        </option>
+                      );
+                    })}
+                </select>
+              )}
+              <p className="text-xs text-gray-500 mt-1">
+                {selectedPeriodSetting 
+                  ? `Period: ${selectedPeriodSetting.start_date ? new Date(selectedPeriodSetting.start_date).toLocaleDateString() : 'N/A'} - ${selectedPeriodSetting.end_date ? new Date(selectedPeriodSetting.end_date).toLocaleDateString() : 'N/A'}`
+                  : 'Choose the review period configured by HR'}
+              </p>
             </div>
             <div>
               <DatePicker
@@ -272,13 +390,19 @@ const KPISetting: React.FC = () => {
                     KPI Description *
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase border border-gray-200">
+                    Current Performance Status *
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase border border-gray-200">
                     Target Value *
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase border border-gray-200">
+                    Expected Completion Date
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase border border-gray-200">
                     Measure Unit *
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase border border-gray-200">
-                    Measure Criteria *
+                    Goal Weight *
                   </th>
                 </tr>
               </thead>
@@ -306,9 +430,26 @@ const KPISetting: React.FC = () => {
                     <td className="border border-gray-200 p-2">
                       <input
                         type="text"
+                        value={kpi.current_performance_status}
+                        onChange={(e) => handleKpiChange(index, 'current_performance_status', e.target.value)}
+                        placeholder="e.g., On Track, At Risk, Delayed"
+                        className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-purple-500"
+                      />
+                    </td>
+                    <td className="border border-gray-200 p-2">
+                      <input
+                        type="text"
                         value={kpi.target_value}
                         onChange={(e) => handleKpiChange(index, 'target_value', e.target.value)}
                         placeholder="e.g., 150,000 or 95%"
+                        className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-purple-500"
+                      />
+                    </td>
+                    <td className="border border-gray-200 p-2">
+                      <input
+                        type="date"
+                        value={kpi.expected_completion_date}
+                        onChange={(e) => handleKpiChange(index, 'expected_completion_date', e.target.value)}
                         className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-purple-500"
                       />
                     </td>
@@ -328,9 +469,9 @@ const KPISetting: React.FC = () => {
                     <td className="border border-gray-200 p-2">
                       <input
                         type="text"
-                        value={kpi.measure_criteria}
-                        onChange={(e) => handleKpiChange(index, 'measure_criteria', e.target.value)}
-                        placeholder="e.g., Resolution within SLA"
+                        value={kpi.goal_weight}
+                        onChange={(e) => handleKpiChange(index, 'goal_weight', e.target.value)}
+                        placeholder="e.g., 30% or 0.3"
                         className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-purple-500"
                       />
                     </td>

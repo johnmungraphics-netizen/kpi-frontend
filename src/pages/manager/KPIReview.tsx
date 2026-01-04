@@ -20,12 +20,47 @@ const ManagerKPIReview: React.FC = () => {
   const [reviewDate, setReviewDate] = useState<Date | null>(new Date());
   const [employeeRatings, setEmployeeRatings] = useState<{ [key: number]: number }>({});
   const [employeeComments, setEmployeeComments] = useState<{ [key: number]: string }>({});
+  const [ratingOptions, setRatingOptions] = useState<Array<{ rating_value: number; label: string; description?: string }>>([]);
 
   useEffect(() => {
+    console.log('🔄 [KPIReview] Component mounted/updated, reviewId:', reviewId);
     if (reviewId) {
       fetchReview();
     }
+    fetchRatingOptions();
   }, [reviewId]);
+
+  const fetchRatingOptions = async () => {
+    try {
+      console.log('🔍 [KPIReview] Fetching rating options from API...');
+      const response = await api.get('/rating-options');
+      console.log('✅ [KPIReview] Rating options response:', response.data);
+      const options = response.data.rating_options || [];
+      console.log('📋 [KPIReview] Setting rating options:', options);
+      setRatingOptions(options);
+      
+      // If no options returned, use fallback
+      if (options.length === 0) {
+        console.warn('⚠️ [KPIReview] No rating options returned, using fallback');
+        const fallbackOptions = [
+          { rating_value: 1.00, label: 'Below Expectation' },
+          { rating_value: 1.25, label: 'Meets Expectation' },
+          { rating_value: 1.50, label: 'Exceeds Expectation' },
+        ];
+        setRatingOptions(fallbackOptions);
+      }
+    } catch (error) {
+      console.error('❌ [KPIReview] Error fetching rating options:', error);
+      // Fallback to default options if API fails
+      const fallbackOptions = [
+        { rating_value: 1.00, label: 'Below Expectation' },
+        { rating_value: 1.25, label: 'Meets Expectation' },
+        { rating_value: 1.50, label: 'Exceeds Expectation' },
+      ];
+      console.log('🔄 [KPIReview] Using fallback rating options:', fallbackOptions);
+      setRatingOptions(fallbackOptions);
+    }
+  };
 
   const fetchReview = async () => {
     try {
@@ -71,26 +106,35 @@ const ManagerKPIReview: React.FC = () => {
         // Parse employee ratings/comments from JSON
         try {
           const employeeData = JSON.parse(reviewData.employee_comment || '{}');
+          console.log('📋 [KPIReview] Parsed employee data:', employeeData);
           if (employeeData.items && Array.isArray(employeeData.items)) {
             const empRatings: { [key: number]: number } = {};
             const empComments: { [key: number]: string } = {};
             employeeData.items.forEach((item: any) => {
               if (item.item_id) {
-                empRatings[item.item_id] = item.rating || 0;
-                empComments[item.item_id] = item.comment || '';
+                const ratingValue = parseFloat(String(item.rating || 0));
+                console.log(`📊 [KPIReview] Item ${item.item_id} - Rating: ${item.rating}, Parsed: ${ratingValue}`);
+                empRatings[item.item_id] = ratingValue;
+                empComments[item.item_id] = String(item.comment || '');
               }
             });
+            console.log('✅ [KPIReview] Employee ratings:', empRatings);
+            console.log('✅ [KPIReview] Employee comments:', empComments);
             setEmployeeRatings(empRatings);
             setEmployeeComments(empComments);
+          } else {
+            console.warn('⚠️ [KPIReview] Employee data.items is not an array:', employeeData);
           }
-        } catch {
+        } catch (error) {
+          console.error('❌ [KPIReview] Error parsing employee data:', error);
           // If not JSON, use single rating for all items (legacy)
           if (kpiData.items && kpiData.items.length > 0) {
             const empRatings: { [key: number]: number } = {};
             const empComments: { [key: number]: string } = {};
+            const legacyRating = parseFloat(String(reviewData.employee_rating || 0));
             kpiData.items.forEach((item: KPIItem) => {
-              empRatings[item.id] = reviewData.employee_rating || 0;
-              empComments[item.id] = reviewData.employee_comment || '';
+              empRatings[item.id] = legacyRating;
+              empComments[item.id] = String(reviewData.employee_comment || '');
             });
             setEmployeeRatings(empRatings);
             setEmployeeComments(empComments);
@@ -130,7 +174,10 @@ const ManagerKPIReview: React.FC = () => {
       }
       
       setOverallComment(reviewData.overall_manager_comment || '');
-      setManagerSignature(reviewData.manager_signature || '');
+      // DO NOT pre-fill signature from KPI setting - manager review needs separate signature
+      // Only set signature if it's from a previous review submission
+      // For new review, signature should be empty
+      setManagerSignature('');
       if (reviewData.manager_signed_at) {
         setReviewDate(new Date(reviewData.manager_signed_at));
       }
@@ -146,7 +193,11 @@ const ManagerKPIReview: React.FC = () => {
   };
 
   const handleRatingChange = (itemId: number, value: number) => {
-    setManagerRatings({ ...managerRatings, [itemId]: value });
+    const ratingValue = parseFloat(String(value));
+    console.log('📝 [KPIReview] Rating changed for item:', itemId, 'Raw value:', value, 'Parsed:', ratingValue, 'Type:', typeof ratingValue);
+    const newRatings = { ...managerRatings, [itemId]: ratingValue };
+    console.log('📊 [KPIReview] Updated manager ratings state:', newRatings);
+    setManagerRatings(newRatings);
   };
 
   const handleCommentChange = (itemId: number, value: string) => {
@@ -162,11 +213,11 @@ const ManagerKPIReview: React.FC = () => {
     // Validate all items have ratings
     const allRated = kpi.items.every((item) => {
       const rating = managerRatings[item.id];
-      return rating && rating >= 1 && rating <= 5;
+      return rating && (rating === 1.00 || rating === 1.25 || rating === 1.50);
     });
 
     if (!allRated) {
-      alert('Please provide a rating between 1 and 5 for all KPI items');
+      alert('Please provide a rating (1.00, 1.25, or 1.50) for all KPI items');
       return;
     }
 
@@ -179,6 +230,13 @@ const ManagerKPIReview: React.FC = () => {
     const itemRatings = kpi.items.map((item) => managerRatings[item.id] || 0);
     const averageRating = itemRatings.reduce((sum, rating) => sum + rating, 0) / itemRatings.length;
 
+    // Round average to nearest allowed rating value (1.00, 1.25, or 1.50)
+    // This ensures the value matches the database constraint
+    const allowedRatings = [1.00, 1.25, 1.50];
+    const roundedRating = allowedRatings.reduce((prev, curr) => 
+      Math.abs(curr - averageRating) < Math.abs(prev - averageRating) ? curr : prev
+    );
+
     // Store item-level data as JSON in comment field
     const itemData = {
       items: kpi.items.map((item) => ({
@@ -187,12 +245,13 @@ const ManagerKPIReview: React.FC = () => {
         comment: managerComments[item.id] || '',
       })),
       average_rating: averageRating,
+      rounded_rating: roundedRating,
     };
 
     setSaving(true);
     try {
       await api.post(`/kpi-review/${reviewId}/manager-review`, {
-        manager_rating: Math.round(averageRating * 10) / 10, // Round to 1 decimal
+        manager_rating: roundedRating, // Use rounded value that matches constraint (1.00, 1.25, or 1.50)
         manager_comment: JSON.stringify(itemData),
         overall_manager_comment: overallComment,
         manager_signature: managerSignature,
@@ -241,13 +300,13 @@ const ManagerKPIReview: React.FC = () => {
     );
   }
 
-  const ratingOptions = [
-    { value: 1, label: '1 - Below Expectations' },
-    { value: 2, label: '2 - Partially Meets' },
-    { value: 3, label: '3 - Meets Expectations' },
-    { value: 4, label: '4 - Exceeds Expectations' },
-    { value: 5, label: '5 - Outstanding' },
-  ];
+  // Rating options are now fetched from database
+  const getRatingLabel = (rating: number): string => {
+    if (rating === 1.00) return 'Below Expectation';
+    if (rating === 1.25) return 'Meets Expectation';
+    if (rating === 1.50) return 'Exceeds Expectation';
+    return `${rating}`;
+  };
 
   // Calculate average ratings
   const calculateEmployeeAverage = () => {
@@ -374,17 +433,20 @@ const ManagerKPIReview: React.FC = () => {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full" style={{ minWidth: '1400px' }}>
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">KPI TITLE</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">KPI DESCRIPTION</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">TARGET VALUE</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">MEASURE UNIT</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">EMPLOYEE SELF RATING</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">EMPLOYEE COMMENT</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">MANAGER RATING</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">MANAGER COMMENT</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap">KPI TITLE</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap">KPI DESCRIPTION</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap">CURRENT PERFORMANCE STATUS</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap">TARGET VALUE</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap">EXPECTED COMPLETION DATE</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap">MEASURE UNIT</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap">GOAL WEIGHT</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap">EMPLOYEE SELF RATING</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap">EMPLOYEE COMMENT</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap">MANAGER RATING</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap">MANAGER COMMENT</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
@@ -406,57 +468,91 @@ const ManagerKPIReview: React.FC = () => {
                         <p className="text-sm text-gray-700">{item.description || 'N/A'}</p>
                       </td>
                       <td className="px-6 py-4">
+                        <p className="text-sm text-gray-900">{item.current_performance_status || 'N/A'}</p>
+                      </td>
+                      <td className="px-6 py-4">
                         <p className="font-semibold text-gray-900">{item.target_value || 'N/A'}</p>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="inline-flex items-center px-2 py-1 rounded bg-blue-100 text-blue-700 text-sm">
+                        <p className="text-sm text-gray-700">
+                          {item.expected_completion_date 
+                            ? new Date(item.expected_completion_date).toLocaleDateString() 
+                            : 'N/A'}
+                        </p>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="inline-flex items-center px-2 py-1 rounded bg-blue-100 text-blue-700 text-sm whitespace-nowrap">
                           {item.measure_unit || 'N/A'}
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="flex items-center space-x-2">
-                          <div className="flex items-center space-x-1">
-                            {[1, 2, 3, 4, 5].map((star) => (
-                              <FiStar
-                                key={star}
-                                className={`w-4 h-4 ${
-                                  star <= empRating
-                                    ? 'text-yellow-400 fill-current'
-                                    : 'text-gray-300'
-                                }`}
-                              />
-                            ))}
+                        <p className="text-sm text-gray-700">{item.goal_weight || item.measure_criteria || 'N/A'}</p>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {empRating > 0 ? (
+                          <div>
+                            <span className="text-sm font-semibold text-gray-900">
+                              {(() => {
+                                const ratingValue = parseFloat(String(empRating));
+                                if (Math.abs(ratingValue - 1.00) < 0.01) return '1.00';
+                                if (Math.abs(ratingValue - 1.25) < 0.01) return '1.25';
+                                if (Math.abs(ratingValue - 1.50) < 0.01) return '1.50';
+                                return String(empRating);
+                              })()}
+                            </span>
+                            <span className="text-xs text-gray-500 ml-1 block">
+                              ({getRatingLabel(empRating)})
+                            </span>
                           </div>
-                          <span className="text-sm text-gray-600">
-                            {empRating > 0 ? `${empRating}/5` : '0/5'}
-                          </span>
-                        </div>
+                        ) : (
+                          <span className="text-sm text-gray-400">Not rated</span>
+                        )}
                       </td>
                       <td className="px-6 py-4">
-                        <p className="text-sm text-gray-700">{empComment || 'N/A'}</p>
+                        <p className="text-sm text-gray-700 break-words max-w-xs">{empComment && empComment !== 'N/A' ? empComment : 'N/A'}</p>
                       </td>
                       <td className="px-6 py-4">
                         <select
-                          value={mgrRating}
-                          onChange={(e) => handleRatingChange(item.id, parseInt(e.target.value))}
+                          value={mgrRating || 0}
+                          onChange={(e) => {
+                            const selectedValue = parseFloat(e.target.value);
+                            console.log('🔄 [KPIReview] Select changed - Raw value:', e.target.value, 'Parsed:', selectedValue, 'Item ID:', item.id);
+                            handleRatingChange(item.id, selectedValue);
+                          }}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
                         >
                           <option value={0}>Select rating</option>
-                          {ratingOptions.map((opt) => (
-                            <option key={opt.value} value={opt.value}>
-                              {opt.value} - {opt.label.split(' - ')[1]}
-                            </option>
-                          ))}
+                          {ratingOptions.map((opt) => {
+                            const optValue = parseFloat(String(opt.rating_value));
+                            return (
+                              <option key={opt.rating_value} value={optValue}>
+                                {opt.rating_value} - {opt.label}
+                              </option>
+                            );
+                          })}
                         </select>
+                        {mgrRating > 0 && (
+                          <div className="mt-1">
+                            <span className="text-xs text-gray-500">
+                              {(() => {
+                                const ratingValue = parseFloat(String(mgrRating));
+                                if (Math.abs(ratingValue - 1.00) < 0.01) return 'Below Expectation';
+                                if (Math.abs(ratingValue - 1.25) < 0.01) return 'Meets Expectation';
+                                if (Math.abs(ratingValue - 1.50) < 0.01) return 'Exceeds Expectation';
+                                return '';
+                              })()}
+                            </span>
+                          </div>
+                        )}
                       </td>
                       <td className="px-6 py-4">
-                        <textarea
-                          value={mgrComment}
-                          onChange={(e) => handleCommentChange(item.id, e.target.value)}
-                          placeholder="Enter your comment..."
-                          rows={2}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-                        />
+                      <textarea
+                        value={mgrComment}
+                        onChange={(e) => handleCommentChange(item.id, e.target.value)}
+                        placeholder="Enter your comment..."
+                        rows={2}
+                        className="w-full min-w-[200px] px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                      />
                       </td>
                     </tr>
                   );
@@ -474,48 +570,72 @@ const ManagerKPIReview: React.FC = () => {
                     <p className="text-sm text-gray-700">{review.kpi_description || 'N/A'}</p>
                   </td>
                   <td className="px-6 py-4">
+                    <p className="text-sm text-gray-900">N/A</p>
+                  </td>
+                  <td className="px-6 py-4">
                     <p className="font-semibold text-gray-900">{review.target_value || 'N/A'}</p>
                   </td>
                   <td className="px-6 py-4">
-                    <span className="inline-flex items-center px-2 py-1 rounded bg-blue-100 text-blue-700 text-sm">
+                    <p className="text-sm text-gray-700">N/A</p>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="inline-flex items-center px-2 py-1 rounded bg-blue-100 text-blue-700 text-sm whitespace-nowrap">
                       {review.measure_unit || 'N/A'}
                     </span>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="flex items-center space-x-2">
-                      <div className="flex items-center space-x-1">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <FiStar
-                            key={star}
-                            className={`w-4 h-4 ${
-                              star <= (review.employee_rating || 0)
-                                ? 'text-yellow-400 fill-current'
-                                : 'text-gray-300'
-                            }`}
-                          />
-                        ))}
-                      </div>
-                      <span className="text-sm text-gray-600">
-                        {review.employee_rating || 0}/5
-                      </span>
-                    </div>
+                    <p className="text-sm text-gray-700">N/A</p>
                   </td>
                   <td className="px-6 py-4">
-                    <p className="text-sm text-gray-700">{review.employee_comment || 'N/A'}</p>
+                    {review.employee_rating ? (
+                      <div>
+                        <span className="text-sm font-semibold text-gray-900">
+                          {review.employee_rating === 1.00 ? '1.00' : review.employee_rating === 1.25 ? '1.25' : review.employee_rating === 1.50 ? '1.50' : review.employee_rating}
+                        </span>
+                        <span className="text-xs text-gray-500 ml-1 block">
+                          ({getRatingLabel(parseFloat(String(review.employee_rating)))})
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-sm text-gray-400">Not rated</span>
+                    )}
+                  </td>
+                  <td className="px-6 py-4">
+                    <p className="text-sm text-gray-700 break-words max-w-xs">{review.employee_comment || 'N/A'}</p>
                   </td>
                   <td className="px-6 py-4">
                     <select
                       value={managerRatings[0] || 0}
-                      onChange={(e) => handleRatingChange(0, parseInt(e.target.value))}
+                      onChange={(e) => {
+                        const selectedValue = parseFloat(e.target.value);
+                        console.log('🔄 [KPIReview] Legacy select changed - Raw value:', e.target.value, 'Parsed:', selectedValue);
+                        handleRatingChange(0, selectedValue);
+                      }}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
                     >
                       <option value={0}>Select rating</option>
-                      {ratingOptions.map((opt) => (
-                        <option key={opt.value} value={opt.value}>
-                          {opt.value} - {opt.label.split(' - ')[1]}
-                        </option>
-                      ))}
+                      {ratingOptions.map((opt) => {
+                        const optValue = parseFloat(String(opt.rating_value));
+                        return (
+                          <option key={opt.rating_value} value={optValue}>
+                            {opt.rating_value} - {opt.label}
+                          </option>
+                        );
+                      })}
                     </select>
+                    {managerRatings[0] > 0 && (
+                      <div className="mt-1">
+                        <span className="text-xs text-gray-500">
+                          {(() => {
+                            const ratingValue = parseFloat(String(managerRatings[0]));
+                            if (Math.abs(ratingValue - 1.00) < 0.01) return 'Below Expectation';
+                            if (Math.abs(ratingValue - 1.25) < 0.01) return 'Meets Expectation';
+                            if (Math.abs(ratingValue - 1.50) < 0.01) return 'Exceeds Expectation';
+                            return '';
+                          })()}
+                        </span>
+                      </div>
+                    )}
                   </td>
                   <td className="px-6 py-4">
                     <textarea
@@ -540,21 +660,14 @@ const ManagerKPIReview: React.FC = () => {
           <div className="bg-blue-50 rounded-lg p-4">
             <p className="text-sm text-gray-600 mb-1">Average Employee Rating</p>
             <div className="flex items-center space-x-2">
-              <div className="flex items-center space-x-1">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <FiStar
-                    key={star}
-                    className={`w-4 h-4 ${
-                      star <= Math.round(employeeAvg)
-                        ? 'text-yellow-400 fill-current'
-                        : 'text-gray-300'
-                    }`}
-                  />
-                ))}
-              </div>
               <span className="font-semibold text-gray-900">
-                {employeeAvg > 0 ? `${employeeAvg.toFixed(1)} / 5.0` : '0.0 / 5.0'}
+                {employeeAvg > 0 ? `${employeeAvg.toFixed(2)}` : '0.00'}
               </span>
+              {employeeAvg > 0 && (
+                <span className="text-xs text-gray-500">
+                  ({getRatingLabel(employeeAvg)})
+                </span>
+              )}
             </div>
           </div>
           <div className="bg-purple-50 rounded-lg p-4">
@@ -573,8 +686,13 @@ const ManagerKPIReview: React.FC = () => {
                 ))}
               </div>
               <span className="font-semibold text-gray-900">
-                {managerAvg > 0 ? `${managerAvg.toFixed(1)} / 5.0` : '0.0 / 5.0'}
+                {managerAvg > 0 ? `${managerAvg.toFixed(2)}` : '0.00'}
               </span>
+              {managerAvg > 0 && (
+                <span className="text-xs text-gray-500 ml-1">
+                  ({getRatingLabel(managerAvg)})
+                </span>
+              )}
             </div>
           </div>
           <div className="bg-green-50 rounded-lg p-4">

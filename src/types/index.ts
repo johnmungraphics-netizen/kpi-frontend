@@ -1,9 +1,9 @@
-export type UserRole = 'employee' | 'manager' | 'hr';
+export type UserRole = 'employee' | 'manager' | 'hr' | 'super_admin';
 
 export interface User {
   id: number;
   name: string;
-  email: string;
+  email?: string;
   role: UserRole;
   payroll_number: string;
   national_id?: string;
@@ -11,6 +11,7 @@ export interface User {
   position?: string;
   employment_date?: string;
   manager_id?: number;
+  company_id?: number;
 }
 
 export interface KPIItem {
@@ -21,6 +22,9 @@ export interface KPIItem {
   target_value?: string;
   measure_unit?: string;
   measure_criteria?: string;
+  current_performance_status?: string;
+  expected_completion_date?: string;
+  goal_weight?: string;
   item_order: number;
   created_at: string;
   updated_at: string;
@@ -66,11 +70,15 @@ export interface KPIReview {
   employee_comment?: string;
   employee_signature?: string;
   employee_signed_at?: string;
+  employee_self_rating_signature?: string;
+  employee_self_rating_signed_at?: string;
   manager_rating?: number;
   manager_comment?: string;
   overall_manager_comment?: string;
   manager_signature?: string;
   manager_signed_at?: string;
+  manager_review_signature?: string;
+  manager_review_signed_at?: string;
   review_status: 'pending' | 'employee_submitted' | 'manager_submitted' | 'hr_reviewed' | 'completed';
   pdf_generated?: boolean;
   pdf_path?: string;
@@ -115,5 +123,19 @@ export interface DashboardStats {
   pendingKPIs?: number;
   completedKPIs?: number;
   avgPerformance?: number;
+}
+
+export interface Company {
+  id: number;
+  name: string;
+  domain?: string;
+  is_primary?: boolean;
+}
+
+export interface Department {
+  id: number;
+  name: string;
+  description?: string;
+  company_id: number;
 }
 

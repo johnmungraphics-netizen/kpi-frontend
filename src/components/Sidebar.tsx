@@ -37,7 +37,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const managerNavItems = [
     { path: '/manager/dashboard', label: 'Dashboard', icon: FiHome },
     { path: '/manager/kpi-management', label: 'KPI Management', icon: FiTarget },
-    { path: '/manager/employees', label: 'Employees', icon: FiUsers, badge: '24' },
+    { path: '/manager/employees', label: 'Employees', icon: FiUsers },
     { path: '/manager/reviews', label: 'Reviews', icon: FiFileText, badge: '5' },
     { path: '/manager/schedule-meeting', label: 'Schedule Meeting', icon: FiCalendar },
     { path: '/manager/acknowledged-kpis', label: 'Acknowledged KPIs', icon: FiCheckCircle },
@@ -53,6 +53,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 
   const hrNavItems = [
     { path: '/hr/dashboard', label: 'Dashboard', icon: FiHome },
+    { path: '/hr/employees', label: 'Employees', icon: FiUsers },
     { path: '/hr/departments', label: 'Departments', icon: FiUsers },
     { path: '/hr/kpi-list', label: 'All KPIs', icon: FiTarget },
     { path: '/hr/acknowledged-kpis', label: 'Acknowledged KPIs', icon: FiCheckCircle },
@@ -61,12 +62,18 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     { path: '/hr/settings', label: 'Settings', icon: FiSettings },
   ];
 
+  const superAdminNavItems = [
+    { path: '/super-admin/dashboard', label: 'Dashboard', icon: FiHome },
+    { path: '/onboard', label: 'Onboard Company', icon: FiUsers },
+  ];
+
   const commonNavItems = [
     { path: '/notifications', label: 'Notifications', icon: FiBell },
     { path: '/settings', label: 'Settings', icon: FiSettings },
   ];
 
   const getNavItems = () => {
+    if (user?.role === 'super_admin') return superAdminNavItems;
     if (user?.role === 'manager') return managerNavItems;
     if (user?.role === 'employee') return employeeNavItems;
     if (user?.role === 'hr') return hrNavItems;
