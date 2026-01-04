@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import { KPIReview } from '../../types';
-import { FiArrowLeft, FiStar, FiClock, FiCheckCircle } from 'react-icons/fi';
+import { FiArrowLeft, FiStar } from 'react-icons/fi';
 
 const ReviewsList: React.FC = () => {
   const navigate = useNavigate();

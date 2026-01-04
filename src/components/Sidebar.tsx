@@ -34,7 +34,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     onClose();
   };
 
-  const managerNavItems = [
+  interface NavItem {
+    path: string;
+    label: string;
+    icon: React.ComponentType<{ className?: string }>;
+    badge?: string | number;
+  }
+
+  const managerNavItems: NavItem[] = [
     { path: '/manager/dashboard', label: 'Dashboard', icon: FiHome },
     { path: '/manager/kpi-management', label: 'KPI Management', icon: FiTarget },
     { path: '/manager/employees', label: 'Employees', icon: FiUsers },
@@ -44,14 +51,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     { path: '/manager/completed-reviews', label: 'Completed Reviews', icon: FiCheckCircle },
   ];
 
-  const employeeNavItems = [
+  const employeeNavItems: NavItem[] = [
     { path: '/employee/dashboard', label: 'Dashboard', icon: FiHome },
     { path: '/employee/my-kpis', label: 'My KPIs', icon: FiTarget, badge: '3' },
     { path: '/employee/reviews', label: 'Reviews', icon: FiFileText },
     { path: '/employee/history', label: 'History', icon: FiFileText },
   ];
 
-  const hrNavItems = [
+  const hrNavItems: NavItem[] = [
     { path: '/hr/dashboard', label: 'Dashboard', icon: FiHome },
     { path: '/hr/employees', label: 'Employees', icon: FiUsers },
     { path: '/hr/departments', label: 'Departments', icon: FiUsers },
@@ -62,12 +69,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     { path: '/hr/settings', label: 'Settings', icon: FiSettings },
   ];
 
-  const superAdminNavItems = [
+  const superAdminNavItems: NavItem[] = [
     { path: '/super-admin/dashboard', label: 'Dashboard', icon: FiHome },
     { path: '/onboard', label: 'Onboard Company', icon: FiUsers },
   ];
 
-  const commonNavItems = [
+  const commonNavItems: NavItem[] = [
     { path: '/notifications', label: 'Notifications', icon: FiBell },
     { path: '/settings', label: 'Settings', icon: FiSettings },
   ];

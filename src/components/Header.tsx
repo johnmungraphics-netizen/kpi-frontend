@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { FiSearch, FiBell, FiMenu, FiX, FiLogOut, FiUser, FiHome } from 'react-icons/fi';
+import { FiSearch, FiBell, FiMenu, FiLogOut, FiUser, FiHome } from 'react-icons/fi';
 
 interface HeaderProps {
   onMenuClick: () => void;

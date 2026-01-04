@@ -1,0 +1,71 @@
+RewriteEngine on
+
+RewriteOptions inherit
+
+Options -Indexes
+
+# BEGIN cPanel-generated php ini directives, do not edit
+# Manual editing of this file may result in unexpected behavior.
+# To make changes to this file, use the cPanel MultiPHP INI Editor (Home >> Software >> MultiPHP INI Editor)
+# For more information, read our documentation (https://go.cpanel.net/EA4ModifyINI)
+<IfModule php7_module>
+   php_flag display_errors Off
+   php_value max_execution_time 90
+   php_value max_input_time 90
+   php_value max_input_vars 1000
+   php_value memory_limit 128M
+   php_value post_max_size 90M
+   php_value session.gc_maxlifetime 1440
+   php_value session.save_path "/var/cpanel/php/sessions/ea-php74"
+   php_value upload_max_filesize 900M
+   php_flag zlib.output_compression Off
+</IfModule>
+
+<IfModule lsapi_module>
+   php_flag display_errors Off
+   php_value max_execution_time 90
+   php_value max_input_time 90
+   php_value max_input_vars 1000
+   php_value memory_limit 128M
+   php_value post_max_size 90M
+   php_value session.gc_maxlifetime 1440
+   php_value session.save_path "/var/cpanel/php/sessions/ea-php74"
+   php_value upload_max_filesize 900M
+   php_flag zlib.output_compression Off
+</IfModule>
+# END cPanel-generated php ini directives, do not edit
+
+# EasyFlow Laravel Application Routing - ADD THIS SECTION
+# EasyFlow Laravel Application Routing
+RewriteCond %{REQUEST_URI} !^/easyflow-site/public/
+RewriteRule ^easyflow-site/?$ /easyflow-site/public/ [L]
+RewriteRule ^easyflow-site/(.*)$ /easyflow-site/public/$1 [L]
+# END EasyFlow Laravel Application Routing
+
+# React Router (KPI Management System) - ADD THIS SECTION
+# Only apply React Router rules if the file doesn't exist and it's not a Laravel route
+# This ensures Laravel routes work correctly while React Router handles frontend routing
+<IfModule mod_rewrite.c>
+  # Don't rewrite if the file or directory exists
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  # Don't rewrite Laravel routes
+  RewriteCond %{REQUEST_URI} !^/easyflow-site
+  # Don't rewrite API routes (if your React app makes API calls to the same domain)
+  RewriteCond %{REQUEST_URI} !^/api
+  # Rewrite everything else to index.html for React Router
+  RewriteRule ^ index.html [L]
+</IfModule>
+# END React Router (KPI Management System)
+
+# Existing domain redirects - KEEP AS IS
+RewriteCond %{HTTP_HOST} ^ict\-a\.co\.ke$ [OR]
+RewriteCond %{HTTP_HOST} ^www\.ict\-a\.co\.ke$
+RewriteRule ^/?$ "https\:\/\/www\.ict\-a\.com\/" [R=301,L]
+
+# php -- BEGIN cPanel-generated handler, do not edit
+# Set the "ea-php74" package as the default "PHP" programming language.
+<IfModule mime_module>
+  AddHandler application/x-httpd-ea-php74 .php .php7 .phtml
+</IfModule>
+# php -- END cPanel-generated handler, do not edit

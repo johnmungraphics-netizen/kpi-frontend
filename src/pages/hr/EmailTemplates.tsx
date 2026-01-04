@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
-import { FiArrowLeft, FiSave, FiTrash2, FiEdit, FiMail, FiCheck, FiX, FiBold, FiItalic, FiUnderline, FiLink, FiType, FiCode } from 'react-icons/fi';
+import { FiArrowLeft, FiSave, FiTrash2, FiEdit, FiMail, FiCheck, FiX, FiBold, FiItalic, FiUnderline, FiLink, FiCode } from 'react-icons/fi';
 
 interface EmailTemplate {
   id?: number;

@@ -38,10 +38,10 @@ const SuperAdminDashboard: React.FC = () => {
 
   const totalStats = {
     companies: companies.length,
-    employees: companies.reduce((sum, c) => sum + parseInt(c.total_employees || '0'), 0),
-    managers: companies.reduce((sum, c) => sum + parseInt(c.total_managers || '0'), 0),
-    hr: companies.reduce((sum, c) => sum + parseInt(c.total_hr || '0'), 0),
-    departments: companies.reduce((sum, c) => sum + parseInt(c.total_departments || '0'), 0),
+    employees: companies.reduce((sum, c) => sum + parseInt(String(c.total_employees || '0')), 0),
+    managers: companies.reduce((sum, c) => sum + parseInt(String(c.total_managers || '0')), 0),
+    hr: companies.reduce((sum, c) => sum + parseInt(String(c.total_hr || '0')), 0),
+    departments: companies.reduce((sum, c) => sum + parseInt(String(c.total_departments || '0')), 0),
   };
 
   if (loading) {

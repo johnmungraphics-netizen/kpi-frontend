@@ -2,14 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
-import { KPI, KPIReview } from '../../types';
+import { KPI } from '../../types';
 import { FiArrowLeft, FiEye, FiUser, FiSearch, FiFilter } from 'react-icons/fi';
 
 const AcknowledgedKPIs: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [kpis, setKpis] = useState<KPI[]>([]);
-  const [reviews, setReviews] = useState<KPIReview[]>([]);
+  // const [reviews, setReviews] = useState<KPIReview[]>([]); // Unused - keeping for potential future use
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [kpiType, setKpiType] = useState<'quarterly' | 'yearly'>('quarterly');
@@ -27,7 +27,7 @@ const AcknowledgedKPIs: React.FC = () => {
       });
 
       setKpis(kpisRes.data.kpis || []);
-      setReviews([]); // Not needed since we're only showing KPIs without reviews
+      // Reviews not needed since we're only showing KPIs without reviews
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -47,7 +47,7 @@ const AcknowledgedKPIs: React.FC = () => {
     return matchesType && matchesSearch;
   });
 
-  const getKPIStatus = (kpi: KPI): { status: string; color: string } => {
+  const getKPIStatus = (_kpi: KPI): { status: string; color: string } => {
     // All KPIs on this page are acknowledged and review pending
     return {
       status: 'KPI Acknowledged - Review Pending',

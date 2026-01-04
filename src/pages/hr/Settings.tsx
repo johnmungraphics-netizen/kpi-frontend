@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
-import { FiSave, FiTrash2, FiPlus, FiSettings } from 'react-icons/fi';
+import { FiSave, FiTrash2, FiPlus } from 'react-icons/fi';
 
 interface PeriodSetting {
   id?: number;

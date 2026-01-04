@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
 import { FiUsers, FiPlus, FiUpload, FiEdit, FiTrash2, FiSearch, FiX, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
@@ -31,8 +31,8 @@ interface EmployeeFormData {
 }
 
 const Employees: React.FC = () => {
-  const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
+  // const navigate = useNavigate(); // Unused - keeping for potential future use
+  const [searchParams] = useSearchParams();
   const { user, selectedCompany } = useAuth();
   
   const [employees, setEmployees] = useState<Employee[]>([]);

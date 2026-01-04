@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
-import { FiHome, FiUser, FiUsers, FiBriefcase, FiUpload, FiX, FiPlus } from 'react-icons/fi';
+import { FiHome, FiUpload, FiX, FiPlus } from 'react-icons/fi';
 
 interface HRUser {
   name: string;

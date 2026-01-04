@@ -79,11 +79,10 @@ const SignatureField: React.FC<SignatureFieldProps> = ({
           canvasProps={{
             width: 600,
             height: 200,
-            className: 'w-full h-48 rounded-lg',
+            className: `w-full h-48 rounded-lg ${disabled ? 'pointer-events-none opacity-50' : ''}`,
           }}
-          onEnd={handleEnd}
+          onEnd={disabled ? undefined : handleEnd}
           backgroundColor="transparent"
-          disabled={disabled}
         />
 
         {!isEmpty && (

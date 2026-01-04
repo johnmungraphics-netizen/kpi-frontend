@@ -1,0 +1,22 @@
+# .htaccess for kpi.ict-a.co.ke subdomain
+# This is a clean React Router configuration (no Laravel conflicts)
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+  
+  # Don't rewrite if the file exists
+  RewriteCond %{REQUEST_FILENAME} !-f
+  # Don't rewrite if the directory exists
+  RewriteCond %{REQUEST_FILENAME} !-d
+  # Don't rewrite API calls (if API is on same domain)
+  RewriteCond %{REQUEST_URI} !^/api
+  # Rewrite everything else to index.html for React Router
+  RewriteRule . /index.html [L]
+</IfModule>
+
+# Force HTTPS (optional - uncomment if you want to force HTTPS)
+# RewriteCond %{HTTPS} off
+# RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+

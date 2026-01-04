@@ -3,13 +3,13 @@ import { useNavigate, useParams } from 'react-router-dom';
 import api from '../../services/api';
 import { User, KPI, KPIReview } from '../../types';
 import DatePicker from '../../components/DatePicker';
-import { FiArrowLeft, FiCalendar, FiUser, FiSave, FiX, FiClock, FiMapPin, FiFileText } from 'react-icons/fi';
+import { FiArrowLeft, FiCalendar, FiSave, FiClock, FiMapPin, FiFileText } from 'react-icons/fi';
 
 const MeetingScheduler: React.FC = () => {
   const navigate = useNavigate();
   const { kpiId, reviewId } = useParams<{ kpiId?: string; reviewId?: string }>();
   const [employees, setEmployees] = useState<User[]>([]);
-  const [selectedEmployee, setSelectedEmployee] = useState<User | null>(null);
+  // const [selectedEmployee, setSelectedEmployee] = useState<User | null>(null); // Unused - keeping for potential future use
   const [kpis, setKpis] = useState<KPI[]>([]);
   const [reviews, setReviews] = useState<KPIReview[]>([]);
   const [loading, setLoading] = useState(true);
@@ -34,16 +34,14 @@ const MeetingScheduler: React.FC = () => {
       const kpi = kpis.find(k => k.id === selectedKpiId);
       if (kpi) {
         setSelectedEmployeeId(kpi.employee_id);
-        setSelectedEmployee(employees.find(e => e.id === kpi.employee_id) || null);
       }
     } else if (selectedReviewId && meetingType === 'kpi_review') {
       const review = reviews.find(r => r.id === selectedReviewId);
       if (review) {
         setSelectedEmployeeId(review.employee_id);
-        setSelectedEmployee(employees.find(e => e.id === review.employee_id) || null);
       }
     }
-  }, [selectedKpiId, selectedReviewId, meetingType, kpis, reviews, employees]);
+  }, [selectedKpiId, selectedReviewId, meetingType, kpis, reviews]);
 
   const fetchData = async () => {
     try {
@@ -187,7 +185,6 @@ const MeetingScheduler: React.FC = () => {
             onChange={(e) => {
               const empId = parseInt(e.target.value);
               setSelectedEmployeeId(empId);
-              setSelectedEmployee(employees.find(e => e.id === empId) || null);
             }}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
             required

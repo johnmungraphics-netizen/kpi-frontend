@@ -185,7 +185,7 @@ const EmployeePerformance: React.FC = () => {
               <p>No performance data available for this employee</p>
             </div>
           ) : (
-            performanceData.map((period, index) => {
+            performanceData.map((period) => {
               const finalRating = period.final_rating || 0;
               const ratingInfo = getRatingLabel(finalRating);
               return (

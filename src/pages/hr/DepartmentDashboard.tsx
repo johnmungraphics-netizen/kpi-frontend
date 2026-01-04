@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
 import { FiUsers, FiClock, FiCheckCircle, FiFileText, FiEye } from 'react-icons/fi';
 
@@ -29,7 +28,6 @@ interface Employee {
 
 const DepartmentDashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
   const [statistics, setStatistics] = useState<DepartmentStatistic[]>([]);
   const [selectedDepartment, setSelectedDepartment] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
