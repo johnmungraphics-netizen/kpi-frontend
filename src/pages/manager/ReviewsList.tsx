@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import { KPIReview } from '../../types';
-import { FiArrowLeft, FiStar } from 'react-icons/fi';
+import { FiArrowLeft } from 'react-icons/fi';
 
 const ReviewsList: React.FC = () => {
   const navigate = useNavigate();
@@ -102,23 +102,9 @@ const ReviewsList: React.FC = () => {
                       </p>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex items-center space-x-2">
-                        <div className="flex items-center space-x-1">
-                          {[1, 2, 3, 4, 5].map((star) => (
-                            <FiStar
-                              key={star}
-                              className={`w-4 h-4 ${
-                                star <= (review.employee_rating || 0)
-                                  ? 'text-yellow-400 fill-current'
-                                  : 'text-gray-300'
-                              }`}
-                            />
-                          ))}
-                        </div>
-                        <span className="text-sm text-gray-600">
-                          {review.employee_rating || 0}/5
-                        </span>
-                      </div>
+                      <span className="text-sm font-semibold text-gray-900">
+                        {review.employee_rating ? parseFloat(String(review.employee_rating)).toFixed(2) : 'N/A'}
+                      </span>
                     </td>
                     <td className="px-6 py-4">
                       <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(review.review_status)}`}>
@@ -126,21 +112,39 @@ const ReviewsList: React.FC = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      {(review.review_status === 'employee_submitted' || review.review_status === 'pending') ? (
-                        <button
-                          onClick={() => navigate(`/manager/kpi-review/${review.id}`)}
-                          className="text-purple-600 hover:text-purple-700 font-medium text-sm"
-                        >
-                          Review
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => navigate(`/manager/kpi-review/${review.id}`)}
-                          className="text-gray-600 hover:text-gray-700 font-medium text-sm"
-                        >
-                          View
-                        </button>
-                      )}
+                      <div className="flex items-center space-x-2">
+                        {review.review_status === 'manager_submitted' || review.review_status === 'completed' ? (
+                          <>
+                            <button
+                              onClick={() => navigate(`/manager/kpi-review/${review.id}`)}
+                              className="text-purple-600 hover:text-purple-700 font-medium text-sm"
+                            >
+                              Edit
+                            </button>
+                            <span className="text-gray-300">|</span>
+                            <button
+                              onClick={() => navigate(`/manager/kpi-details/${review.kpi_id}`)}
+                              className="text-blue-600 hover:text-blue-700 font-medium text-sm"
+                            >
+                              View KPI
+                            </button>
+                          </>
+                        ) : (review.review_status === 'employee_submitted' || review.review_status === 'pending') ? (
+                          <button
+                            onClick={() => navigate(`/manager/kpi-review/${review.id}`)}
+                            className="text-purple-600 hover:text-purple-700 font-medium text-sm"
+                          >
+                            Review
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => navigate(`/manager/kpi-review/${review.id}`)}
+                            className="text-gray-600 hover:text-gray-700 font-medium text-sm"
+                          >
+                            View
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))

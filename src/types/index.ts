@@ -12,6 +12,7 @@ export interface User {
   employment_date?: string;
   manager_id?: number;
   company_id?: number;
+  signature?: string;
 }
 
 export interface KPIItem {

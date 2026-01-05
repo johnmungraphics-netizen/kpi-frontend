@@ -55,9 +55,31 @@ const NotificationItem: React.FC<NotificationItemProps> = ({ notification, onMar
   };
 
   const formatTimeAgo = (dateString: string) => {
-    const date = new Date(dateString);
+    if (!dateString) return 'Unknown time';
+    
+    // Parse the date string - handle both ISO format and database timestamp format
+    let date: Date;
+    try {
+      // Try parsing as ISO string first
+      date = new Date(dateString);
+      
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        console.warn('Invalid date string:', dateString);
+        return 'Unknown time';
+      }
+    } catch (error) {
+      console.error('Error parsing date:', dateString, error);
+      return 'Unknown time';
+    }
+    
     const now = new Date();
     const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+    
+    // Handle negative differences (future dates) - should not happen but handle gracefully
+    if (diffInSeconds < 0) {
+      return 'Just now';
+    }
     
     if (diffInSeconds < 60) {
       return 'Just now';
@@ -70,8 +92,17 @@ const NotificationItem: React.FC<NotificationItemProps> = ({ notification, onMar
     } else if (diffInSeconds < 604800) {
       const days = Math.floor(diffInSeconds / 86400);
       return `${days} day${days > 1 ? 's' : ''} ago`;
+    } else if (diffInSeconds < 2592000) {
+      // Less than 30 days
+      const weeks = Math.floor(diffInSeconds / 604800);
+      return `${weeks} week${weeks > 1 ? 's' : ''} ago`;
     } else {
-      return date.toLocaleDateString();
+      // More than 30 days - show actual date
+      return date.toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric' 
+      });
     }
   };
 

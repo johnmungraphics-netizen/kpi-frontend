@@ -34,6 +34,7 @@ import Notifications from './pages/shared/Notifications';
 import EmployeePerformance from './pages/hr/EmployeePerformance';
 import SuperAdminDashboard from './pages/superadmin/SuperAdminDashboard';
 import Employees from './pages/shared/Employees';
+import Profile from './pages/shared/Profile';
 
 // Protected Route Component
 const ProtectedRoute: React.FC<{ children: React.ReactNode; allowedRoles?: string[] }> = ({
@@ -465,6 +466,28 @@ function AppRoutes() {
           <ProtectedRoute allowedRoles={['hr', 'manager', 'super_admin']}>
             <Layout>
               <Employees />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Shared Routes */}
+      <Route
+        path="/profile"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <Profile />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/notifications"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <Notifications />
             </Layout>
           </ProtectedRoute>
         }

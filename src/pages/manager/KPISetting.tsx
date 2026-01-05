@@ -4,7 +4,8 @@ import api from '../../services/api';
 import { User } from '../../types';
 import SignatureField from '../../components/SignatureField';
 import DatePicker from '../../components/DatePicker';
-import { FiArrowLeft, FiSave, FiSend, FiEye } from 'react-icons/fi';
+import TextModal from '../../components/TextModal';
+import { FiArrowLeft, FiSave, FiSend, FiEye, FiExternalLink } from 'react-icons/fi';
 
 const KPISetting: React.FC = () => {
   const { employeeId } = useParams<{ employeeId: string }>();
@@ -24,20 +25,101 @@ const KPISetting: React.FC = () => {
   const [managerSignature, setManagerSignature] = useState('');
   const [availablePeriods, setAvailablePeriods] = useState<any[]>([]);
   const [selectedPeriodSetting, setSelectedPeriodSetting] = useState<any>(null);
+  const [textModal, setTextModal] = useState<{ isOpen: boolean; title: string; value: string; field?: string; rowIndex?: number; onChange?: (value: string) => void }>({
+    isOpen: false,
+    title: '',
+    value: '',
+  });
 
   useEffect(() => {
     if (employeeId) {
+      // Load draft FIRST before fetching periods to prevent overwriting
+      loadDraft();
       fetchEmployee();
+      fetchAvailablePeriods();
     }
-    fetchAvailablePeriods();
   }, [employeeId]);
+
+  // Save draft to localStorage whenever form data changes
+  useEffect(() => {
+    if (employeeId) {
+      const draftKey = `kpi-setting-draft-${employeeId}`;
+      const draftData = {
+        kpiRows,
+        period,
+        quarter,
+        year,
+        meetingDate: meetingDate?.toISOString(),
+        managerSignature,
+        selectedPeriodSetting,
+      };
+      localStorage.setItem(draftKey, JSON.stringify(draftData));
+    }
+  }, [kpiRows, period, quarter, year, meetingDate, managerSignature, selectedPeriodSetting, employeeId]);
+
+  const loadDraft = () => {
+    if (!employeeId) return;
+    try {
+      const draftKey = `kpi-setting-draft-${employeeId}`;
+      const savedDraft = localStorage.getItem(draftKey);
+      if (savedDraft) {
+        const draftData = JSON.parse(savedDraft);
+        console.log('Loading draft for employee:', employeeId, draftData);
+        
+        // Always load draft data if it exists (don't check hasData - draft should override empty state)
+        if (draftData.kpiRows && Array.isArray(draftData.kpiRows) && draftData.kpiRows.length > 0) {
+          // Check if draft has any actual data (not just empty strings)
+          const hasDraftData = draftData.kpiRows.some((row: any) => 
+            (row.title && row.title.trim()) || (row.description && row.description.trim())
+          );
+          if (hasDraftData) {
+            setKpiRows(draftData.kpiRows);
+            console.log('Loaded KPI rows from draft:', draftData.kpiRows);
+          }
+        }
+        
+        // Load period settings from draft
+        if (draftData.period) {
+          setPeriod(draftData.period);
+        }
+        if (draftData.quarter) {
+          setQuarter(draftData.quarter);
+        }
+        if (draftData.year) {
+          setYear(draftData.year);
+        }
+        if (draftData.meetingDate) {
+          setMeetingDate(new Date(draftData.meetingDate));
+        }
+        if (draftData.managerSignature) {
+          setManagerSignature(draftData.managerSignature);
+        }
+        if (draftData.selectedPeriodSetting) {
+          setSelectedPeriodSetting(draftData.selectedPeriodSetting);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading draft:', error);
+    }
+  };
 
   const fetchAvailablePeriods = async () => {
     try {
       const response = await api.get('/settings/available-periods');
       setAvailablePeriods(response.data.periods || []);
       
-      // Set default to first active quarterly period if available
+      // Check if draft exists before setting defaults
+      if (employeeId) {
+        const draftKey = `kpi-setting-draft-${employeeId}`;
+        const savedDraft = localStorage.getItem(draftKey);
+        if (savedDraft) {
+          // Draft exists, don't overwrite with defaults
+          console.log('Draft exists, skipping default period settings');
+          return;
+        }
+      }
+      
+      // Set default to first active quarterly period if available (only if no draft)
       const quarterlyPeriods = response.data.periods?.filter((p: any) => p.period_type === 'quarterly' && p.is_active) || [];
       if (quarterlyPeriods.length > 0) {
         const firstPeriod = quarterlyPeriods[0];
@@ -72,9 +154,20 @@ const KPISetting: React.FC = () => {
     setKpiRows(updated);
   };
 
-  const handleSaveDraft = async () => {
-    // Save draft logic (can be implemented later)
-    alert('Draft saved');
+  const handleSaveDraft = () => {
+    if (!employeeId) return;
+    const draftKey = `kpi-setting-draft-${employeeId}`;
+    const draftData = {
+      kpiRows,
+      period,
+      quarter,
+      year,
+      meetingDate: meetingDate?.toISOString(),
+      managerSignature,
+      selectedPeriodSetting,
+    };
+    localStorage.setItem(draftKey, JSON.stringify(draftData));
+    alert('Draft saved successfully! Your progress has been saved.');
   };
 
   const handleSubmit = async () => {
@@ -113,6 +206,12 @@ const KPISetting: React.FC = () => {
           goal_weight: kpi.goal_weight,
         })),
       });
+
+      // Clear draft after successful submission
+      if (employeeId) {
+        const draftKey = `kpi-setting-draft-${employeeId}`;
+        localStorage.removeItem(draftKey);
+      }
 
       navigate('/manager/dashboard');
     } catch (error: any) {
@@ -204,17 +303,17 @@ const KPISetting: React.FC = () => {
                 <p className="text-sm text-gray-600">Employment Date</p>
                 <p className="font-semibold text-gray-900">
                   {employee?.employment_date
-                    ? new Date(employee.employment_date).toLocaleDateString()
+                    ? new Date(employee.employment_date).toLocaleDateString('en-US', { 
+                        year: 'numeric', 
+                        month: '2-digit', 
+                        day: '2-digit' 
+                      })
                     : 'N/A'}
                 </p>
               </div>
               <div>
                 <p className="text-sm text-gray-600">Department</p>
                 <p className="font-semibold text-gray-900">{employee?.department}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Current KPIs</p>
-                <p className="font-semibold text-gray-900">4 Active</p>
               </div>
             </div>
           </div>
@@ -380,28 +479,28 @@ const KPISetting: React.FC = () => {
 
           {/* KPI Table */}
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
+            <table className="w-full border-collapse" style={{ minWidth: '1600px' }}>
               <thead>
                 <tr className="bg-gray-50">
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase border border-gray-200">
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase border border-gray-200 whitespace-nowrap" style={{ minWidth: '200px' }}>
                     KPI Title / Name *
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase border border-gray-200">
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase border border-gray-200 whitespace-nowrap" style={{ minWidth: '250px' }}>
                     KPI Description *
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase border border-gray-200">
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase border border-gray-200 whitespace-nowrap" style={{ minWidth: '180px' }}>
                     Current Performance Status *
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase border border-gray-200">
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase border border-gray-200 whitespace-nowrap" style={{ minWidth: '150px' }}>
                     Target Value *
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase border border-gray-200">
-                    Expected Completion Date
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase border border-gray-200">
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase border border-gray-200 whitespace-nowrap" style={{ minWidth: '120px' }}>
                     Measure Unit *
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase border border-gray-200">
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase border border-gray-200 whitespace-nowrap" style={{ minWidth: '150px' }}>
+                    Expected Completion Date
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase border border-gray-200 whitespace-nowrap" style={{ minWidth: '120px' }}>
                     Goal Weight *
                   </th>
                 </tr>
@@ -419,39 +518,82 @@ const KPISetting: React.FC = () => {
                       />
                     </td>
                     <td className="border border-gray-200 p-2">
-                      <textarea
-                        value={kpi.description}
-                        onChange={(e) => handleKpiChange(index, 'description', e.target.value)}
-                        placeholder="Provide detailed description..."
-                        rows={2}
-                        className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-purple-500"
-                      />
+                      <div className="flex items-start space-x-2">
+                        <textarea
+                          value={kpi.description}
+                          onChange={(e) => handleKpiChange(index, 'description', e.target.value)}
+                          placeholder="Provide detailed description..."
+                          rows={2}
+                          className="flex-1 px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-purple-500"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setTextModal({ 
+                            isOpen: true, 
+                            title: 'KPI Description', 
+                            value: kpi.description,
+                            field: 'description',
+                            rowIndex: index,
+                            onChange: (value) => handleKpiChange(index, 'description', value)
+                          })}
+                          className="px-2 py-1 text-xs text-purple-600 hover:text-purple-700 border border-purple-300 rounded"
+                          title="Edit in modal"
+                        >
+                          <FiExternalLink />
+                        </button>
+                      </div>
                     </td>
                     <td className="border border-gray-200 p-2">
-                      <input
-                        type="text"
-                        value={kpi.current_performance_status}
-                        onChange={(e) => handleKpiChange(index, 'current_performance_status', e.target.value)}
-                        placeholder="e.g., On Track, At Risk, Delayed"
-                        className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-purple-500"
-                      />
+                      <div className="flex items-start space-x-2">
+                        <input
+                          type="text"
+                          value={kpi.current_performance_status}
+                          onChange={(e) => handleKpiChange(index, 'current_performance_status', e.target.value)}
+                          placeholder="e.g., On Track, At Risk, Delayed"
+                          className="flex-1 px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-purple-500"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setTextModal({ 
+                            isOpen: true, 
+                            title: 'Current Performance Status', 
+                            value: kpi.current_performance_status,
+                            field: 'current_performance_status',
+                            rowIndex: index,
+                            onChange: (value) => handleKpiChange(index, 'current_performance_status', value)
+                          })}
+                          className="px-2 py-1 text-xs text-purple-600 hover:text-purple-700 border border-purple-300 rounded"
+                          title="Edit in modal"
+                        >
+                          <FiExternalLink />
+                        </button>
+                      </div>
                     </td>
                     <td className="border border-gray-200 p-2">
-                      <input
-                        type="text"
-                        value={kpi.target_value}
-                        onChange={(e) => handleKpiChange(index, 'target_value', e.target.value)}
-                        placeholder="e.g., 150,000 or 95%"
-                        className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-purple-500"
-                      />
-                    </td>
-                    <td className="border border-gray-200 p-2">
-                      <input
-                        type="date"
-                        value={kpi.expected_completion_date}
-                        onChange={(e) => handleKpiChange(index, 'expected_completion_date', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-purple-500"
-                      />
+                      <div className="flex items-start space-x-2">
+                        <input
+                          type="text"
+                          value={kpi.target_value}
+                          onChange={(e) => handleKpiChange(index, 'target_value', e.target.value)}
+                          placeholder="e.g., 150,000 or 95%"
+                          className="flex-1 px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-purple-500"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setTextModal({ 
+                            isOpen: true, 
+                            title: 'Target Value', 
+                            value: kpi.target_value,
+                            field: 'target_value',
+                            rowIndex: index,
+                            onChange: (value) => handleKpiChange(index, 'target_value', value)
+                          })}
+                          className="px-2 py-1 text-xs text-purple-600 hover:text-purple-700 border border-purple-300 rounded"
+                          title="Edit in modal"
+                        >
+                          <FiExternalLink />
+                        </button>
+                      </div>
                     </td>
                     <td className="border border-gray-200 p-2">
                       <select
@@ -465,6 +607,14 @@ const KPISetting: React.FC = () => {
                         <option value="Currency">Currency</option>
                         <option value="Days">Days</option>
                       </select>
+                    </td>
+                    <td className="border border-gray-200 p-2">
+                      <input
+                        type="date"
+                        value={kpi.expected_completion_date}
+                        onChange={(e) => handleKpiChange(index, 'expected_completion_date', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-purple-500"
+                      />
                     </td>
                     <td className="border border-gray-200 p-2">
                       <input
@@ -496,6 +646,21 @@ const KPISetting: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Text Modal */}
+      <TextModal
+        isOpen={textModal.isOpen}
+        onClose={() => {
+          if (textModal.onChange && textModal.rowIndex !== undefined) {
+            textModal.onChange(textModal.value);
+          }
+          setTextModal({ isOpen: false, title: '', value: '' });
+        }}
+        title={textModal.title}
+        value={textModal.value}
+        onChange={textModal.onChange}
+        readOnly={!textModal.onChange}
+      />
     </div>
   );
 };

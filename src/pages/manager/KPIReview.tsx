@@ -4,7 +4,8 @@ import api from '../../services/api';
 import { KPI, KPIReview, KPIItem } from '../../types';
 import SignatureField from '../../components/SignatureField';
 import DatePicker from '../../components/DatePicker';
-import { FiArrowLeft, FiSave, FiSend, FiStar, FiExternalLink } from 'react-icons/fi';
+import TextModal from '../../components/TextModal';
+import { FiArrowLeft, FiSave, FiSend, FiExternalLink } from 'react-icons/fi';
 
 const ManagerKPIReview: React.FC = () => {
   const { reviewId } = useParams<{ reviewId: string }>();
@@ -21,14 +22,67 @@ const ManagerKPIReview: React.FC = () => {
   const [employeeRatings, setEmployeeRatings] = useState<{ [key: number]: number }>({});
   const [employeeComments, setEmployeeComments] = useState<{ [key: number]: string }>({});
   const [ratingOptions, setRatingOptions] = useState<Array<{ rating_value: number; label: string; description?: string }>>([]);
+  const [textModal, setTextModal] = useState<{ isOpen: boolean; title: string; value: string; field?: string; itemId?: number; onChange?: (value: string) => void }>({
+    isOpen: false,
+    title: '',
+    value: '',
+  });
 
   useEffect(() => {
     console.log('🔄 [KPIReview] Component mounted/updated, reviewId:', reviewId);
     if (reviewId) {
       fetchReview();
+      loadDraft();
     }
     fetchRatingOptions();
   }, [reviewId]);
+
+  // Save draft to localStorage whenever form data changes
+  useEffect(() => {
+    if (reviewId) {
+      const draftKey = `kpi-review-draft-${reviewId}`;
+      const draftData = {
+        managerRatings,
+        managerComments,
+        overallComment,
+        managerSignature,
+        reviewDate: reviewDate?.toISOString(),
+      };
+      localStorage.setItem(draftKey, JSON.stringify(draftData));
+    }
+  }, [managerRatings, managerComments, overallComment, managerSignature, reviewDate, reviewId]);
+
+  const loadDraft = () => {
+    if (!reviewId) return;
+    // Load draft after a short delay to allow API data to load first
+    setTimeout(() => {
+      try {
+        const draftKey = `kpi-review-draft-${reviewId}`;
+        const savedDraft = localStorage.getItem(draftKey);
+        if (savedDraft) {
+          const draftData = JSON.parse(savedDraft);
+          // Only load draft if there's no existing manager data (indicating it's a new review)
+          if (Object.keys(managerRatings).length === 0 && draftData.managerRatings) {
+            setManagerRatings(draftData.managerRatings);
+          }
+          if (Object.keys(managerComments).length === 0 && draftData.managerComments) {
+            setManagerComments(draftData.managerComments);
+          }
+          if (!overallComment && draftData.overallComment) {
+            setOverallComment(draftData.overallComment);
+          }
+          if (!managerSignature && draftData.managerSignature) {
+            setManagerSignature(draftData.managerSignature);
+          }
+          if (!reviewDate && draftData.reviewDate) {
+            setReviewDate(new Date(draftData.reviewDate));
+          }
+        }
+      } catch (error) {
+        console.error('Error loading draft:', error);
+      }
+    }, 500);
+  };
 
   const fetchRatingOptions = async () => {
     try {
@@ -188,8 +242,18 @@ const ManagerKPIReview: React.FC = () => {
     }
   };
 
-  const handleSaveDraft = async () => {
-    alert('Draft saved');
+  const handleSaveDraft = () => {
+    if (!reviewId) return;
+    const draftKey = `kpi-review-draft-${reviewId}`;
+    const draftData = {
+      managerRatings,
+      managerComments,
+      overallComment,
+      managerSignature,
+      reviewDate: reviewDate?.toISOString(),
+    };
+    localStorage.setItem(draftKey, JSON.stringify(draftData));
+    alert('Draft saved successfully! Your progress has been saved.');
   };
 
   const handleRatingChange = (itemId: number, value: number) => {
@@ -256,6 +320,12 @@ const ManagerKPIReview: React.FC = () => {
         overall_manager_comment: overallComment,
         manager_signature: managerSignature,
       });
+
+      // Clear draft after successful submission
+      if (reviewId) {
+        const draftKey = `kpi-review-draft-${reviewId}`;
+        localStorage.removeItem(draftKey);
+      }
 
       navigate('/manager/reviews');
     } catch (error: any) {
@@ -433,20 +503,20 @@ const ManagerKPIReview: React.FC = () => {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full" style={{ minWidth: '1400px' }}>
+          <table className="w-full" style={{ minWidth: '1800px' }}>
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap">KPI TITLE</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap">KPI DESCRIPTION</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap">CURRENT PERFORMANCE STATUS</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap">TARGET VALUE</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap">EXPECTED COMPLETION DATE</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap">MEASURE UNIT</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap">GOAL WEIGHT</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap">EMPLOYEE SELF RATING</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap">EMPLOYEE COMMENT</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap">MANAGER RATING</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap">MANAGER COMMENT</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap" style={{ minWidth: '200px' }}>KPI TITLE</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap" style={{ minWidth: '250px' }}>KPI DESCRIPTION</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap" style={{ minWidth: '180px' }}>CURRENT PERFORMANCE STATUS</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap" style={{ minWidth: '150px' }}>TARGET VALUE</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap" style={{ minWidth: '120px' }}>MEASURE UNIT</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap" style={{ minWidth: '150px' }}>EXPECTED COMPLETION DATE</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap" style={{ minWidth: '120px' }}>GOAL WEIGHT</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap" style={{ minWidth: '150px' }}>EMPLOYEE SELF RATING</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap" style={{ minWidth: '200px' }}>EMPLOYEE COMMENT</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap" style={{ minWidth: '150px' }}>MANAGER RATING</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap" style={{ minWidth: '200px' }}>MANAGER COMMENT</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
@@ -460,25 +530,38 @@ const ManagerKPIReview: React.FC = () => {
                     <tr key={item.id}>
                       <td className="px-6 py-4">
                         <div>
-                          <p className="font-semibold text-gray-900">{item.title}</p>
+                          <button
+                            onClick={() => setTextModal({ isOpen: true, title: 'KPI Title', value: item.title || 'N/A' })}
+                            className="text-left font-semibold text-gray-900 hover:text-purple-600 transition-colors"
+                          >
+                            <p className="truncate max-w-[200px]" title={item.title}>{item.title}</p>
+                          </button>
                           <p className="text-xs text-gray-500">KPI-{review.review_quarter}-{String(index + 1).padStart(3, '0')}</p>
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <p className="text-sm text-gray-700">{item.description || 'N/A'}</p>
+                        <button
+                          onClick={() => setTextModal({ isOpen: true, title: 'KPI Description', value: item.description || 'N/A' })}
+                          className="text-left text-sm text-gray-700 hover:text-purple-600 transition-colors"
+                        >
+                          <p className="truncate max-w-[250px]" title={item.description || 'N/A'}>{item.description || 'N/A'}</p>
+                        </button>
                       </td>
                       <td className="px-6 py-4">
-                        <p className="text-sm text-gray-900">{item.current_performance_status || 'N/A'}</p>
+                        <button
+                          onClick={() => setTextModal({ isOpen: true, title: 'Current Performance Status', value: item.current_performance_status || 'N/A' })}
+                          className="text-left text-sm text-gray-900 hover:text-purple-600 transition-colors"
+                        >
+                          <p className="truncate max-w-[180px]" title={item.current_performance_status || 'N/A'}>{item.current_performance_status || 'N/A'}</p>
+                        </button>
                       </td>
                       <td className="px-6 py-4">
-                        <p className="font-semibold text-gray-900">{item.target_value || 'N/A'}</p>
-                      </td>
-                      <td className="px-6 py-4">
-                        <p className="text-sm text-gray-700">
-                          {item.expected_completion_date 
-                            ? new Date(item.expected_completion_date).toLocaleDateString() 
-                            : 'N/A'}
-                        </p>
+                        <button
+                          onClick={() => setTextModal({ isOpen: true, title: 'Target Value', value: item.target_value || 'N/A' })}
+                          className="text-left font-semibold text-gray-900 hover:text-purple-600 transition-colors"
+                        >
+                          <p className="truncate max-w-[150px]" title={item.target_value || 'N/A'}>{item.target_value || 'N/A'}</p>
+                        </button>
                       </td>
                       <td className="px-6 py-4">
                         <span className="inline-flex items-center px-2 py-1 rounded bg-blue-100 text-blue-700 text-sm whitespace-nowrap">
@@ -486,7 +569,14 @@ const ManagerKPIReview: React.FC = () => {
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <p className="text-sm text-gray-700">{item.goal_weight || item.measure_criteria || 'N/A'}</p>
+                        <p className="text-sm text-gray-700 whitespace-nowrap">
+                          {item.expected_completion_date 
+                            ? new Date(item.expected_completion_date).toLocaleDateString() 
+                            : 'N/A'}
+                        </p>
+                      </td>
+                      <td className="px-6 py-4">
+                        <p className="text-sm text-gray-700 whitespace-nowrap">{item.goal_weight || item.measure_criteria || 'N/A'}</p>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         {empRating > 0 ? (
@@ -497,7 +587,7 @@ const ManagerKPIReview: React.FC = () => {
                                 if (Math.abs(ratingValue - 1.00) < 0.01) return '1.00';
                                 if (Math.abs(ratingValue - 1.25) < 0.01) return '1.25';
                                 if (Math.abs(ratingValue - 1.50) < 0.01) return '1.50';
-                                return String(empRating);
+                                return parseFloat(String(empRating)).toFixed(2);
                               })()}
                             </span>
                             <span className="text-xs text-gray-500 ml-1 block">
@@ -509,7 +599,18 @@ const ManagerKPIReview: React.FC = () => {
                         )}
                       </td>
                       <td className="px-6 py-4">
-                        <p className="text-sm text-gray-700 break-words max-w-xs">{empComment && empComment !== 'N/A' ? empComment : 'N/A'}</p>
+                        {empComment && empComment !== 'N/A' ? (
+                          <button
+                            onClick={() => setTextModal({ isOpen: true, title: 'Employee Comment', value: empComment })}
+                            className="text-left text-sm text-gray-700 hover:text-purple-600 transition-colors"
+                          >
+                            <p className="truncate max-w-[200px]" title={empComment}>
+                              {empComment.length > 50 ? empComment.substring(0, 50) + '...' : empComment}
+                            </p>
+                          </button>
+                        ) : (
+                          <p className="text-sm text-gray-400">N/A</p>
+                        )}
                       </td>
                       <td className="px-6 py-4">
                         <select
@@ -546,13 +647,31 @@ const ManagerKPIReview: React.FC = () => {
                         )}
                       </td>
                       <td className="px-6 py-4">
-                      <textarea
-                        value={mgrComment}
-                        onChange={(e) => handleCommentChange(item.id, e.target.value)}
-                        placeholder="Enter your comment..."
-                        rows={2}
-                        className="w-full min-w-[200px] px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-                      />
+                        <div className="flex items-start space-x-2">
+                          <textarea
+                            value={mgrComment}
+                            onChange={(e) => handleCommentChange(item.id, e.target.value)}
+                            placeholder="Enter your comment..."
+                            rows={2}
+                            className="flex-1 min-w-[150px] px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                          />
+                          {mgrComment && mgrComment.length > 30 && (
+                            <button
+                              onClick={() => setTextModal({ 
+                                isOpen: true, 
+                                title: 'Manager Comment', 
+                                value: mgrComment,
+                                field: 'manager_comment',
+                                itemId: item.id,
+                                onChange: (value) => handleCommentChange(item.id, value)
+                              })}
+                              className="px-2 py-1 text-xs text-purple-600 hover:text-purple-700 border border-purple-300 rounded"
+                              title="View/Edit full comment"
+                            >
+                              <FiExternalLink />
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );
@@ -661,7 +780,7 @@ const ManagerKPIReview: React.FC = () => {
             <p className="text-sm text-gray-600 mb-1">Average Employee Rating</p>
             <div className="flex items-center space-x-2">
               <span className="font-semibold text-gray-900">
-                {employeeAvg > 0 ? `${employeeAvg.toFixed(2)}` : '0.00'}
+                {employeeAvg > 0 ? parseFloat(String(employeeAvg)).toFixed(2) : '0.00'}
               </span>
               {employeeAvg > 0 && (
                 <span className="text-xs text-gray-500">
@@ -673,20 +792,8 @@ const ManagerKPIReview: React.FC = () => {
           <div className="bg-purple-50 rounded-lg p-4">
             <p className="text-sm text-gray-600 mb-1">Average Manager Rating</p>
             <div className="flex items-center space-x-2">
-              <div className="flex items-center space-x-1">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <FiStar
-                    key={star}
-                    className={`w-4 h-4 ${
-                      star <= Math.round(managerAvg)
-                        ? 'text-yellow-400 fill-current'
-                        : 'text-gray-300'
-                    }`}
-                  />
-                ))}
-              </div>
               <span className="font-semibold text-gray-900">
-                {managerAvg > 0 ? `${managerAvg.toFixed(2)}` : '0.00'}
+                {managerAvg > 0 ? parseFloat(String(managerAvg)).toFixed(2) : '0.00'}
               </span>
               {managerAvg > 0 && (
                 <span className="text-xs text-gray-500 ml-1">
@@ -810,6 +917,21 @@ const ManagerKPIReview: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* Text Modal */}
+      <TextModal
+        isOpen={textModal.isOpen}
+        onClose={() => {
+          if (textModal.onChange && textModal.itemId !== undefined) {
+            textModal.onChange(textModal.value);
+          }
+          setTextModal({ isOpen: false, title: '', value: '' });
+        }}
+        title={textModal.title}
+        value={textModal.value}
+        onChange={textModal.onChange}
+        readOnly={!textModal.onChange}
+      />
     </div>
   );
 };

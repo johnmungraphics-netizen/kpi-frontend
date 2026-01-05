@@ -1,19 +1,17 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import api from '../services/api';
 import {
   FiHome,
   FiTarget,
   FiUsers,
   FiFileText,
-  FiBarChart2,
-  FiDownload,
-  FiBell,
-  FiSettings,
   FiLogOut,
   FiCheckCircle,
   FiCalendar,
   FiMail,
+  FiSettings,
 } from 'react-icons/fi';
 
 interface SidebarProps {
@@ -25,8 +23,32 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const [pendingReviewsCount, setPendingReviewsCount] = useState<number>(0);
 
   const isActive = (path: string) => location.pathname === path;
+
+  useEffect(() => {
+    if (user?.role === 'manager') {
+      fetchPendingReviewsCount();
+    }
+  }, [user]);
+
+  // Refresh count when navigating to/from reviews page
+  useEffect(() => {
+    if (user?.role === 'manager' && location.pathname === '/manager/reviews') {
+      fetchPendingReviewsCount();
+    }
+  }, [location.pathname, user]);
+
+  const fetchPendingReviewsCount = async () => {
+    try {
+      const response = await api.get('/kpi-review/pending/count');
+      setPendingReviewsCount(response.data.count || 0);
+    } catch (error) {
+      console.error('Error fetching pending reviews count:', error);
+      setPendingReviewsCount(0);
+    }
+  };
 
   const handleLogout = () => {
     logout();
@@ -45,7 +67,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     { path: '/manager/dashboard', label: 'Dashboard', icon: FiHome },
     { path: '/manager/kpi-management', label: 'KPI Management', icon: FiTarget },
     { path: '/manager/employees', label: 'Employees', icon: FiUsers },
-    { path: '/manager/reviews', label: 'Reviews', icon: FiFileText, badge: '5' },
+    { 
+      path: '/manager/reviews', 
+      label: 'Reviews', 
+      icon: FiFileText, 
+      badge: pendingReviewsCount > 0 ? pendingReviewsCount : undefined 
+    },
     { path: '/manager/schedule-meeting', label: 'Schedule Meeting', icon: FiCalendar },
     { path: '/manager/acknowledged-kpis', label: 'Acknowledged KPIs', icon: FiCheckCircle },
     { path: '/manager/completed-reviews', label: 'Completed Reviews', icon: FiCheckCircle },
@@ -72,11 +99,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const superAdminNavItems: NavItem[] = [
     { path: '/super-admin/dashboard', label: 'Dashboard', icon: FiHome },
     { path: '/onboard', label: 'Onboard Company', icon: FiUsers },
-  ];
-
-  const commonNavItems: NavItem[] = [
-    { path: '/notifications', label: 'Notifications', icon: FiBell },
-    { path: '/settings', label: 'Settings', icon: FiSettings },
   ];
 
   const getNavItems = () => {
@@ -155,87 +177,31 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
               })}
             </div>
 
-            {user?.role === 'manager' && (
-              <div className="mb-6">
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 px-3">
-                  REPORTS
-                </p>
-                <Link
-                  to="/manager/analytics"
-                  className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg mb-1 transition-colors ${
-                    isActive('/manager/analytics')
-                      ? 'bg-purple-100 text-purple-700'
-                      : 'text-gray-700 hover:bg-gray-100'
-                  }`}
-                  onClick={onClose}
-                >
-                  <FiBarChart2 className="text-lg" />
-                  <span className="flex-1 font-medium">Analytics</span>
-                </Link>
-                <Link
-                  to="/manager/export"
-                  className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg mb-1 transition-colors ${
-                    isActive('/manager/export')
-                      ? 'bg-purple-100 text-purple-700'
-                      : 'text-gray-700 hover:bg-gray-100'
-                  }`}
-                  onClick={onClose}
-                >
-                  <FiDownload className="text-lg" />
-                  <span className="flex-1 font-medium">Export Data</span>
-                </Link>
-              </div>
-            )}
-
-            {user?.role !== 'hr' && (
-              <div>
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 px-3">
-                  SETTINGS
-                </p>
-                {commonNavItems.map((item) => {
-                  const Icon = item.icon;
-                  const active = isActive(item.path);
-                  return (
-                    <Link
-                      key={item.path}
-                      to={item.path}
-                      onClick={onClose}
-                      className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg mb-1 transition-colors ${
-                        active
-                          ? 'bg-purple-100 text-purple-700'
-                          : 'text-gray-700 hover:bg-gray-100'
-                      }`}
-                    >
-                      <Icon className={`text-lg ${active ? 'text-purple-600' : ''}`} />
-                      <span className="flex-1 font-medium">{item.label}</span>
-                    </Link>
-                  );
-                })}
-              </div>
-            )}
           </nav>
 
-          {/* User Profile */}
-          <div className="p-4 border-t border-gray-200">
-            <div className="flex items-center space-x-3 mb-3">
-              <div className="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
-                {user?.name?.charAt(0).toUpperCase() || 'U'}
+          {/* User Profile - Only for HR and Super Admin */}
+          {(user?.role === 'hr' || user?.role === 'super_admin') && (
+            <div className="p-4 border-t border-gray-200">
+              <div className="flex items-center space-x-3 mb-3">
+                <div className="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
+                  {user?.name?.charAt(0).toUpperCase() || 'U'}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-gray-900 truncate">
+                    {user?.name || 'User'}
+                  </p>
+                  <p className="text-xs text-gray-500 capitalize">{user?.role || 'User'}</p>
+                </div>
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-gray-900 truncate">
-                  {user?.name || 'User'}
-                </p>
-                <p className="text-xs text-gray-500 capitalize">{user?.role || 'User'}</p>
-              </div>
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
+              >
+                <FiLogOut className="text-lg" />
+                <span className="font-medium">Logout</span>
+              </button>
             </div>
-            <button
-              onClick={handleLogout}
-              className="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
-            >
-              <FiLogOut className="text-lg" />
-              <span className="font-medium">Logout</span>
-            </button>
-          </div>
+          )}
         </div>
       </aside>
     </>

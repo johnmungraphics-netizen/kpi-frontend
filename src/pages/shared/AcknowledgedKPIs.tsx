@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
 import { KPI } from '../../types';
-import { FiArrowLeft, FiEye, FiUser, FiSearch, FiFilter } from 'react-icons/fi';
+import { FiArrowLeft, FiEye, FiUser, FiSearch, FiFilter, FiDownload } from 'react-icons/fi';
 
 const AcknowledgedKPIs: React.FC = () => {
   const navigate = useNavigate();
@@ -13,6 +13,7 @@ const AcknowledgedKPIs: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [kpiType, setKpiType] = useState<'quarterly' | 'yearly'>('quarterly');
+  const [downloading, setDownloading] = useState<number | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -53,6 +54,30 @@ const AcknowledgedKPIs: React.FC = () => {
       status: 'KPI Acknowledged - Review Pending',
       color: 'bg-blue-100 text-blue-700'
     };
+  };
+
+  const handleDownloadPDF = async (kpiId: number) => {
+    setDownloading(kpiId);
+    try {
+      const response = await api.get(`/kpis/${kpiId}/download-pdf`, {
+        responseType: 'blob',
+      });
+
+      // Create a blob URL and trigger download
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `kpi-acknowledged-${kpiId}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error: any) {
+      console.error('Error downloading PDF:', error);
+      alert(error.response?.data?.error || 'Failed to download PDF');
+    } finally {
+      setDownloading(null);
+    }
   };
 
   if (loading) {
@@ -186,19 +211,30 @@ const AcknowledgedKPIs: React.FC = () => {
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <button
-                          onClick={() => {
-                            // Navigate based on user role
-                            const path = user?.role === 'hr' 
-                              ? `/hr/kpi-details/${kpi.id}`
-                              : `/manager/kpi-details/${kpi.id}`;
-                            navigate(path);
-                          }}
-                          className="flex items-center space-x-1 text-purple-600 hover:text-purple-700 font-medium text-sm"
-                        >
-                          <FiEye className="text-sm" />
-                          <span>View Details</span>
-                        </button>
+                        <div className="flex items-center space-x-2">
+                          <button
+                            onClick={() => {
+                              // Navigate based on user role
+                              const path = user?.role === 'hr' 
+                                ? `/hr/kpi-details/${kpi.id}`
+                                : `/manager/kpi-details/${kpi.id}`;
+                              navigate(path);
+                            }}
+                            className="flex items-center space-x-1 text-purple-600 hover:text-purple-700 font-medium text-sm"
+                          >
+                            <FiEye className="text-sm" />
+                            <span>View</span>
+                          </button>
+                          <button
+                            onClick={() => handleDownloadPDF(kpi.id)}
+                            disabled={downloading === kpi.id}
+                            className="flex items-center space-x-1 text-blue-600 hover:text-blue-700 font-medium text-sm disabled:opacity-50"
+                            title="Download PDF"
+                          >
+                            <FiDownload className="text-sm" />
+                            <span>{downloading === kpi.id ? 'Downloading...' : 'Download'}</span>
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );

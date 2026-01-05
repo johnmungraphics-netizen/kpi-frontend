@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import api from '../../services/api';
-import { FiArrowLeft, FiUser, FiTrendingUp, FiCalendar, FiCheckCircle } from 'react-icons/fi';
+import { FiArrowLeft, FiUser, FiTrendingUp, FiCalendar, FiCheckCircle, FiFilter } from 'react-icons/fi';
 
 interface PerformanceData {
   id: number;
@@ -33,6 +33,8 @@ const EmployeePerformance: React.FC = () => {
   const [performanceData, setPerformanceData] = useState<PerformanceData[]>([]);
   const [employeeInfo, setEmployeeInfo] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [periodFilter, setPeriodFilter] = useState<'all' | 'quarterly' | 'yearly'>('all');
+  const [yearFilter, setYearFilter] = useState<string>('all');
 
   useEffect(() => {
     if (employeeId) {
@@ -75,19 +77,118 @@ const EmployeePerformance: React.FC = () => {
     return { label: 'Below Expectation', color: 'text-orange-700 bg-orange-100' };
   };
 
-  const calculateAverageRating = (): number => {
-    if (performanceData.length === 0) return 0;
-    const validRatings = performanceData.filter(p => p.final_rating != null && !isNaN(p.final_rating));
+  // Get available years from data
+  const availableYears = useMemo(() => {
+    const years = new Set<number>();
+    performanceData.forEach(p => {
+      const year = p.year || p.review_year;
+      if (year) years.add(year);
+    });
+    return Array.from(years).sort((a, b) => b - a);
+  }, [performanceData]);
+
+  // Filter data based on selected filters
+  const filteredData = useMemo(() => {
+    let filtered = [...performanceData];
+    
+    // Filter by period type
+    if (periodFilter === 'quarterly') {
+      filtered = filtered.filter(p => p.period === 'quarterly');
+    } else if (periodFilter === 'yearly') {
+      filtered = filtered.filter(p => p.period === 'yearly');
+    }
+    
+    // Filter by year (only for quarterly)
+    if (periodFilter === 'quarterly' && yearFilter !== 'all') {
+      const selectedYear = parseInt(yearFilter);
+      filtered = filtered.filter(p => (p.year || p.review_year) === selectedYear);
+    }
+    
+    return filtered;
+  }, [performanceData, periodFilter, yearFilter]);
+
+  // Separate quarterly and yearly data
+  const quarterlyData = useMemo(() => {
+    return filteredData.filter(p => p.period === 'quarterly');
+  }, [filteredData]);
+
+  const yearlyData = useMemo(() => {
+    return filteredData.filter(p => p.period === 'yearly');
+  }, [filteredData]);
+
+  // Calculate quarterly totals by year
+  const quarterlyTotalsByYear = useMemo(() => {
+    const totals: { [year: number]: { count: number; totalRating: number; averageRating: number } } = {};
+    
+    quarterlyData.forEach(period => {
+      const year = period.year || period.review_year || 0;
+      if (!totals[year]) {
+        totals[year] = { count: 0, totalRating: 0, averageRating: 0 };
+      }
+      totals[year].count++;
+      totals[year].totalRating += period.final_rating || 0;
+    });
+    
+    // Calculate averages
+    Object.keys(totals).forEach(year => {
+      const yearNum = parseInt(year);
+      if (totals[yearNum].count > 0) {
+        totals[yearNum].averageRating = totals[yearNum].totalRating / totals[yearNum].count;
+      }
+    });
+    
+    return totals;
+  }, [quarterlyData]);
+
+  // Calculate average rating for filtered data
+  const calculateAverageRating = (data: PerformanceData[]): number => {
+    if (data.length === 0) return 0;
+    const validRatings = data.filter(p => p.final_rating != null && !isNaN(p.final_rating));
     if (validRatings.length === 0) return 0;
     const sum = validRatings.reduce((acc, p) => acc + (p.final_rating || 0), 0);
     return sum / validRatings.length;
   };
 
+  // Calculate average manager rating for a period
+  const calculateAverageManagerRating = (itemCalculations: Array<{ manager_rating: number }>): number => {
+    if (!itemCalculations || itemCalculations.length === 0) return 0;
+    const validRatings = itemCalculations.filter(c => c.manager_rating != null && !isNaN(c.manager_rating) && c.manager_rating > 0);
+    if (validRatings.length === 0) return 0;
+    const sum = validRatings.reduce((acc, c) => acc + (c.manager_rating || 0), 0);
+    return sum / validRatings.length;
+  };
+
+  // Prepare data for line graph (quarterly only, by year)
+  const graphData = useMemo(() => {
+    const data: { year: number; quarters: { [quarter: string]: number } }[] = [];
+    const yearMap: { [year: number]: { [quarter: string]: number } } = {};
+    
+    quarterlyData.forEach(period => {
+      const year = period.year || period.review_year || 0;
+      const quarter = period.quarter || period.review_quarter || '';
+      
+      if (!yearMap[year]) {
+        yearMap[year] = {};
+      }
+      yearMap[year][quarter] = period.final_rating || 0;
+    });
+    
+    Object.keys(yearMap).sort((a, b) => parseInt(b) - parseInt(a)).forEach(yearStr => {
+      const year = parseInt(yearStr);
+      data.push({
+        year,
+        quarters: yearMap[year]
+      });
+    });
+    
+    return data;
+  }, [quarterlyData]);
+
   if (loading) {
     return <div className="p-6">Loading...</div>;
   }
 
-  const averageRating = calculateAverageRating();
+  const averageRating = calculateAverageRating(filteredData);
   const avgRatingInfo = getRatingLabel(averageRating);
 
   return (
@@ -133,6 +234,47 @@ const EmployeePerformance: React.FC = () => {
         </div>
       )}
 
+      {/* Filters */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="flex items-center space-x-4">
+          <FiFilter className="text-gray-600" />
+          <div className="flex-1 flex items-center space-x-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Period Type</label>
+              <select
+                value={periodFilter}
+                onChange={(e) => {
+                  setPeriodFilter(e.target.value as 'all' | 'quarterly' | 'yearly');
+                  if (e.target.value !== 'quarterly') {
+                    setYearFilter('all');
+                  }
+                }}
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+              >
+                <option value="all">All Periods</option>
+                <option value="quarterly">Quarterly</option>
+                <option value="yearly">Yearly</option>
+              </select>
+            </div>
+            {periodFilter === 'quarterly' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Year</label>
+                <select
+                  value={yearFilter}
+                  onChange={(e) => setYearFilter(e.target.value)}
+                  className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                >
+                  <option value="all">All Years</option>
+                  {availableYears.map(year => (
+                    <option key={year} value={year.toString()}>{year}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
       {/* Performance Summary */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
@@ -142,7 +284,12 @@ const EmployeePerformance: React.FC = () => {
             </div>
             <div>
               <p className="text-sm text-gray-600">Total Periods</p>
-              <p className="text-2xl font-bold text-gray-900">{performanceData.length}</p>
+              <p className="text-2xl font-bold text-gray-900">{filteredData.length}</p>
+              {periodFilter === 'quarterly' && (
+                <p className="text-xs text-gray-500 mt-1">
+                  Quarterly: {quarterlyData.length} | Yearly: {yearlyData.length}
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -154,6 +301,11 @@ const EmployeePerformance: React.FC = () => {
             <div>
               <p className="text-sm text-gray-600">Average Rating</p>
               <p className="text-2xl font-bold text-gray-900">{averageRating.toFixed(2)}</p>
+              {periodFilter === 'quarterly' && quarterlyData.length > 0 && (
+                <p className="text-xs text-gray-500 mt-1">
+                  Quarterly Avg: {calculateAverageRating(quarterlyData).toFixed(2)}
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -170,40 +322,103 @@ const EmployeePerformance: React.FC = () => {
         </div>
       </div>
 
-      {/* Performance by Period */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-        <div className="p-6 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">Performance by KPI Period</h2>
-          <p className="text-sm text-gray-600 mt-1">
-            Detailed ratings for each completed KPI period
-          </p>
+      {/* Quarterly Totals by Year */}
+      {periodFilter !== 'yearly' && Object.keys(quarterlyTotalsByYear).length > 0 && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Quarterly Totals by Year</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {Object.keys(quarterlyTotalsByYear)
+              .sort((a, b) => parseInt(b) - parseInt(a))
+              .map(yearStr => {
+                const year = parseInt(yearStr);
+                const total = quarterlyTotalsByYear[year];
+                const ratingInfo = getRatingLabel(total.averageRating);
+                return (
+                  <div key={year} className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                    <p className="text-sm text-gray-600 mb-1">{year}</p>
+                    <p className="text-2xl font-bold text-blue-600">{total.averageRating.toFixed(2)}</p>
+                    <p className="text-xs text-gray-600 mt-1">
+                      {total.count} Quarter{total.count !== 1 ? 's' : ''}
+                    </p>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium mt-2 inline-block ${ratingInfo.color}`}>
+                      {ratingInfo.label}
+                    </span>
+                  </div>
+                );
+              })}
+          </div>
         </div>
+      )}
 
-        <div className="divide-y divide-gray-200">
-          {performanceData.length === 0 ? (
-            <div className="p-12 text-center text-gray-500">
-              <p>No performance data available for this employee</p>
+      {/* Line Graph for Quarterly Performance */}
+      {periodFilter !== 'yearly' && quarterlyData.length > 0 && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Quarterly Performance Trend</h2>
+          {graphData.length > 0 ? (
+            <div className="h-64 flex items-end justify-center space-x-4 overflow-x-auto pb-4">
+              {graphData.map((yearData) => (
+                <div key={`year-${yearData.year}`} className="flex-1 min-w-[120px] flex flex-col items-center">
+                  <div className="w-full flex items-end justify-center space-x-1 h-48 mb-2">
+                    {['Q1', 'Q2', 'Q3', 'Q4'].map(quarter => {
+                      const rating = yearData.quarters[quarter];
+                      if (rating === undefined) {
+                        return (
+                          <div key={`${yearData.year}-${quarter}-empty`} className="flex-1 flex flex-col items-center">
+                            <div className="w-full bg-gray-200 rounded-t" style={{ height: '10px' }} />
+                            <span className="text-xs text-gray-400 mt-1">{quarter}</span>
+                          </div>
+                        );
+                      }
+                      const height = Math.max((rating / 1.5) * 100, 5); // Scale to max 1.50, minimum 5%
+                      return (
+                        <div key={`${yearData.year}-${quarter}`} className="flex-1 flex flex-col items-center">
+                          <div
+                            className="w-full bg-purple-500 rounded-t hover:bg-purple-600 transition-colors cursor-pointer min-h-[20px]"
+                            style={{ height: `${height}%` }}
+                            title={`${quarter} ${yearData.year}: ${rating.toFixed(2)}`}
+                          />
+                          <span className="text-xs text-gray-600 mt-1">{quarter}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <span className="text-sm font-semibold text-gray-900 mt-2">{yearData.year}</span>
+                </div>
+              ))}
             </div>
           ) : (
-            performanceData.map((period) => {
+            <div className="h-64 flex items-center justify-center">
+              <p className="text-gray-500">No quarterly data available for graph</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Quarterly Performance */}
+      {periodFilter !== 'yearly' && quarterlyData.length > 0 && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+          <div className="p-6 border-b border-gray-200">
+            <h2 className="text-lg font-semibold text-gray-900">Quarterly Performance</h2>
+            <p className="text-sm text-gray-600 mt-1">
+              Detailed ratings for each quarterly KPI period
+            </p>
+          </div>
+
+          <div className="divide-y divide-gray-200">
+            {quarterlyData.map((period, periodIdx) => {
               const finalRating = period.final_rating || 0;
               const ratingInfo = getRatingLabel(finalRating);
+              const avgManagerRating = calculateAverageManagerRating(period.item_calculations || []);
               return (
-                <div key={period.id} className="p-6 hover:bg-gray-50">
+                <div key={`quarterly-${period.id}-${period.review_id}-${periodIdx}`} className="p-6 hover:bg-gray-50">
                   <div className="flex items-start justify-between mb-4">
                     <div>
                       <div className="flex items-center space-x-3 mb-2">
                         <h3 className="text-lg font-semibold text-gray-900">
-                          {period.period === 'quarterly' 
-                            ? `${period.quarter || period.review_quarter} ${period.year || period.review_year} - Quarterly`
-                            : `${period.year || period.review_year} - Yearly`}
+                          {period.quarter || period.review_quarter} {period.year || period.review_year} - Quarterly
                         </h3>
-                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                          period.period === 'quarterly' 
-                            ? 'bg-blue-100 text-blue-700' 
-                            : 'bg-green-100 text-green-700'
-                        }`}>
-                          {period.period === 'quarterly' ? 'Quarterly' : 'Yearly'}
+                        <span className="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
+                          Quarterly
                         </span>
                       </div>
                       <div className="flex items-center space-x-4 text-sm text-gray-600">
@@ -237,9 +452,9 @@ const EmployeePerformance: React.FC = () => {
                         </thead>
                         <tbody>
                           {period.item_calculations && period.item_calculations.length > 0 ? (
-                            period.item_calculations.map((calc, idx) => (
-                              <tr key={calc.item_id} className="border-b border-gray-200">
-                                <td className="py-2 px-3 text-gray-700">{calc.title || `Item ${idx + 1}`}</td>
+                            period.item_calculations.map((calc, calcIdx) => (
+                              <tr key={`quarterly-calc-${period.id}-${calc.item_id}-${calcIdx}`} className="border-b border-gray-200">
+                                <td className="py-2 px-3 text-gray-700">{calc.title || `Item ${calc.item_id}`}</td>
                                 <td className="py-2 px-3 text-right font-semibold">{(calc.manager_rating || 0).toFixed(2)}</td>
                                 <td className="py-2 px-3 text-right">{((calc.goal_weight || 0) * 100).toFixed(0)}%</td>
                                 <td className="py-2 px-3 text-right font-semibold text-purple-600">{(calc.contribution || 0).toFixed(2)}</td>
@@ -256,7 +471,9 @@ const EmployeePerformance: React.FC = () => {
                         <tfoot>
                           <tr className="border-t-2 border-gray-400 font-semibold">
                             <td className="py-2 px-3">Total</td>
-                            <td className="py-2 px-3 text-right">-</td>
+                            <td className="py-2 px-3 text-right">
+                              {avgManagerRating > 0 ? avgManagerRating.toFixed(2) : '-'}
+                            </td>
                             <td className="py-2 px-3 text-right">{((period.total_weight || 0) * 100).toFixed(0)}%</td>
                             <td className="py-2 px-3 text-right text-purple-600">{finalRating.toFixed(2)}</td>
                           </tr>
@@ -275,10 +492,120 @@ const EmployeePerformance: React.FC = () => {
                   </div>
                 </div>
               );
-            })
-          )}
+            })}
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Yearly Performance */}
+      {periodFilter !== 'quarterly' && yearlyData.length > 0 && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+          <div className="p-6 border-b border-gray-200">
+            <h2 className="text-lg font-semibold text-gray-900">Yearly Performance</h2>
+            <p className="text-sm text-gray-600 mt-1">
+              Yearly KPI periods (not aggregated with quarterly)
+            </p>
+          </div>
+
+          <div className="divide-y divide-gray-200">
+            {yearlyData.map((period, periodIdx) => {
+              const finalRating = period.final_rating || 0;
+              const ratingInfo = getRatingLabel(finalRating);
+              const avgManagerRating = calculateAverageManagerRating(period.item_calculations || []);
+              return (
+                <div key={`yearly-${period.id}-${period.review_id}-${periodIdx}`} className="p-6 hover:bg-gray-50 border-l-4 border-red-500">
+                  <div className="flex items-start justify-between mb-4">
+                    <div>
+                      <div className="flex items-center space-x-3 mb-2">
+                        <h3 className="text-lg font-semibold text-gray-900">
+                          {period.year || period.review_year} - Yearly
+                        </h3>
+                        <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                          Yearly
+                        </span>
+                      </div>
+                      <div className="flex items-center space-x-4 text-sm text-gray-600">
+                        <span>Manager: {period.manager_name}</span>
+                        {period.manager_signed_at && (
+                          <span>Completed: {new Date(period.manager_signed_at).toLocaleDateString()}</span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm text-gray-600 mb-1">Final Rating</p>
+                      <p className="text-3xl font-bold text-red-600">{finalRating.toFixed(2)}</p>
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium mt-2 inline-block ${ratingInfo.color}`}>
+                        {ratingInfo.label}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Calculation Breakdown */}
+                  <div className="mt-4 bg-gray-50 rounded-lg p-4">
+                    <p className="text-sm font-medium text-gray-700 mb-3">Rating Calculation:</p>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-gray-300">
+                            <th className="text-left py-2 px-3">KPI Item</th>
+                            <th className="text-right py-2 px-3">Manager Rating</th>
+                            <th className="text-right py-2 px-3">Goal Weight</th>
+                            <th className="text-right py-2 px-3">Contribution</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {period.item_calculations && period.item_calculations.length > 0 ? (
+                            period.item_calculations.map((calc, calcIdx) => (
+                              <tr key={`yearly-calc-${period.id}-${calc.item_id}-${calcIdx}`} className="border-b border-gray-200">
+                                <td className="py-2 px-3 text-gray-700">{calc.title || `Item ${calc.item_id}`}</td>
+                                <td className="py-2 px-3 text-right font-semibold">{(calc.manager_rating || 0).toFixed(2)}</td>
+                                <td className="py-2 px-3 text-right">{((calc.goal_weight || 0) * 100).toFixed(0)}%</td>
+                                <td className="py-2 px-3 text-right font-semibold text-red-600">{(calc.contribution || 0).toFixed(2)}</td>
+                              </tr>
+                            ))
+                          ) : (
+                            <tr>
+                              <td colSpan={4} className="py-4 px-3 text-center text-gray-500 text-sm">
+                                No calculation data available
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                        <tfoot>
+                          <tr className="border-t-2 border-gray-400 font-semibold">
+                            <td className="py-2 px-3">Total</td>
+                            <td className="py-2 px-3 text-right text-red-600">
+                              {avgManagerRating > 0 ? avgManagerRating.toFixed(2) : '-'}
+                            </td>
+                            <td className="py-2 px-3 text-right">{((period.total_weight || 0) * 100).toFixed(0)}%</td>
+                            <td className="py-2 px-3 text-right text-red-600">{finalRating.toFixed(2)}</td>
+                          </tr>
+                        </tfoot>
+                      </table>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 flex justify-end">
+                    <button
+                      onClick={() => navigate(`/hr/kpi-details/${period.id}`)}
+                      className="text-sm text-purple-600 hover:text-purple-700 font-medium"
+                    >
+                      View Full Details →
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* No Data Message */}
+      {filteredData.length === 0 && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center text-gray-500">
+          <p>No performance data available for the selected filters</p>
+        </div>
+      )}
     </div>
   );
 };

@@ -13,6 +13,7 @@ interface AuthContextType {
   selectCompany: (companyId: number) => Promise<void>;
   logout: () => void;
   isLoading: boolean;
+  setUser: (user: User | null) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -148,6 +149,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     delete api.defaults.headers.common['Authorization'];
   };
 
+  const updateUser = (updatedUser: User | null) => {
+    setUser(updatedUser);
+    if (updatedUser) {
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+    }
+  };
+
   return (
     <AuthContext.Provider value={{ 
       user, 
@@ -159,7 +167,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       loginWithEmail, 
       selectCompany,
       logout, 
-      isLoading 
+      isLoading,
+      setUser: updateUser
     }}>
       {children}
     </AuthContext.Provider>

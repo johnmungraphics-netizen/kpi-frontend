@@ -9,25 +9,18 @@ import { FiArrowLeft, FiCheck, FiFilter } from 'react-icons/fi';
 const Notifications: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [allNotifications, setAllNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'unread' | 'read'>('all');
 
   useEffect(() => {
-    fetchNotifications();
-  }, [filter]);
+    fetchAllNotifications();
+  }, []);
 
-  const fetchNotifications = async () => {
+  const fetchAllNotifications = async () => {
     try {
-      const params: any = { limit: 100 };
-      if (filter === 'unread') {
-        params.read = 'false';
-      } else if (filter === 'read') {
-        params.read = 'true';
-      }
-
-      const response = await api.get('/notifications', { params });
-      setNotifications(response.data.notifications || []);
+      const response = await api.get('/notifications', { params: { limit: 100 } });
+      setAllNotifications(response.data.notifications || []);
     } catch (error) {
       console.error('Error fetching notifications:', error);
     } finally {
@@ -35,10 +28,20 @@ const Notifications: React.FC = () => {
     }
   };
 
+  // Filter notifications based on selected filter
+  const notifications = React.useMemo(() => {
+    if (filter === 'unread') {
+      return allNotifications.filter(n => !n.read);
+    } else if (filter === 'read') {
+      return allNotifications.filter(n => n.read);
+    }
+    return allNotifications;
+  }, [allNotifications, filter]);
+
   const handleMarkAsRead = async (id: number) => {
     try {
       await api.patch(`/notifications/${id}/read`);
-      setNotifications(prev =>
+      setAllNotifications(prev =>
         prev.map(n => n.id === id ? { ...n, read: true } : n)
       );
     } catch (error) {
@@ -49,7 +52,7 @@ const Notifications: React.FC = () => {
   const handleMarkAllAsRead = async () => {
     try {
       await api.patch('/notifications/read-all');
-      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+      setAllNotifications(prev => prev.map(n => ({ ...n, read: true })));
     } catch (error) {
       console.error('Error marking all as read:', error);
     }
@@ -72,7 +75,10 @@ const Notifications: React.FC = () => {
     }
   };
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+  // Calculate counts from all notifications (not filtered)
+  const totalCount = allNotifications.length;
+  const unreadCount = allNotifications.filter(n => !n.read).length;
+  const readCount = allNotifications.filter(n => n.read).length;
 
   if (loading) {
     return <div className="p-6">Loading...</div>;
@@ -122,7 +128,7 @@ const Notifications: React.FC = () => {
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
-            All ({notifications.length})
+            All ({totalCount})
           </button>
           <button
             onClick={() => setFilter('unread')}
@@ -142,7 +148,7 @@ const Notifications: React.FC = () => {
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
-            Read ({notifications.length - unreadCount})
+            Read ({readCount})
           </button>
         </div>
       </div>

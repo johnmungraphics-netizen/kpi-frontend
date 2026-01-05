@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import SignatureCanvas from 'react-signature-canvas';
-import { FiX } from 'react-icons/fi';
+import { useAuth } from '../context/AuthContext';
+import { FiX, FiCheckCircle, FiUpload } from 'react-icons/fi';
 
 interface SignatureFieldProps {
   value?: string;
@@ -19,8 +20,11 @@ const SignatureField: React.FC<SignatureFieldProps> = ({
   required = false,
   disabled = false,
 }) => {
+  const { user } = useAuth();
   const canvasRef = useRef<SignatureCanvas>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [isEmpty, setIsEmpty] = useState(true);
+  const [useSavedSignature, setUseSavedSignature] = useState(false);
 
   useEffect(() => {
     if (value && canvasRef.current) {
@@ -34,6 +38,7 @@ const SignatureField: React.FC<SignatureFieldProps> = ({
       const dataURL = canvasRef.current.toDataURL();
       onChange(dataURL);
       setIsEmpty(canvasRef.current.isEmpty());
+      setUseSavedSignature(false);
     }
   };
 
@@ -42,7 +47,46 @@ const SignatureField: React.FC<SignatureFieldProps> = ({
       canvasRef.current.clear();
       onChange('');
       setIsEmpty(true);
+      setUseSavedSignature(false);
     }
+  };
+
+  const handleUseSavedSignature = () => {
+    if (user?.signature) {
+      onChange(user.signature);
+      setUseSavedSignature(true);
+      setIsEmpty(false);
+      if (canvasRef.current) {
+        canvasRef.current.fromDataURL(user.signature);
+      }
+    }
+  };
+
+  const handleUploadSignature = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert('Please upload an image file');
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      alert('File size must be less than 2MB');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const result = e.target?.result as string;
+      onChange(result);
+      setUseSavedSignature(false);
+      setIsEmpty(false);
+      if (canvasRef.current) {
+        canvasRef.current.fromDataURL(result);
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
   return (
@@ -97,8 +141,53 @@ const SignatureField: React.FC<SignatureFieldProps> = ({
         )}
       </div>
 
-      {value && (
-        <p className="text-xs text-gray-500">
+      {/* Action Buttons */}
+      <div className="flex items-center space-x-2 mt-2">
+        {user?.signature && (
+          <button
+            type="button"
+            onClick={handleUseSavedSignature}
+            disabled={disabled || useSavedSignature}
+            className={`flex items-center space-x-1 px-3 py-1.5 text-sm rounded-lg transition-colors ${
+              useSavedSignature
+                ? 'bg-green-100 text-green-700 border border-green-300'
+                : 'bg-purple-100 text-purple-700 hover:bg-purple-200 border border-purple-300'
+            } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+          >
+            {useSavedSignature ? (
+              <>
+                <FiCheckCircle className="text-sm" />
+                <span>Using Saved Signature</span>
+              </>
+            ) : (
+              <>
+                <FiCheckCircle className="text-sm" />
+                <span>Use Saved Signature</span>
+              </>
+            )}
+          </button>
+        )}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleUploadSignature}
+          className="hidden"
+          disabled={disabled}
+        />
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={disabled}
+          className="flex items-center space-x-1 px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <FiUpload className="text-sm" />
+          <span>Upload Image</span>
+        </button>
+      </div>
+
+      {value && !useSavedSignature && (
+        <p className="text-xs text-gray-500 mt-1">
           Or type your full name below
         </p>
       )}

@@ -126,21 +126,36 @@ const EmployeeDashboard: React.FC = () => {
                     </span>
                   </td>
                   <td className="px-6 py-4">
-                    {kpi.status === 'pending' ? (
-                      <button
-                        onClick={() => navigate(`/employee/kpi-acknowledgement/${kpi.id}`)}
-                        className="text-purple-600 hover:text-purple-700 font-medium text-sm"
-                      >
-                        Acknowledge
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => navigate(`/employee/self-rating/${kpi.id}`)}
-                        className="text-blue-600 hover:text-blue-700 font-medium text-sm"
-                      >
-                        Review
-                      </button>
-                    )}
+                    <div className="flex items-center space-x-2">
+                      {kpi.status === 'pending' ? (
+                        <button
+                          onClick={() => navigate(`/employee/kpi-acknowledgement/${kpi.id}`)}
+                          className="text-purple-600 hover:text-purple-700 font-medium text-sm"
+                        >
+                          Acknowledge
+                        </button>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => navigate(`/employee/kpi-details/${kpi.id}`)}
+                            className="text-blue-600 hover:text-blue-700 font-medium text-sm"
+                          >
+                            View
+                          </button>
+                          {kpi.status === 'acknowledged' && (
+                            <>
+                              <span className="text-gray-300">|</span>
+                              <button
+                                onClick={() => navigate(`/employee/self-rating/${kpi.id}`)}
+                                className="text-purple-600 hover:text-purple-700 font-medium text-sm"
+                              >
+                                Edit
+                              </button>
+                            </>
+                          )}
+                        </>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}

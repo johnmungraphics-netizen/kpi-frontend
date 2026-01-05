@@ -12,6 +12,7 @@ const CompletedReviews: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [kpiType, setKpiType] = useState<'quarterly' | 'yearly'>('quarterly');
+  const [downloading, setDownloading] = useState<number | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -51,6 +52,30 @@ const CompletedReviews: React.FC = () => {
       status: 'KPI Review Completed',
       color: 'bg-green-100 text-green-700'
     };
+  };
+
+  const handleDownloadPDF = async (kpiId: number) => {
+    setDownloading(kpiId);
+    try {
+      const response = await api.get(`/kpis/${kpiId}/review-download-pdf`, {
+        responseType: 'blob',
+      });
+
+      // Create a blob URL and trigger download
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `kpi-review-completed-${kpiId}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error: any) {
+      console.error('Error downloading PDF:', error);
+      alert(error.response?.data?.error || 'Failed to download PDF');
+    } finally {
+      setDownloading(null);
+    }
   };
 
   if (loading) {
@@ -225,20 +250,15 @@ const CompletedReviews: React.FC = () => {
                               <span>Performance</span>
                             </button>
                           )}
-                          {(kpi as any).pdf_generated && (
-                            <button
-                              onClick={() => {
-                                // Download PDF if available
-                                if ((kpi as any).pdf_path) {
-                                  window.open((kpi as any).pdf_path, '_blank');
-                                }
-                              }}
-                              className="flex items-center space-x-1 text-blue-600 hover:text-blue-700 font-medium text-sm"
-                              title="Download PDF"
-                            >
-                              <FiDownload className="text-sm" />
-                            </button>
-                          )}
+                          <button
+                            onClick={() => handleDownloadPDF(kpi.id)}
+                            disabled={downloading === kpi.id}
+                            className="flex items-center space-x-1 text-blue-600 hover:text-blue-700 font-medium text-sm disabled:opacity-50"
+                            title="Download PDF"
+                          >
+                            <FiDownload className="text-sm" />
+                            <span>{downloading === kpi.id ? 'Downloading...' : 'Download'}</span>
+                          </button>
                         </div>
                       </td>
                     </tr>

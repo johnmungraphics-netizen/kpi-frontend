@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import api from '../../services/api';
 import { KPI, KPIReview } from '../../types';
-import { FiArrowLeft, FiStar, FiCheckCircle, FiClock, FiFileText, FiUser } from 'react-icons/fi';
+import { FiArrowLeft, FiCheckCircle, FiClock, FiFileText, FiUser } from 'react-icons/fi';
+import TextModal from '../../components/TextModal';
 
 const HRKPIDetails: React.FC = () => {
   const { kpiId } = useParams<{ kpiId: string }>();
@@ -10,6 +11,11 @@ const HRKPIDetails: React.FC = () => {
   const [kpi, setKpi] = useState<KPI | null>(null);
   const [review, setReview] = useState<KPIReview | null>(null);
   const [loading, setLoading] = useState(true);
+  const [textModal, setTextModal] = useState<{ isOpen: boolean; title: string; value: string }>({
+    isOpen: false,
+    title: '',
+    value: '',
+  });
 
   useEffect(() => {
     if (kpiId) {
@@ -199,21 +205,21 @@ const HRKPIDetails: React.FC = () => {
 
           return (
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[1200px]">
+              <table className="w-full" style={{ minWidth: '2000px' }}>
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase sticky left-0 bg-gray-50 z-10">#</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase min-w-[200px]">KPI TITLE</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase min-w-[250px]">DESCRIPTION</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase min-w-[150px]">CURRENT PERFORMANCE STATUS</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase min-w-[120px]">TARGET VALUE</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase min-w-[120px]">EXPECTED COMPLETION DATE</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase min-w-[120px]">MEASURE UNIT</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase min-w-[150px]">GOAL WEIGHT</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase min-w-[180px]">EMPLOYEE SELF RATING</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase min-w-[200px]">EMPLOYEE COMMENT</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase min-w-[180px]">MANAGER RATING</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase min-w-[200px]">MANAGER COMMENT</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase sticky left-0 bg-gray-50 z-10 whitespace-nowrap" style={{ minWidth: '50px' }}>#</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap" style={{ minWidth: '200px' }}>KPI TITLE</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap" style={{ minWidth: '250px' }}>DESCRIPTION</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap" style={{ minWidth: '180px' }}>CURRENT PERFORMANCE STATUS</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap" style={{ minWidth: '150px' }}>TARGET VALUE</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap" style={{ minWidth: '120px' }}>MEASURE UNIT</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap" style={{ minWidth: '150px' }}>EXPECTED COMPLETION DATE</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap" style={{ minWidth: '120px' }}>GOAL WEIGHT</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap" style={{ minWidth: '150px' }}>EMPLOYEE SELF RATING</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap" style={{ minWidth: '200px' }}>EMPLOYEE COMMENT</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap" style={{ minWidth: '150px' }}>MANAGER RATING</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap" style={{ minWidth: '200px' }}>MANAGER COMMENT</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
@@ -230,32 +236,54 @@ const HRKPIDetails: React.FC = () => {
                             <span className="font-semibold text-gray-900">{index + 1}</span>
                           </td>
                           <td className="px-4 py-4">
-                            <p className="font-semibold text-gray-900">{item.title}</p>
-                            <p className="text-xs text-gray-500">KPI-{kpi.quarter}-{String(index + 1).padStart(3, '0')}</p>
+                            <div>
+                              <button
+                                onClick={() => setTextModal({ isOpen: true, title: 'KPI Title', value: item.title || 'N/A' })}
+                                className="text-left font-semibold text-gray-900 hover:text-purple-600 transition-colors"
+                              >
+                                <p className="truncate max-w-[200px]" title={item.title}>{item.title}</p>
+                              </button>
+                              <p className="text-xs text-gray-500">KPI-{kpi.quarter}-{String(index + 1).padStart(3, '0')}</p>
+                            </div>
                           </td>
                           <td className="px-4 py-4">
-                            <p className="text-sm text-gray-700">{item.description || 'N/A'}</p>
+                            <button
+                              onClick={() => setTextModal({ isOpen: true, title: 'KPI Description', value: item.description || 'N/A' })}
+                              className="text-left text-sm text-gray-700 hover:text-purple-600 transition-colors"
+                            >
+                              <p className="truncate max-w-[250px]" title={item.description || 'N/A'}>{item.description || 'N/A'}</p>
+                            </button>
                           </td>
                           <td className="px-4 py-4">
-                            <p className="text-sm text-gray-900">{item.current_performance_status || 'N/A'}</p>
+                            <button
+                              onClick={() => setTextModal({ isOpen: true, title: 'Current Performance Status', value: item.current_performance_status || 'N/A' })}
+                              className="text-left text-sm text-gray-900 hover:text-purple-600 transition-colors"
+                            >
+                              <p className="truncate max-w-[180px]" title={item.current_performance_status || 'N/A'}>{item.current_performance_status || 'N/A'}</p>
+                            </button>
                           </td>
                           <td className="px-4 py-4">
-                            <p className="text-sm text-gray-900">{item.target_value || 'N/A'}</p>
+                            <button
+                              onClick={() => setTextModal({ isOpen: true, title: 'Target Value', value: item.target_value || 'N/A' })}
+                              className="text-left text-sm text-gray-900 hover:text-purple-600 transition-colors"
+                            >
+                              <p className="truncate max-w-[150px]" title={item.target_value || 'N/A'}>{item.target_value || 'N/A'}</p>
+                            </button>
                           </td>
                           <td className="px-4 py-4">
-                            <p className="text-sm text-gray-700">
+                            <span className="inline-flex items-center px-2 py-1 rounded bg-blue-100 text-blue-700 text-sm whitespace-nowrap">
+                              {item.measure_unit || 'N/A'}
+                            </span>
+                          </td>
+                          <td className="px-4 py-4">
+                            <p className="text-sm text-gray-700 whitespace-nowrap">
                               {item.expected_completion_date 
                                 ? new Date(item.expected_completion_date).toLocaleDateString() 
                                 : 'N/A'}
                             </p>
                           </td>
                           <td className="px-4 py-4">
-                            <span className="inline-flex items-center px-2 py-1 rounded bg-blue-100 text-blue-700 text-sm">
-                              {item.measure_unit || 'N/A'}
-                            </span>
-                          </td>
-                          <td className="px-4 py-4">
-                            <p className="text-sm text-gray-700">{item.goal_weight || item.measure_criteria || 'N/A'}</p>
+                            <p className="text-sm text-gray-700 whitespace-nowrap">{item.goal_weight || item.measure_criteria || 'N/A'}</p>
                           </td>
                           <td className="px-4 py-4">
                             {review && review.employee_rating ? (
@@ -292,7 +320,14 @@ const HRKPIDetails: React.FC = () => {
                           </td>
                           <td className="px-4 py-4">
                             {empComment ? (
-                              <p className="text-sm text-gray-700">{empComment}</p>
+                              <button
+                                onClick={() => setTextModal({ isOpen: true, title: 'Employee Comment', value: empComment })}
+                                className="text-left text-sm text-gray-700 hover:text-purple-600 transition-colors"
+                              >
+                                <p className="truncate max-w-[200px]" title={empComment}>
+                                  {empComment.length > 50 ? empComment.substring(0, 50) + '...' : empComment}
+                                </p>
+                              </button>
                             ) : (
                               <span className="text-sm text-gray-400">No comment</span>
                             )}
@@ -306,7 +341,7 @@ const HRKPIDetails: React.FC = () => {
                                       const rating = typeof mgrRating === 'number' 
                                         ? mgrRating 
                                         : parseFloat(String(mgrRating || '0'));
-                                      return isNaN(rating) ? '0.00' : rating.toFixed(2);
+                                      return isNaN(rating) ? '0.00' : parseFloat(String(rating)).toFixed(2);
                                     })()}
                                   </span>
                                   {(() => {
@@ -332,7 +367,14 @@ const HRKPIDetails: React.FC = () => {
                           </td>
                           <td className="px-4 py-4">
                             {mgrComment ? (
-                              <p className="text-sm text-gray-700">{mgrComment}</p>
+                              <button
+                                onClick={() => setTextModal({ isOpen: true, title: 'Manager Comment', value: mgrComment })}
+                                className="text-left text-sm text-gray-700 hover:text-purple-600 transition-colors"
+                              >
+                                <p className="truncate max-w-[200px]" title={mgrComment}>
+                                  {mgrComment.length > 50 ? mgrComment.substring(0, 50) + '...' : mgrComment}
+                                </p>
+                              </button>
                             ) : (
                               <span className="text-sm text-gray-400">No comment</span>
                             )}
@@ -372,31 +414,24 @@ const HRKPIDetails: React.FC = () => {
                       <td className="px-4 py-4">
                         {review && review.employee_rating ? (
                           <div className="flex items-center space-x-2">
-                            <div className="flex items-center space-x-1">
-                              {[1, 2, 3, 4, 5].map((star) => {
-                                const rating = typeof review.employee_rating === 'number' 
-                                  ? review.employee_rating 
-                                  : parseFloat(review.employee_rating || '0');
-                                return (
-                                  <FiStar
-                                    key={star}
-                                    className={`w-4 h-4 ${
-                                      star <= Math.round(rating)
-                                        ? 'text-yellow-400 fill-current'
-                                        : 'text-gray-300'
-                                    }`}
-                                  />
-                                );
-                              })}
-                            </div>
                             <span className="text-sm font-semibold text-gray-900">
                               {(() => {
                                 const rating = typeof review.employee_rating === 'number' 
                                   ? review.employee_rating 
-                                  : parseFloat(review.employee_rating || '0');
-                                return isNaN(rating) ? '0.0' : rating.toFixed(1);
-                              })()}/5
+                                  : parseFloat(String(review.employee_rating || '0'));
+                                return isNaN(rating) ? '0.00' : parseFloat(String(rating)).toFixed(2);
+                              })()}
                             </span>
+                            {(() => {
+                              const rating = typeof review.employee_rating === 'number' 
+                                ? review.employee_rating 
+                                : parseFloat(String(review.employee_rating || '0'));
+                              return !isNaN(rating) && rating > 0 ? (
+                                <span className="text-xs text-gray-500 ml-1">
+                                  ({rating === 1.00 ? 'Below' : rating === 1.25 ? 'Meets' : rating === 1.50 ? 'Exceeds' : ''} Expectation)
+                                </span>
+                              ) : null;
+                            })()}
                           </div>
                         ) : (
                           <span className="text-sm text-gray-500">Not submitted</span>
@@ -412,35 +447,18 @@ const HRKPIDetails: React.FC = () => {
                       <td className="px-4 py-4">
                         {review && review.manager_rating ? (
                           <div className="flex items-center space-x-2">
-                            <div className="flex items-center space-x-1">
-                              {[1, 2, 3, 4, 5].map((star) => {
-                                const rating = typeof review.manager_rating === 'number' 
-                                  ? review.manager_rating 
-                                  : parseFloat(review.manager_rating || '0');
-                                return (
-                                  <FiStar
-                                    key={star}
-                                    className={`w-4 h-4 ${
-                                      star <= Math.round(rating)
-                                        ? 'text-yellow-400 fill-current'
-                                        : 'text-gray-300'
-                                    }`}
-                                  />
-                                );
-                              })}
-                            </div>
                             <span className="text-sm font-semibold text-gray-900">
                               {(() => {
                                 const rating = typeof review.manager_rating === 'number' 
                                   ? review.manager_rating 
-                                  : parseFloat(review.manager_rating || '0');
-                                return isNaN(rating) ? '0.00' : rating.toFixed(2);
+                                  : parseFloat(String(review.manager_rating || '0'));
+                                return isNaN(rating) ? '0.00' : parseFloat(String(rating)).toFixed(2);
                               })()}
                             </span>
                             {(() => {
                               const rating = typeof review.manager_rating === 'number' 
                                 ? review.manager_rating 
-                                : parseFloat(review.manager_rating || '0');
+                                : parseFloat(String(review.manager_rating || '0'));
                               return !isNaN(rating) && rating > 0 ? (
                                 <span className="text-xs text-gray-500 ml-1">
                                   ({rating === 1.00 ? 'Below' : rating === 1.25 ? 'Meets' : rating === 1.50 ? 'Exceeds' : ''} Expectation)
@@ -658,6 +676,15 @@ const HRKPIDetails: React.FC = () => {
           <span>Back to KPI List</span>
         </button>
       </div>
+
+      {/* Text Modal */}
+      <TextModal
+        isOpen={textModal.isOpen}
+        onClose={() => setTextModal({ isOpen: false, title: '', value: '' })}
+        title={textModal.title}
+        value={textModal.value}
+        readOnly={true}
+      />
     </div>
   );
 };

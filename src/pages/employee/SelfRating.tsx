@@ -5,7 +5,8 @@ import api from '../../services/api';
 import { KPI } from '../../types';
 import SignatureField from '../../components/SignatureField';
 import DatePicker from '../../components/DatePicker';
-import { FiArrowLeft, FiSave, FiSend } from 'react-icons/fi';
+import TextModal from '../../components/TextModal';
+import { FiArrowLeft, FiSave, FiSend, FiExternalLink } from 'react-icons/fi';
 
 const SelfRating: React.FC = () => {
   const { kpiId } = useParams<{ kpiId: string }>();
@@ -19,14 +20,63 @@ const SelfRating: React.FC = () => {
   const [employeeSignature, setEmployeeSignature] = useState('');
   const [reviewDate, setReviewDate] = useState<Date | null>(new Date());
   const [ratingOptions, setRatingOptions] = useState<Array<{ rating_value: number; label: string; description?: string }>>([]);
+  const [textModal, setTextModal] = useState<{ isOpen: boolean; title: string; value: string; field?: string; itemId?: number; onChange?: (value: string) => void }>({
+    isOpen: false,
+    title: '',
+    value: '',
+  });
 
   useEffect(() => {
     console.log('🔄 [SelfRating] Component mounted/updated, kpiId:', kpiId);
     if (kpiId) {
       fetchKPI();
+      loadDraft();
     }
     fetchRatingOptions();
   }, [kpiId]);
+
+  // Save draft to localStorage whenever form data changes
+  useEffect(() => {
+    if (kpiId) {
+      const draftKey = `self-rating-draft-${kpiId}`;
+      const draftData = {
+        ratings,
+        comments,
+        employeeSignature,
+        reviewDate: reviewDate?.toISOString(),
+      };
+      localStorage.setItem(draftKey, JSON.stringify(draftData));
+    }
+  }, [ratings, comments, employeeSignature, reviewDate, kpiId]);
+
+  const loadDraft = () => {
+    if (!kpiId) return;
+    // Load draft after a short delay to allow API data to load first
+    setTimeout(() => {
+      try {
+        const draftKey = `self-rating-draft-${kpiId}`;
+        const savedDraft = localStorage.getItem(draftKey);
+        if (savedDraft) {
+          const draftData = JSON.parse(savedDraft);
+          // Only load draft if there's no existing rating data (indicating it's a new review)
+          if (Object.keys(ratings).length === 0 && draftData.ratings) {
+            setRatings(draftData.ratings);
+          }
+          if (Object.keys(comments).length === 0 && draftData.comments) {
+            setComments(draftData.comments);
+          }
+          if (!employeeSignature && draftData.employeeSignature) {
+            setEmployeeSignature(draftData.employeeSignature);
+          }
+          if (!reviewDate && draftData.reviewDate) {
+            setReviewDate(new Date(draftData.reviewDate));
+          }
+        }
+      } catch (error) {
+        console.error('Error loading draft:', error);
+      }
+    }, 500);
+  };
 
   const fetchRatingOptions = async () => {
     try {
@@ -151,9 +201,17 @@ const SelfRating: React.FC = () => {
     setComments({ ...comments, [itemId]: value });
   };
 
-  const handleSaveDraft = async () => {
-    // Save draft logic
-    alert('Draft saved');
+  const handleSaveDraft = () => {
+    if (!kpiId) return;
+    const draftKey = `self-rating-draft-${kpiId}`;
+    const draftData = {
+      ratings,
+      comments,
+      employeeSignature,
+      reviewDate: reviewDate?.toISOString(),
+    };
+    localStorage.setItem(draftKey, JSON.stringify(draftData));
+    alert('Draft saved successfully! Your progress has been saved.');
   };
 
   const handleSubmit = async () => {
@@ -210,6 +268,12 @@ const SelfRating: React.FC = () => {
         review_quarter: kpi?.quarter,
         review_year: kpi?.year,
       });
+
+      // Clear draft after successful submission
+      if (kpiId) {
+        const draftKey = `self-rating-draft-${kpiId}`;
+        localStorage.removeItem(draftKey);
+      }
 
       navigate('/employee/kpi-list');
     } catch (error: any) {
@@ -309,18 +373,18 @@ const SelfRating: React.FC = () => {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full" style={{ minWidth: '1800px' }}>
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">KPI TITLE</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">KPI DESCRIPTION</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">CURRENT PERFORMANCE STATUS</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">TARGET VALUE</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">EXPECTED COMPLETION DATE</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">MEASURE UNIT</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">GOAL WEIGHT</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">SELF RATING *</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">EMPLOYEE COMMENT</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap" style={{ minWidth: '200px' }}>KPI TITLE</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap" style={{ minWidth: '250px' }}>KPI DESCRIPTION</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap" style={{ minWidth: '180px' }}>CURRENT PERFORMANCE STATUS</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap" style={{ minWidth: '150px' }}>TARGET VALUE</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap" style={{ minWidth: '120px' }}>MEASURE UNIT</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap" style={{ minWidth: '150px' }}>EXPECTED COMPLETION DATE</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap" style={{ minWidth: '120px' }}>GOAL WEIGHT</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap" style={{ minWidth: '150px' }}>SELF RATING *</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap" style={{ minWidth: '200px' }}>EMPLOYEE COMMENT</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
@@ -332,33 +396,53 @@ const SelfRating: React.FC = () => {
                     <tr key={item.id}>
                       <td className="px-6 py-4">
                         <div>
-                          <p className="font-semibold text-gray-900">{item.title}</p>
+                          <button
+                            onClick={() => setTextModal({ isOpen: true, title: 'KPI Title', value: item.title || 'N/A' })}
+                            className="text-left font-semibold text-gray-900 hover:text-purple-600 transition-colors"
+                          >
+                            <p className="truncate max-w-[200px]" title={item.title}>{item.title}</p>
+                          </button>
                           <p className="text-xs text-gray-500">KPI-{kpi.quarter}-{String(index + 1).padStart(3, '0')}</p>
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <p className="text-sm text-gray-700">{item.description || 'N/A'}</p>
+                        <button
+                          onClick={() => setTextModal({ isOpen: true, title: 'KPI Description', value: item.description || 'N/A' })}
+                          className="text-left text-sm text-gray-700 hover:text-purple-600 transition-colors"
+                        >
+                          <p className="truncate max-w-[250px]" title={item.description || 'N/A'}>{item.description || 'N/A'}</p>
+                        </button>
                       </td>
                       <td className="px-6 py-4">
-                        <p className="text-sm text-gray-900">{item.current_performance_status || 'N/A'}</p>
+                        <button
+                          onClick={() => setTextModal({ isOpen: true, title: 'Current Performance Status', value: item.current_performance_status || 'N/A' })}
+                          className="text-left text-sm text-gray-900 hover:text-purple-600 transition-colors"
+                        >
+                          <p className="truncate max-w-[180px]" title={item.current_performance_status || 'N/A'}>{item.current_performance_status || 'N/A'}</p>
+                        </button>
                       </td>
                       <td className="px-6 py-4">
-                        <p className="font-semibold text-gray-900">{item.target_value || 'N/A'}</p>
+                        <button
+                          onClick={() => setTextModal({ isOpen: true, title: 'Target Value', value: item.target_value || 'N/A' })}
+                          className="text-left font-semibold text-gray-900 hover:text-purple-600 transition-colors"
+                        >
+                          <p className="truncate max-w-[150px]" title={item.target_value || 'N/A'}>{item.target_value || 'N/A'}</p>
+                        </button>
                       </td>
                       <td className="px-6 py-4">
-                        <p className="text-sm text-gray-700">
+                        <span className="inline-flex items-center px-2 py-1 rounded bg-blue-100 text-blue-700 text-sm whitespace-nowrap">
+                          {item.measure_unit || 'N/A'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <p className="text-sm text-gray-700 whitespace-nowrap">
                           {item.expected_completion_date 
                             ? new Date(item.expected_completion_date).toLocaleDateString() 
                             : 'N/A'}
                         </p>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="inline-flex items-center px-2 py-1 rounded bg-blue-100 text-blue-700 text-sm">
-                          {item.measure_unit || 'N/A'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <p className="text-sm text-gray-700">{item.goal_weight || item.measure_criteria || 'N/A'}</p>
+                        <p className="text-sm text-gray-700 whitespace-nowrap">{item.goal_weight || item.measure_criteria || 'N/A'}</p>
                       </td>
                       <td className="px-6 py-4">
                         <div className="space-y-2">
@@ -398,13 +482,31 @@ const SelfRating: React.FC = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <textarea
-                          value={itemComment}
-                          onChange={(e) => handleCommentChange(item.id, e.target.value)}
-                          placeholder="Optional comment..."
-                          rows={2}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-                        />
+                        <div className="flex items-start space-x-2">
+                          <textarea
+                            value={itemComment}
+                            onChange={(e) => handleCommentChange(item.id, e.target.value)}
+                            placeholder="Optional comment..."
+                            rows={2}
+                            className="flex-1 min-w-[150px] px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                          />
+                          {itemComment && itemComment.length > 30 && (
+                            <button
+                              onClick={() => setTextModal({ 
+                                isOpen: true, 
+                                title: 'Employee Comment', 
+                                value: itemComment,
+                                field: 'comment',
+                                itemId: item.id,
+                                onChange: (value) => handleCommentChange(item.id, value)
+                              })}
+                              className="px-2 py-1 text-xs text-purple-600 hover:text-purple-700 border border-purple-300 rounded"
+                              title="View/Edit full comment"
+                            >
+                              <FiExternalLink />
+                            </button>
+                          )}
+                        </div>
                         <p className="text-xs text-gray-500 mt-1">Optional</p>
                       </td>
                     </tr>
@@ -614,6 +716,21 @@ const SelfRating: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* Text Modal */}
+      <TextModal
+        isOpen={textModal.isOpen}
+        onClose={() => {
+          if (textModal.onChange && textModal.itemId !== undefined) {
+            textModal.onChange(textModal.value);
+          }
+          setTextModal({ isOpen: false, title: '', value: '' });
+        }}
+        title={textModal.title}
+        value={textModal.value}
+        onChange={textModal.onChange}
+        readOnly={!textModal.onChange}
+      />
     </div>
   );
 };

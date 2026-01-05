@@ -4,6 +4,7 @@ import api from '../../services/api';
 import { KPI } from '../../types';
 import SignatureField from '../../components/SignatureField';
 import DatePicker from '../../components/DatePicker';
+import TextModal from '../../components/TextModal';
 import { FiCheckCircle, FiClock } from 'react-icons/fi';
 
 const KPIAcknowledgement: React.FC = () => {
@@ -14,6 +15,11 @@ const KPIAcknowledgement: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [employeeSignature, setEmployeeSignature] = useState('');
   const [acknowledgementDate, setAcknowledgementDate] = useState<Date | null>(new Date());
+  const [textModal, setTextModal] = useState<{ isOpen: boolean; title: string; value: string }>({
+    isOpen: false,
+    title: '',
+    value: '',
+  });
 
   useEffect(() => {
     if (kpiId) {
@@ -97,15 +103,16 @@ const KPIAcknowledgement: React.FC = () => {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full" style={{ minWidth: '1600px' }}>
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">#</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">KPI TITLE</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">DESCRIPTION</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">TARGET VALUE</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">MEASURE UNIT</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">MEASURE CRITERIA</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap" style={{ minWidth: '50px' }}>#</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap" style={{ minWidth: '200px' }}>KPI TITLE</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap" style={{ minWidth: '250px' }}>DESCRIPTION</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap" style={{ minWidth: '150px' }}>TARGET VALUE</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap" style={{ minWidth: '120px' }}>MEASURE UNIT</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap" style={{ minWidth: '150px' }}>EXPECTED COMPLETION DATE</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap" style={{ minWidth: '120px' }}>GOAL WEIGHT</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
@@ -116,19 +123,41 @@ const KPIAcknowledgement: React.FC = () => {
                       <span className="font-semibold text-gray-900">{index + 1}</span>
                     </td>
                     <td className="px-6 py-4">
-                      <p className="font-semibold text-gray-900">{item.title}</p>
+                      <button
+                        onClick={() => setTextModal({ isOpen: true, title: 'KPI Title', value: item.title || 'N/A' })}
+                        className="text-left font-semibold text-gray-900 hover:text-purple-600 transition-colors"
+                      >
+                        <p className="truncate max-w-[200px]" title={item.title}>{item.title}</p>
+                      </button>
                     </td>
                     <td className="px-6 py-4">
-                      <p className="text-sm text-gray-700">{item.description || 'N/A'}</p>
+                      <button
+                        onClick={() => setTextModal({ isOpen: true, title: 'KPI Description', value: item.description || 'N/A' })}
+                        className="text-left text-sm text-gray-700 hover:text-purple-600 transition-colors"
+                      >
+                        <p className="truncate max-w-[250px]" title={item.description || 'N/A'}>{item.description || 'N/A'}</p>
+                      </button>
                     </td>
                     <td className="px-6 py-4">
-                      <p className="text-sm text-gray-900">{item.target_value || 'N/A'}</p>
+                      <button
+                        onClick={() => setTextModal({ isOpen: true, title: 'Target Value', value: item.target_value || 'N/A' })}
+                        className="text-left text-sm text-gray-900 hover:text-purple-600 transition-colors"
+                      >
+                        <p className="truncate max-w-[150px]" title={item.target_value || 'N/A'}>{item.target_value || 'N/A'}</p>
+                      </button>
                     </td>
                     <td className="px-6 py-4">
-                      <p className="text-sm text-gray-700">{item.measure_unit || 'N/A'}</p>
+                      <p className="text-sm text-gray-700 whitespace-nowrap">{item.measure_unit || 'N/A'}</p>
                     </td>
                     <td className="px-6 py-4">
-                      <p className="text-sm text-gray-700">{item.measure_criteria || 'N/A'}</p>
+                      <p className="text-sm text-gray-700 whitespace-nowrap">
+                        {item.expected_completion_date 
+                          ? new Date(item.expected_completion_date).toLocaleDateString() 
+                          : 'N/A'}
+                      </p>
+                    </td>
+                    <td className="px-6 py-4">
+                      <p className="text-sm text-gray-700 whitespace-nowrap">{item.goal_weight || 'N/A'}</p>
                     </td>
                   </tr>
                 ))
@@ -139,19 +168,37 @@ const KPIAcknowledgement: React.FC = () => {
                     <span className="font-semibold text-gray-900">1</span>
                   </td>
                   <td className="px-6 py-4">
-                    <p className="font-semibold text-gray-900">{kpi.title}</p>
+                    <button
+                      onClick={() => setTextModal({ isOpen: true, title: 'KPI Title', value: kpi.title || 'N/A' })}
+                      className="text-left font-semibold text-gray-900 hover:text-purple-600 transition-colors"
+                    >
+                      <p className="truncate max-w-[200px]" title={kpi.title}>{kpi.title}</p>
+                    </button>
                   </td>
                   <td className="px-6 py-4">
-                    <p className="text-sm text-gray-700">{kpi.description || 'N/A'}</p>
+                    <button
+                      onClick={() => setTextModal({ isOpen: true, title: 'KPI Description', value: kpi.description || 'N/A' })}
+                      className="text-left text-sm text-gray-700 hover:text-purple-600 transition-colors"
+                    >
+                      <p className="truncate max-w-[250px]" title={kpi.description || 'N/A'}>{kpi.description || 'N/A'}</p>
+                    </button>
                   </td>
                   <td className="px-6 py-4">
-                    <p className="text-sm text-gray-900">{kpi.target_value || 'N/A'}</p>
+                    <button
+                      onClick={() => setTextModal({ isOpen: true, title: 'Target Value', value: kpi.target_value || 'N/A' })}
+                      className="text-left text-sm text-gray-900 hover:text-purple-600 transition-colors"
+                    >
+                      <p className="truncate max-w-[150px]" title={kpi.target_value || 'N/A'}>{kpi.target_value || 'N/A'}</p>
+                    </button>
                   </td>
                   <td className="px-6 py-4">
-                    <p className="text-sm text-gray-700">{kpi.measure_unit || 'N/A'}</p>
+                    <p className="text-sm text-gray-700 whitespace-nowrap">{kpi.measure_unit || 'N/A'}</p>
                   </td>
                   <td className="px-6 py-4">
-                    <p className="text-sm text-gray-700">{kpi.measure_criteria || 'N/A'}</p>
+                    <p className="text-sm text-gray-700 whitespace-nowrap">N/A</p>
+                  </td>
+                  <td className="px-6 py-4">
+                    <p className="text-sm text-gray-700 whitespace-nowrap">{kpi.measure_criteria || 'N/A'}</p>
                   </td>
                 </tr>
               )}
@@ -219,8 +266,8 @@ const KPIAcknowledgement: React.FC = () => {
                 <p className="font-semibold text-gray-900">{kpi.target_value} {kpi.measure_unit}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-600 mb-1">Measure Criteria</p>
-                <p className="text-gray-700">{kpi.measure_criteria}</p>
+                <p className="text-sm text-gray-600 mb-1">Goal Weight</p>
+                <p className="text-gray-700">{kpi.measure_criteria || 'N/A'}</p>
               </div>
             </div>
             <div>
@@ -280,6 +327,15 @@ const KPIAcknowledgement: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Text Modal */}
+      <TextModal
+        isOpen={textModal.isOpen}
+        onClose={() => setTextModal({ isOpen: false, title: '', value: '' })}
+        title={textModal.title}
+        value={textModal.value}
+        readOnly={true}
+      />
     </div>
   );
 };
