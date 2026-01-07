@@ -395,7 +395,6 @@ const SelfRating: React.FC = () => {
       <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
         <h3 className="font-semibold text-blue-900 mb-3">Self-Rating Instructions</h3>
         <ul className="space-y-2 text-sm text-blue-800 list-disc list-inside">
-          <li>Please rate your performance against each KPI using the rating scale: 1.00 (Below Expectation), 1.25 (Meets Expectation), or 1.50 (Exceeds Expectation)</li>
           <li>Provide honest and accurate self-assessments based on your actual achievements during this quarter</li>
           <li>Add comments to explain your rating, highlight achievements, or note any challenges faced</li>
           <li>Your self-rating will be reviewed by your manager during the KPI review meeting</li>

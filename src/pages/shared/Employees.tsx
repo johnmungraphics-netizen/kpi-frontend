@@ -21,6 +21,7 @@ interface Employee {
 
 interface EmployeeFormData {
   name: string;
+  email: string;
   payrollNumber: string;
   nationalId: string;
   department: string;
@@ -56,6 +57,7 @@ const Employees: React.FC = () => {
   const [managers, setManagers] = useState<Array<{ id: number; name: string }>>([]);
   const [formData, setFormData] = useState<EmployeeFormData>({
     name: '',
+    email: '',
     payrollNumber: '',
     nationalId: '',
     department: '',
@@ -208,6 +210,7 @@ const Employees: React.FC = () => {
   const resetForm = () => {
     setFormData({
       name: '',
+      email: '',
       payrollNumber: '',
       nationalId: '',
       department: '',
@@ -224,6 +227,7 @@ const Employees: React.FC = () => {
     const dept = departments.find(d => d.name === employee.department || d.name === employee.department_name);
     setFormData({
       name: employee.name,
+      email: employee.email || '',
       payrollNumber: employee.payroll_number,
       nationalId: employee.national_id || '',
       department: employee.department_name || employee.department || '',
@@ -255,24 +259,28 @@ const Employees: React.FC = () => {
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Employees</h1>
-          <p className="text-gray-600">Manage employees in your organization</p>
+          <p className="text-gray-600">
+            {user?.role === 'manager' ? 'View and manage your team members' : 'Manage employees in your organization'}
+          </p>
         </div>
-        <div className="flex space-x-3">
-          <button
-            onClick={() => setShowUploadModal(true)}
-            className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-          >
-            <FiUpload />
-            <span>Upload Excel</span>
-          </button>
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="flex items-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
-          >
-            <FiPlus />
-            <span>Add Employee</span>
-          </button>
-        </div>
+        {user?.role === 'hr' && (
+          <div className="flex space-x-3">
+            <button
+              onClick={() => setShowUploadModal(true)}
+              className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            >
+              <FiUpload />
+              <span>Upload Excel</span>
+            </button>
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="flex items-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+            >
+              <FiPlus />
+              <span>Add Employee</span>
+            </button>
+          </div>
+        )}
       </div>
 
       {error && (
@@ -358,12 +366,14 @@ const Employees: React.FC = () => {
                         >
                           <FiEdit />
                         </button>
-                        <button
-                          onClick={() => openDeleteModal(employee)}
-                          className="text-red-600 hover:text-red-900"
-                        >
-                          <FiTrash2 />
-                        </button>
+                        {user?.role === 'hr' && (
+                          <button
+                            onClick={() => openDeleteModal(employee)}
+                            className="text-red-600 hover:text-red-900"
+                          >
+                            <FiTrash2 />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -404,15 +414,16 @@ const Employees: React.FC = () => {
 
       {/* Add Employee Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <div className="flex justify-between items-center mb-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg w-full max-w-md max-h-[90vh] flex flex-col">
+            <div className="flex justify-between items-center p-6 border-b">
               <h2 className="text-xl font-bold">Add Employee</h2>
               <button onClick={() => { setShowAddModal(false); resetForm(); }}>
                 <FiX />
               </button>
             </div>
-            <form onSubmit={handleAddEmployee} className="space-y-4">
+            <form onSubmit={handleAddEmployee} className="flex flex-col flex-1 min-h-0">
+              <div className="overflow-y-auto px-6 py-4 space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-1">Name *</label>
                 <input
@@ -422,6 +433,18 @@ const Employees: React.FC = () => {
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   className="w-full px-4 py-2 border rounded-lg"
                 />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Email *</label>
+                <input
+                  type="email"
+                  required
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  className="w-full px-4 py-2 border rounded-lg"
+                  placeholder="employee@company.com"
+                />
+                <p className="text-xs text-gray-500 mt-1">Employee will use this for login. Default password: Africa.1</p>
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Payroll Number *</label>
@@ -434,10 +457,9 @@ const Employees: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">National ID *</label>
+                <label className="block text-sm font-medium mb-1">National ID</label>
                 <input
                   type="text"
-                  required
                   value={formData.nationalId}
                   onChange={(e) => setFormData({ ...formData, nationalId: e.target.value })}
                   className="w-full px-4 py-2 border rounded-lg"
@@ -495,7 +517,8 @@ const Employees: React.FC = () => {
                   className="w-full px-4 py-2 border rounded-lg"
                 />
               </div>
-              <div className="flex justify-end space-x-3">
+              </div>
+              <div className="flex justify-end space-x-3 p-6 border-t bg-gray-50">
                 <button
                   type="button"
                   onClick={() => { setShowAddModal(false); resetForm(); }}
@@ -517,15 +540,16 @@ const Employees: React.FC = () => {
 
       {/* Edit Employee Modal - Similar structure to Add Modal */}
       {showEditModal && selectedEmployee && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <div className="flex justify-between items-center mb-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg w-full max-w-md max-h-[90vh] flex flex-col">
+            <div className="flex justify-between items-center p-6 border-b">
               <h2 className="text-xl font-bold">Edit Employee</h2>
               <button onClick={() => { setShowEditModal(false); setSelectedEmployee(null); resetForm(); }}>
                 <FiX />
               </button>
             </div>
-            <form onSubmit={handleEditEmployee} className="space-y-4">
+            <form onSubmit={handleEditEmployee} className="flex flex-col flex-1 min-h-0">
+              <div className="overflow-y-auto px-6 py-4 space-y-4">
               {/* Same form fields as Add Modal */}
               <div>
                 <label className="block text-sm font-medium mb-1">Name *</label>
@@ -534,6 +558,16 @@ const Employees: React.FC = () => {
                   required
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className="w-full px-4 py-2 border rounded-lg"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Email *</label>
+                <input
+                  type="email"
+                  required
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   className="w-full px-4 py-2 border rounded-lg"
                 />
               </div>
@@ -548,10 +582,9 @@ const Employees: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">National ID *</label>
+                <label className="block text-sm font-medium mb-1">National ID</label>
                 <input
                   type="text"
-                  required
                   value={formData.nationalId}
                   onChange={(e) => setFormData({ ...formData, nationalId: e.target.value })}
                   className="w-full px-4 py-2 border rounded-lg"
@@ -609,7 +642,8 @@ const Employees: React.FC = () => {
                   className="w-full px-4 py-2 border rounded-lg"
                 />
               </div>
-              <div className="flex justify-end space-x-3">
+              </div>
+              <div className="flex justify-end space-x-3 p-6 border-t bg-gray-50">
                 <button
                   type="button"
                   onClick={() => { setShowEditModal(false); setSelectedEmployee(null); resetForm(); }}

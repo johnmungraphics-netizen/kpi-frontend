@@ -529,7 +529,7 @@ const KPISetting: React.FC = () => {
           </div>
 
           {/* KPI Table */}
-          <div className="overflow-x-auto">
+          <div>
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-medium text-gray-700">
                 KPI Items ({kpiRows.length} {kpiRows.length === 1 ? 'item' : 'items'})
@@ -543,7 +543,8 @@ const KPISetting: React.FC = () => {
                 <span>Add Row</span>
               </button>
             </div>
-            <table className="w-full border-collapse" style={{ minWidth: '1600px' }}>
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse" style={{ minWidth: '1600px' }}>
               <thead>
                 <tr className="bg-gray-50">
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase border border-gray-200 whitespace-nowrap" style={{ minWidth: '50px' }}>
@@ -718,6 +719,7 @@ const KPISetting: React.FC = () => {
                 })}
               </tbody>
             </table>
+            </div>
           </div>
 
           {/* Manager Signature */}

@@ -261,14 +261,7 @@ const KPIAcknowledgement: React.FC = () => {
               <p className="text-gray-700">{kpi.description}</p>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm text-gray-600 mb-1">Target Value</p>
-                <p className="font-semibold text-gray-900">{kpi.target_value} {kpi.measure_unit}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600 mb-1">Goal Weight</p>
-                <p className="text-gray-700">{kpi.measure_criteria || 'N/A'}</p>
-              </div>
+              
             </div>
             <div>
               <p className="text-sm text-gray-600 mb-1">Period</p>
@@ -305,11 +298,11 @@ const KPIAcknowledgement: React.FC = () => {
                 />
                 <div>
                   <p className="text-sm text-gray-600 mb-1">Employee Name</p>
-                  <p className="font-semibold text-gray-900">Sarah Williams</p>
+                  <p className="font-semibold text-gray-900">{kpi.employee_name || 'N/A'}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-600 mb-1">Payroll Number</p>
-                  <p className="font-semibold text-gray-900">EMP-2024-0145</p>
+                  <p className="font-semibold text-gray-900">{kpi.employee_payroll_number || 'N/A'}</p>
                 </div>
               </div>
             </div>

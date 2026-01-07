@@ -190,8 +190,8 @@ const Profile: React.FC = () => {
     }
   };
 
-  // Check if user can change password (HR, Manager, Super Admin only)
-  const canChangePassword = user?.role === 'hr' || user?.role === 'manager' || user?.role === 'super_admin';
+  // Check if user can change password (all users can change password)
+  const canChangePassword = true;
 
   if (loading) {
     return <div className="p-6">Loading...</div>;
@@ -364,7 +364,7 @@ const Profile: React.FC = () => {
         </div>
       </div>
 
-      {/* Password Change Section (HR, Manager, Super Admin only) */}
+      {/* Password Change Section (All Users) */}
       {canChangePassword && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex items-center space-x-2 mb-4">
@@ -373,6 +373,11 @@ const Profile: React.FC = () => {
           </div>
           <p className="text-sm text-gray-600 mb-6">
             Update your account password. Make sure to use a strong password.
+            {user?.role === 'employee' && (
+              <span className="block mt-1 text-purple-600">
+                If you're using the default password (Africa.1), please change it immediately for security.
+              </span>
+            )}
           </p>
 
           {passwordError && (

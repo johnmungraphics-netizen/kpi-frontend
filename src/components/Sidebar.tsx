@@ -24,19 +24,28 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const [pendingReviewsCount, setPendingReviewsCount] = useState<number>(0);
+  const [pendingAcknowledgementsCount, setPendingAcknowledgementsCount] = useState<number>(0);
+  const [pendingEmployeeReviewsCount, setPendingEmployeeReviewsCount] = useState<number>(0);
 
   const isActive = (path: string) => location.pathname === path;
 
   useEffect(() => {
     if (user?.role === 'manager') {
       fetchPendingReviewsCount();
+    } else if (user?.role === 'employee') {
+      fetchEmployeeCounts();
     }
   }, [user]);
 
-  // Refresh count when navigating to/from reviews page
+  // Refresh count when navigating to/from relevant pages
   useEffect(() => {
     if (user?.role === 'manager' && location.pathname === '/manager/reviews') {
       fetchPendingReviewsCount();
+    } else if (user?.role === 'employee' && (
+      location.pathname === '/employee/acknowledge' || 
+      location.pathname === '/employee/reviews'
+    )) {
+      fetchEmployeeCounts();
     }
   }, [location.pathname, user]);
 
@@ -47,6 +56,34 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     } catch (error) {
       console.error('Error fetching pending reviews count:', error);
       setPendingReviewsCount(0);
+    }
+  };
+
+  const fetchEmployeeCounts = async () => {
+    try {
+      const [kpisRes, reviewsRes] = await Promise.all([
+        api.get('/kpis'),
+        api.get('/kpi-review'),
+      ]);
+
+      const kpis = kpisRes.data.kpis || [];
+      const reviews = reviewsRes.data.reviews || [];
+
+      // Count pending acknowledgements
+      const pendingAcknowledgements = kpis.filter((kpi: any) => kpi.status === 'pending').length;
+      setPendingAcknowledgementsCount(pendingAcknowledgements);
+
+      // Count KPIs needing employee review
+      const acknowledgedKPIs = kpis.filter((kpi: any) => kpi.status === 'acknowledged');
+      const needReview = acknowledgedKPIs.filter((kpi: any) => {
+        const review = reviews.find((r: any) => r.kpi_id === kpi.id);
+        return !review || review.review_status === 'pending';
+      }).length;
+      setPendingEmployeeReviewsCount(needReview);
+    } catch (error) {
+      console.error('Error fetching employee counts:', error);
+      setPendingAcknowledgementsCount(0);
+      setPendingEmployeeReviewsCount(0);
     }
   };
 
@@ -81,16 +118,27 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 
   const employeeNavItems: NavItem[] = [
     { path: '/employee/dashboard', label: 'Dashboard', icon: FiHome },
-    { path: '/employee/my-kpis', label: 'My KPIs', icon: FiTarget, badge: '3' },
-    { path: '/employee/reviews', label: 'Reviews', icon: FiFileText },
-    { path: '/employee/history', label: 'History', icon: FiFileText },
+    { 
+      path: '/employee/acknowledge', 
+      label: 'Acknowledge', 
+      icon: FiCheckCircle,
+      badge: pendingAcknowledgementsCount > 0 ? pendingAcknowledgementsCount : undefined
+    },
+    { 
+      path: '/employee/reviews', 
+      label: 'Reviews', 
+      icon: FiFileText,
+      badge: pendingEmployeeReviewsCount > 0 ? pendingEmployeeReviewsCount : undefined
+    },
+    { path: '/employee/kpi-setting-completed', label: 'KPI Setting Completed', icon: FiCheckCircle },
+    { path: '/employee/completed-reviews', label: 'Completed Reviews', icon: FiCheckCircle },
   ];
 
   const hrNavItems: NavItem[] = [
     { path: '/hr/dashboard', label: 'Dashboard', icon: FiHome },
     { path: '/hr/employees', label: 'Employees', icon: FiUsers },
     { path: '/hr/departments', label: 'Departments', icon: FiUsers },
-    { path: '/hr/kpi-list', label: 'All KPIs', icon: FiTarget },
+    { path: '/hr/kpi-list', label: 'KPI Overview', icon: FiTarget },
      { path: '/hr/kpi-setting-completed', label: 'KPI Setting Completed', icon: FiCheckCircle },
     { path: '/hr/acknowledged-kpis', label: 'Acknowledged KPIs', icon: FiCheckCircle },
     { path: '/hr/completed-reviews', label: 'Completed Reviews', icon: FiCheckCircle },

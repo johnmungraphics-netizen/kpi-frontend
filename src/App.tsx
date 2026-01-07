@@ -21,6 +21,8 @@ import KPIAcknowledgement from './pages/employee/KPIAcknowledgement';
 import SelfRating from './pages/employee/SelfRating';
 import KPIList from './pages/employee/KPIList';
 import KPIDetails from './pages/employee/KPIDetails';
+import Acknowledge from './pages/employee/Acknowledge';
+import Reviews from './pages/employee/Reviews';
 import HRDashboard from './pages/hr/Dashboard';
 import HRKPIList from './pages/hr/KPIList';
 import HRKPIDetails from './pages/hr/KPIDetails';
@@ -35,9 +37,6 @@ import Notifications from './pages/shared/Notifications';
 import EmployeePerformance from './pages/hr/EmployeePerformance';
 import SuperAdminDashboard from './pages/superadmin/SuperAdminDashboard';
 import AssignHrToCompany from './pages/superadmin/AssignHrToCompany';
-import CompanyManagement from './pages/superadmin/CompanyManagement';
-import UserManagement from './pages/superadmin/UserManagement';
-import EditProfile from './pages/shared/EditProfile';
 import CompanyManagement from './pages/superadmin/CompanyManagement';
 import UserManagement from './pages/superadmin/UserManagement';
 import EditProfile from './pages/shared/EditProfile';
@@ -372,6 +371,46 @@ function AppRoutes() {
           <ProtectedRoute allowedRoles={['employee']}>
             <Layout>
               <KPIDetails />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/employee/acknowledge"
+        element={
+          <ProtectedRoute allowedRoles={['employee']}>
+            <Layout>
+              <Acknowledge />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/employee/reviews"
+        element={
+          <ProtectedRoute allowedRoles={['employee']}>
+            <Layout>
+              <Reviews />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/employee/kpi-setting-completed"
+        element={
+          <ProtectedRoute allowedRoles={['employee']}>
+            <Layout>
+              <KPISettingCompleted />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/employee/completed-reviews"
+        element={
+          <ProtectedRoute allowedRoles={['employee']}>
+            <Layout>
+              <CompletedReviews />
             </Layout>
           </ProtectedRoute>
         }

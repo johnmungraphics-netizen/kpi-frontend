@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { FiEye, FiEyeOff } from 'react-icons/fi';
 
 const Login: React.FC = () => {
   const [loginMethod, setLoginMethod] = useState<'payroll' | 'email'>('payroll');
   const [payrollNumber, setPayrollNumber] = useState('');
-  const [nationalId, setNationalId] = useState('');
+  const [] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { login, loginWithEmail } = useAuth();
@@ -28,16 +30,34 @@ const Login: React.FC = () => {
         }
         result = await loginWithEmail(email, password);
       } else {
-        if (!payrollNumber || !nationalId) {
-          setError('Payroll number and National ID are required');
+        if (!payrollNumber || !password) {
+          setError('Payroll number and password are required');
           setLoading(false);
           return;
         }
-        result = await login(payrollNumber, nationalId, password);
+        result = await login(payrollNumber, password);
       }
       
-      // Redirect based on role
+      // Get user role for navigation
       const user = JSON.parse(localStorage.getItem('user') || '{}');
+      
+      // Check if password change is required for any user
+      if (result.passwordChangeRequired) {
+        // Store flag in localStorage
+        localStorage.setItem('passwordChangeRequired', 'true');
+        
+        // Navigate to appropriate dashboard with password change flag
+        if (user.role === 'super_admin') {
+          navigate('/super-admin/dashboard?passwordChangeRequired=true');
+        } else if (user.role === 'manager') {
+          navigate('/manager/dashboard?passwordChangeRequired=true');
+        } else if (user.role === 'employee') {
+          navigate('/employee/dashboard?passwordChangeRequired=true');
+        } else if (user.role === 'hr') {
+          navigate('/hr/dashboard?passwordChangeRequired=true');
+        }
+        return;
+      }
       
       if (user.role === 'super_admin') {
         navigate('/super-admin/dashboard');
@@ -166,31 +186,17 @@ const Login: React.FC = () => {
               </div>
 
               <div>
-                <label htmlFor="nationalId" className="block text-sm font-medium text-gray-700 mb-2">
-                  National ID *
-                </label>
-                <input
-                  id="nationalId"
-                  type="text"
-                  value={nationalId}
-                  onChange={(e) => setNationalId(e.target.value)}
-                  required
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  placeholder="Enter your national ID"
-                />
-              </div>
-
-              <div>
                 <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                  Password (Optional)
+                  Password *
                 </label>
                 <input
                   id="password"
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  required
                   className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  placeholder="Enter password (optional)"
+                  placeholder="Enter your password"
                 />
               </div>
             </>
@@ -205,18 +211,7 @@ const Login: React.FC = () => {
           </button>
         </form>
 
-        <div className="mt-6 text-center text-sm text-gray-600">
-          <p className="font-semibold mb-2">Demo Credentials:</p>
-          <div className="space-y-1 font-mono text-xs">
-            <p><strong>Payroll Login:</strong></p>
-            <p>Manager: MGR-2024-0089 / NAT-001</p>
-            <p>Employee: EMP-2024-0145 / NAT-003</p>
-            <p>HR: HR-2024-0001 / NAT-009</p>
-            <p className="mt-3"><strong>Email Login:</strong></p>
-            <p>Use any user email + password: "password123"</p>
-            <p className="text-xs text-gray-500 mt-2">(e.g., john.manager@company.com)</p>
-          </div>
-        </div>
+        
       </div>
     </div>
   );

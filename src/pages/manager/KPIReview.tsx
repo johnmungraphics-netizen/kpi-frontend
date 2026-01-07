@@ -418,18 +418,16 @@ const ManagerKPIReview: React.FC = () => {
           <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
             In Progress
           </span>
-          <span className="text-sm text-gray-600">Due: Jan 15, 2025</span>
+          <span className="text-sm text-gray-600">
+            Due: {kpi?.meeting_date ? new Date(kpi.meeting_date).toLocaleDateString() : 'N/A'}
+          </span>
         </div>
       </div>
 
       {/* Employee Information */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <div className="flex items-center justify-between mb-4">
+        <div className="mb-4">
           <h2 className="text-lg font-semibold text-gray-900">Employee Information</h2>
-          <button className="text-sm text-purple-600 hover:text-purple-700 flex items-center space-x-1">
-            <span>View Full Profile</span>
-            <FiExternalLink className="text-sm" />
-          </button>
         </div>
         <div className="flex items-center space-x-4">
           <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center">
@@ -515,7 +513,7 @@ const ManagerKPIReview: React.FC = () => {
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap" style={{ minWidth: '120px' }}>GOAL WEIGHT</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap" style={{ minWidth: '150px' }}>EMPLOYEE SELF RATING</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap" style={{ minWidth: '200px' }}>EMPLOYEE COMMENT</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap" style={{ minWidth: '150px' }}>MANAGER RATING</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap" style={{ minWidth: '200px' }}>MANAGER RATING</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap" style={{ minWidth: '200px' }}>MANAGER COMMENT</th>
               </tr>
             </thead>
@@ -778,12 +776,12 @@ const ManagerKPIReview: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="bg-blue-50 rounded-lg p-4">
             <p className="text-sm text-gray-600 mb-1">Average Employee Rating</p>
-            <div className="flex items-center space-x-2">
-              <span className="font-semibold text-gray-900">
+            <div>
+              <span className="text-2xl font-bold text-gray-900">
                 {employeeAvg > 0 ? parseFloat(String(employeeAvg)).toFixed(2) : '0.00'}
               </span>
               {employeeAvg > 0 && (
-                <span className="text-xs text-gray-500">
+                <span className="text-xs text-gray-500 ml-2">
                   ({getRatingLabel(employeeAvg)})
                 </span>
               )}
@@ -791,12 +789,12 @@ const ManagerKPIReview: React.FC = () => {
           </div>
           <div className="bg-purple-50 rounded-lg p-4">
             <p className="text-sm text-gray-600 mb-1">Average Manager Rating</p>
-            <div className="flex items-center space-x-2">
-              <span className="font-semibold text-gray-900">
+            <div>
+              <span className="text-2xl font-bold text-gray-900">
                 {managerAvg > 0 ? parseFloat(String(managerAvg)).toFixed(2) : '0.00'}
               </span>
               {managerAvg > 0 && (
-                <span className="text-xs text-gray-500 ml-1">
+                <span className="text-xs text-gray-500 ml-2">
                   ({getRatingLabel(managerAvg)})
                 </span>
               )}

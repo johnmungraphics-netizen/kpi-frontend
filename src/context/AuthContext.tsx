@@ -8,8 +8,8 @@ interface AuthContextType {
   companies: Company[];
   hasMultipleCompanies: boolean;
   selectedCompany: Company | null;
-  login: (payrollNumber: string, nationalId: string, password?: string) => Promise<{ hasMultipleCompanies: boolean }>;
-  loginWithEmail: (email: string, password: string) => Promise<{ hasMultipleCompanies: boolean }>;
+  login: (payrollNumber: string, password: string) => Promise<{ hasMultipleCompanies: boolean; passwordChangeRequired: boolean }>;
+  loginWithEmail: (email: string, password: string) => Promise<{ hasMultipleCompanies: boolean; passwordChangeRequired: boolean }>;
   selectCompany: (companyId: number) => Promise<void>;
   logout: () => void;
   isLoading: boolean;
@@ -52,15 +52,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(false);
   }, []);
 
-  const login = async (payrollNumber: string, nationalId: string, password?: string) => {
+  const login = async (payrollNumber: string, password: string) => {
     try {
       const response = await api.post('/auth/login', {
         payrollNumber,
-        nationalId,
         password,
+        loginMethod: 'payroll'
       });
 
-      const { token: newToken, user: newUser, companies: userCompanies, hasMultipleCompanies: multiple } = response.data;
+      const { token: newToken, user: newUser, companies: userCompanies, hasMultipleCompanies: multiple, passwordChangeRequired } = response.data;
 
       setToken(newToken);
       setUser(newUser);
@@ -77,9 +77,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.setItem('token', newToken);
       localStorage.setItem('user', JSON.stringify(newUser));
       localStorage.setItem('companies', JSON.stringify(userCompanies || []));
+      localStorage.setItem('passwordChangeRequired', passwordChangeRequired ? 'true' : 'false');
       api.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
       
-      return { hasMultipleCompanies: multiple || false };
+      return { hasMultipleCompanies: multiple || false, passwordChangeRequired: passwordChangeRequired || false };
     } catch (error: any) {
       throw new Error(error.response?.data?.error || 'Login failed');
     }
@@ -90,9 +91,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const response = await api.post('/auth/login', {
         email,
         password,
+        loginMethod: 'email'
       });
 
-      const { token: newToken, user: newUser, companies: userCompanies, hasMultipleCompanies: multiple } = response.data;
+      const { token: newToken, user: newUser, companies: userCompanies, hasMultipleCompanies: multiple, passwordChangeRequired } = response.data;
 
       setToken(newToken);
       setUser(newUser);
@@ -109,9 +111,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.setItem('token', newToken);
       localStorage.setItem('user', JSON.stringify(newUser));
       localStorage.setItem('companies', JSON.stringify(userCompanies || []));
+      localStorage.setItem('passwordChangeRequired', passwordChangeRequired ? 'true' : 'false');
       api.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
       
-      return { hasMultipleCompanies: multiple || false };
+      return { hasMultipleCompanies: multiple || false, passwordChangeRequired: passwordChangeRequired || false };
     } catch (error: any) {
       throw new Error(error.response?.data?.error || 'Login failed');
     }
