@@ -1,0 +1,37 @@
+/**
+ * Employee Feature Module
+ */
+
+// Export pages explicitly to avoid conflicts
+export { default as EmployeeDashboard } from './pages/Dashboard';
+export { default as KPIAcknowledgement } from './pages/KPIAcknowledgementSign';
+export { default as KPIDetails } from './pages/KPIDetails';
+export { default as Reviews } from './pages/Reviews';
+export { default as SelfRating } from './pages/SelfRating';
+export { default as KPIList } from './pages/KPIList';
+export { default as KPIConfirmation } from './pages/KPIConfirmation';
+
+// Export components
+export * from './components';
+
+// Export hooks
+export * from './hooks';
+
+// Export services
+export * from './services';
+
+// Export types explicitly to avoid conflicts
+export type {
+  EmployeeState,
+  AcknowledgementData,
+  EmployeeKPIFilter,
+  EmployeeDashboardStats,
+  RatingOption,
+  SelfRatingDraft,
+  SelfRatingSubmission,
+  TextModalState,
+  ItemRatings,
+  ItemComments,
+  KPIReviewConfirmation,
+  ConfirmationSubmission,
+} from './types';

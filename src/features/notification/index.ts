@@ -1,0 +1,5 @@
+/**
+ * Notification Feature Module
+ */
+
+export {};

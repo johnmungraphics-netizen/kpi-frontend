@@ -1,0 +1,157 @@
+/**
+ * useManagerEmployeeSelection
+ * 
+ * Custom hook for managing employee selection page state and logic.
+ */
+
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import api from '../../../services/api';
+import { User } from '../../../types';
+
+interface UseManagerEmployeeSelectionReturn {
+  employees: User[];
+  loading: boolean;
+  searchQuery: string;
+  setSearchQuery: (query: string) => void;
+  reviews: any[];
+  currentPage: number;
+  employeesPerPage: number;
+  filteredEmployees: User[];
+  currentEmployees: User[];
+  totalPages: number;
+  startIndex: number;
+  endIndex: number;
+  pendingReviewsCount: number;
+  handlePreviousPage: () => void;
+  handleNextPage: () => void;
+  handleScrollToEmployees: () => void;
+  handleNavigateToTemplates: () => void;
+  handleNavigateToReviews: () => void;
+  handleNavigateToScheduleMeeting: () => void;
+  handleViewKPIs: (employeeId: number) => void;
+  handleSetKPI: (employeeId: number) => void;
+  handleBack: () => void;
+}
+
+export const useManagerEmployeeSelection = (): UseManagerEmployeeSelectionReturn => {
+  const navigate = useNavigate();
+  const [employees, setEmployees] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const employeesPerPage = 15;
+
+  useEffect(() => {
+    fetchEmployees();
+    fetchReviews();
+  }, []);
+
+  // Reset to page 1 when search query changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
+
+  const fetchEmployees = async () => {
+    try {
+      // Fetch employees filtered by manager's assigned departments
+      const response = await api.get('/employees', {
+        params: { managerId: 'current' } // Backend will use authenticated user's ID
+      });
+      setEmployees(response.data.employees || []);
+    } catch (error) {
+      console.error('Error fetching employees:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchReviews = async () => {
+    try {
+      const response = await api.get('/kpi-review');
+      setReviews(response.data.reviews || []);
+    } catch (error) {
+      console.error('Error fetching reviews:', error);
+    }
+  };
+
+  const filteredEmployees = employees.filter((emp) =>
+    emp.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    emp.payroll_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    emp.department?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredEmployees.length / employeesPerPage);
+  const startIndex = (currentPage - 1) * employeesPerPage;
+  const endIndex = startIndex + employeesPerPage;
+  const currentEmployees = filteredEmployees.slice(startIndex, endIndex);
+
+  // Calculate pending reviews count
+  const pendingReviewsCount = reviews.filter(r => r.review_status === 'employee_submitted').length;
+
+  const handlePreviousPage = () => {
+    setCurrentPage((prev) => Math.max(prev - 1, 1));
+  };
+
+  const handleNextPage = () => {
+    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+  };
+
+  const handleScrollToEmployees = () => {
+    const employeeList = document.querySelector('.employee-list-section');
+    if (employeeList) {
+      employeeList.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  const handleNavigateToTemplates = () => {
+    navigate('/manager/kpi-templates');
+  };
+
+  const handleNavigateToReviews = () => {
+    navigate('/manager/reviews');
+  };
+
+  const handleNavigateToScheduleMeeting = () => {
+    navigate('/manager/schedule-meeting');
+  };
+
+  const handleViewKPIs = (employeeId: number) => {
+    navigate(`/manager/employee-kpis/${employeeId}`);
+  };
+
+  const handleSetKPI = (employeeId: number) => {
+    navigate(`/manager/kpi-setting/${employeeId}`);
+  };
+
+  const handleBack = () => {
+    navigate(-1);
+  };
+
+  return {
+    employees,
+    loading,
+    searchQuery,
+    setSearchQuery,
+    reviews,
+    currentPage,
+    employeesPerPage,
+    filteredEmployees,
+    currentEmployees,
+    totalPages,
+    startIndex,
+    endIndex,
+    pendingReviewsCount,
+    handlePreviousPage,
+    handleNextPage,
+    handleScrollToEmployees,
+    handleNavigateToTemplates,
+    handleNavigateToReviews,
+    handleNavigateToScheduleMeeting,
+    handleViewKPIs,
+    handleSetKPI,
+    handleBack,
+  };
+};

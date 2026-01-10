@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import SignatureCanvas from 'react-signature-canvas';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import { FiX, FiCheckCircle, FiUpload } from 'react-icons/fi';
 
 interface SignatureFieldProps {
@@ -21,6 +22,7 @@ const SignatureField: React.FC<SignatureFieldProps> = ({
   disabled = false,
 }) => {
   const { user } = useAuth();
+  const toast = useToast();
   const canvasRef = useRef<SignatureCanvas>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isEmpty, setIsEmpty] = useState(true);
@@ -67,12 +69,12 @@ const SignatureField: React.FC<SignatureFieldProps> = ({
     if (!file) return;
 
     if (!file.type.startsWith('image/')) {
-      alert('Please upload an image file');
+      toast.warning('Please upload an image file');
       return;
     }
 
     if (file.size > 2 * 1024 * 1024) {
-      alert('File size must be less than 2MB');
+      toast.warning('File size must be less than 2MB');
       return;
     }
 

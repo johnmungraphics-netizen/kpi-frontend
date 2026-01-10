@@ -7,15 +7,21 @@ const api = axios.create({
   },
 });
 
-// Add token to requests if available
-const token = localStorage.getItem('token');
-if (token) {
-  api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-}
-
-// Request interceptor for logging
+// Request interceptor: Dynamically add auth token and provide logging
+// SECURITY FIX: Token is now retrieved on each request, not set once at module load
 api.interceptors.request.use(
   (config) => {
+    // Dynamically retrieve token from localStorage for each request
+    // This ensures the token is always up-to-date after login/logout/token refresh
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    } else {
+      // Explicitly remove Authorization header if no token exists
+      delete config.headers.Authorization;
+    }
+
+    // Debug logging for rating-options endpoint
     if (config.url?.includes('rating-options')) {
       console.log('🔍 [api] Request interceptor - rating-options call');
       console.log('🔍 [api] Request URL:', config.url);

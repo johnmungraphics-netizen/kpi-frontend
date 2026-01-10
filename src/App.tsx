@@ -1,61 +1,88 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { useAppDispatch, useAppSelector } from './store/hooks';
+import { initializeAuth } from './store/slices/authSlice';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 
-// Pages
-import Login from './pages/Login';
-import CompanySelection from './pages/CompanySelection';
-import CompanyOnboarding from './pages/CompanyOnboarding';
-import ManagerDashboard from './pages/manager/Dashboard';
-import KPISetting from './pages/manager/KPISetting';
-import ManagerKPIReview from './pages/manager/KPIReview';
-import EmployeeSelection from './pages/manager/EmployeeSelection';
-import ReviewsList from './pages/manager/ReviewsList';
-import ManagerKPIList from './pages/manager/KPIList';
-import ManagerKPIDetails from './pages/manager/KPIDetails';
-import EmployeeKPIs from './pages/manager/EmployeeKPIs';
-import KPITemplates from './pages/manager/KPITemplates';
-import KPITemplateForm from './pages/manager/KPITemplateForm';
-import ApplyKPITemplate from './pages/manager/ApplyKPITemplate';
-import EmployeeDashboard from './pages/employee/Dashboard';
-import KPIAcknowledgement from './pages/employee/KPIAcknowledgement';
-import KPIConfirmation from './pages/employee/KPIConfirmation';
-import SelfRating from './pages/employee/SelfRating';
-import KPIList from './pages/employee/KPIList';
-import KPIDetails from './pages/employee/KPIDetails';
-import Acknowledge from './pages/employee/Acknowledge';
-import Reviews from './pages/employee/Reviews';
-import HRDashboard from './pages/hr/Dashboard';
-import HRKPIList from './pages/hr/KPIList';
-import HRKPIDetails from './pages/hr/KPIDetails';
-import HRSettings from './pages/hr/Settings';
-import DepartmentDashboard from './pages/hr/DepartmentDashboard';
-import EmailTemplates from './pages/hr/EmailTemplates';
-import RejectedKPIManagement from './pages/hr/RejectedKPIManagement';
-import MeetingScheduler from './pages/manager/MeetingScheduler';
-import AcknowledgedKPIs from './pages/shared/AcknowledgedKPIs';
-import KPISettingCompleted from './pages/shared/KPISettingCompleted';
-import CompletedReviews from './pages/shared/CompletedReviews';
-import Notifications from './pages/shared/Notifications';
-import EmployeePerformance from './pages/hr/EmployeePerformance';
-import SuperAdminDashboard from './pages/superadmin/SuperAdminDashboard';
-import AssignHrToCompany from './pages/superadmin/AssignHrToCompany';
-import CompanyManagement from './pages/superadmin/CompanyManagement';
-import UserManagement from './pages/superadmin/UserManagement';
-import EditProfile from './pages/shared/EditProfile';
-import Employees from './pages/shared/Employees';
-import Profile from './pages/shared/Profile';
+// Auth Pages
+import { Login } from './features/auth';
 
-// Protected Route Component
+// Manager Pages
+import {
+  ManagerDashboard,
+  KPISetting,
+  ManagerKPIReview,
+  EmployeeSelection,
+  ReviewsList,
+  ManagerKPIList,
+  ManagerKPIDetails,
+  EmployeeKPIs,
+  KPITemplates,
+  KPITemplateForm,
+  ApplyKPITemplate,
+  MeetingScheduler,
+} from './features/manager';
+
+// Employee Pages
+import {
+  EmployeeDashboard,
+  KPIAcknowledgement,
+  KPIConfirmation,
+  SelfRating,
+  KPIList,
+  KPIDetails,
+  Reviews,
+} from './features/employee';
+import AcknowledgeList from './features/employee/pages/AcknowledgeList';
+
+// HR Pages
+import {
+  HRDashboard,
+  HRKPIList,
+  HRKPIDetails,
+  HRSettings,
+  DepartmentDashboard,
+  EmailTemplates,
+  RejectedKPIManagement,
+  EmployeePerformance,
+} from './features/hr';
+
+// Shared Pages
+import {
+  AcknowledgedKPIs,
+  KPISettingCompleted,
+  CompletedReviews,
+  Notifications,
+  EditProfile,
+  Employees,
+  Profile,
+} from './features/shared';
+
+// Super Admin Pages
+import {
+  SuperAdminDashboard,
+  CompanySelection,
+  CompanyOnboarding,
+  AssignHrToCompany,
+  CompanyManagement,
+  UserManagement,
+} from './features/superadmin';
+
+// Protected Route Component (Using Redux)
 const ProtectedRoute: React.FC<{ children: React.ReactNode; allowedRoles?: string[] }> = ({
   children,
   allowedRoles,
 }) => {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading } = useAppSelector((state) => state.auth);
+  const { user: contextUser, isLoading: contextLoading } = useAuth();
 
-  if (isLoading) {
+  // Use Redux state if available, fallback to context during migration
+  const currentUser = user || contextUser;
+  const loading = isLoading || contextLoading;
+
+  if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="text-gray-500">Loading...</div>
@@ -63,11 +90,11 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode; allowedRoles?: strin
     );
   }
 
-  if (!user) {
+  if (!currentUser) {
     return <Navigate to="/login" replace />;
   }
 
-  if (allowedRoles && !allowedRoles.includes(user.role)) {
+  if (allowedRoles && !allowedRoles.includes(currentUser.role)) {
     return <Navigate to="/" replace />;
   }
 
@@ -90,6 +117,8 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 };
 
 function AppRoutes() {
+  const { user } = useAppSelector((state) => state.auth);
+
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
@@ -148,216 +177,220 @@ function AppRoutes() {
       />
       
       {/* Manager Routes */}
-      <Route
-        path="/manager/dashboard"
-        element={
-          <ProtectedRoute allowedRoles={['manager']}>
-            <Layout>
-              <ManagerDashboard />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/manager/kpi-setting/:employeeId"
-        element={
-          <ProtectedRoute allowedRoles={['manager']}>
-            <Layout>
-              <KPISetting />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/manager/kpi-review/:reviewId"
-        element={
-          <ProtectedRoute allowedRoles={['manager']}>
-            <Layout>
-              <ManagerKPIReview />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/manager/select-employee"
-        element={
-          <ProtectedRoute allowedRoles={['manager']}>
-            <Layout>
-              <EmployeeSelection />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/manager/kpi-management"
-        element={
-          <ProtectedRoute allowedRoles={['manager']}>
-            <Layout>
-              <EmployeeSelection />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/manager/employees"
-        element={
-          <ProtectedRoute allowedRoles={['manager']}>
-            <Layout>
-              <EmployeeSelection />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/manager/reviews"
-        element={
-          <ProtectedRoute allowedRoles={['manager']}>
-            <Layout>
-              <ReviewsList />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/manager/kpi-list"
-        element={
-          <ProtectedRoute allowedRoles={['manager']}>
-            <Layout>
-              <ManagerKPIList />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/manager/kpi-details/:kpiId"
-        element={
-          <ProtectedRoute allowedRoles={['manager']}>
-            <Layout>
-              <ManagerKPIDetails />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/manager/kpi-templates"
-        element={
-          <ProtectedRoute allowedRoles={['manager']}>
-            <Layout>
-              <KPITemplates />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/manager/kpi-templates/create"
-        element={
-          <ProtectedRoute allowedRoles={['manager']}>
-            <Layout>
-              <KPITemplateForm />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/manager/kpi-templates/:id/edit"
-        element={
-          <ProtectedRoute allowedRoles={['manager']}>
-            <Layout>
-              <KPITemplateForm />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/manager/kpi-templates/:id/apply"
-        element={
-          <ProtectedRoute allowedRoles={['manager']}>
-            <Layout>
-              <ApplyKPITemplate />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/manager/employee-kpis/:employeeId"
-        element={
-          <ProtectedRoute allowedRoles={['manager']}>
-            <Layout>
-              <EmployeeKPIs />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/manager/acknowledged-kpis"
-        element={
-          <ProtectedRoute allowedRoles={['manager']}>
-            <Layout>
-              <AcknowledgedKPIs />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/manager/kpi-setting-completed"
-        element={
-          <ProtectedRoute allowedRoles={['manager']}>
-            <Layout>
-              <KPISettingCompleted />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/manager/completed-reviews"
-        element={
-          <ProtectedRoute allowedRoles={['manager']}>
-            <Layout>
-              <CompletedReviews />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/manager/schedule-meeting"
-        element={
-          <ProtectedRoute allowedRoles={['manager']}>
-            <Layout>
-              <MeetingScheduler />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/manager/schedule-meeting/kpi/:kpiId"
-        element={
-          <ProtectedRoute allowedRoles={['manager']}>
-            <Layout>
-              <MeetingScheduler />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/manager/schedule-meeting/review/:reviewId"
-        element={
-          <ProtectedRoute allowedRoles={['manager']}>
-            <Layout>
-              <MeetingScheduler />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/manager/notifications"
-        element={
-          <ProtectedRoute allowedRoles={['manager']}>
-            <Layout>
-              <Notifications />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
+      {user?.role === 'manager' && (
+        <>
+          <Route
+            path="/manager/dashboard"
+            element={
+              <ProtectedRoute allowedRoles={['manager']}>
+                <Layout>
+                  <ManagerDashboard />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/manager/kpi-setting/:employeeId"
+            element={
+              <ProtectedRoute allowedRoles={['manager']}>
+                <Layout>
+                  <KPISetting />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/manager/kpi-review/:reviewId"
+            element={
+              <ProtectedRoute allowedRoles={['manager']}>
+                <Layout>
+                  <ManagerKPIReview />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/manager/select-employee"
+            element={
+              <ProtectedRoute allowedRoles={['manager']}>
+                <Layout>
+                  <EmployeeSelection />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/manager/kpi-management"
+            element={
+              <ProtectedRoute allowedRoles={['manager']}>
+                <Layout>
+                  <EmployeeSelection />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/manager/employees"
+            element={
+              <ProtectedRoute allowedRoles={['manager']}>
+                <Layout>
+                  <EmployeeSelection />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/manager/reviews"
+            element={
+              <ProtectedRoute allowedRoles={['manager']}>
+                <Layout>
+                  <ReviewsList />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/manager/kpi-list"
+            element={
+              <ProtectedRoute allowedRoles={['manager']}>
+                <Layout>
+                  <ManagerKPIList />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/manager/kpi-details/:kpiId"
+            element={
+              <ProtectedRoute allowedRoles={['manager']}>
+                <Layout>
+                  <ManagerKPIDetails />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/manager/kpi-templates"
+            element={
+              <ProtectedRoute allowedRoles={['manager']}>
+                <Layout>
+                  <KPITemplates />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/manager/kpi-templates/create"
+            element={
+              <ProtectedRoute allowedRoles={['manager']}>
+                <Layout>
+                  <KPITemplateForm />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/manager/kpi-templates/:id/edit"
+            element={
+              <ProtectedRoute allowedRoles={['manager']}>
+                <Layout>
+                  <KPITemplateForm />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/manager/kpi-templates/:templateId/apply"
+            element={
+              <ProtectedRoute allowedRoles={['manager']}>
+                <Layout>
+                  <ApplyKPITemplate />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/manager/employee-kpis/:employeeId"
+            element={
+              <ProtectedRoute allowedRoles={['manager']}>
+                <Layout>
+                  <EmployeeKPIs />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/manager/acknowledged-kpis"
+            element={
+              <ProtectedRoute allowedRoles={['manager']}>
+                <Layout>
+                  <AcknowledgedKPIs />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/manager/kpi-setting-completed"
+            element={
+              <ProtectedRoute allowedRoles={['manager']}>
+                <Layout>
+                  <KPISettingCompleted />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/manager/completed-reviews"
+            element={
+              <ProtectedRoute allowedRoles={['manager']}>
+                <Layout>
+                  <CompletedReviews />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/manager/schedule-meeting"
+            element={
+              <ProtectedRoute allowedRoles={['manager']}>
+                <Layout>
+                  <MeetingScheduler />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/manager/schedule-meeting/kpi/:kpiId"
+            element={
+              <ProtectedRoute allowedRoles={['manager']}>
+                <Layout>
+                  <MeetingScheduler />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/manager/schedule-meeting/review/:reviewId"
+            element={
+              <ProtectedRoute allowedRoles={['manager']}>
+                <Layout>
+                  <MeetingScheduler />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/manager/notifications"
+            element={
+              <ProtectedRoute allowedRoles={['manager']}>
+                <Layout>
+                  <Notifications />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+        </>
+      )}
 
       {/* Employee Routes */}
       <Route
@@ -376,6 +409,16 @@ function AppRoutes() {
           <ProtectedRoute allowedRoles={['employee']}>
             <Layout>
               <EmployeeDashboard />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/employee/acknowledge"
+        element={
+          <ProtectedRoute allowedRoles={['employee']}>
+            <Layout>
+              <AcknowledgeList />
             </Layout>
           </ProtectedRoute>
         }
@@ -426,16 +469,6 @@ function AppRoutes() {
           <ProtectedRoute allowedRoles={['employee']}>
             <Layout>
               <KPIDetails />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/employee/acknowledge"
-        element={
-          <ProtectedRoute allowedRoles={['employee']}>
-            <Layout>
-              <Acknowledge />
             </Layout>
           </ProtectedRoute>
         }
@@ -673,6 +706,13 @@ function AppRoutes() {
 }
 
 function App() {
+  const dispatch = useAppDispatch();
+
+  // Initialize Redux auth state from localStorage on app mount
+  useEffect(() => {
+    dispatch(initializeAuth());
+  }, [dispatch]);
+
   return (
     <AuthProvider>
       <Router>
