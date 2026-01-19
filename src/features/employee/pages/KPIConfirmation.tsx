@@ -121,7 +121,8 @@ const KPIConfirmation: React.FC = () => {
   console.log('📊 Manager Data PARSED to numbers:');
   console.log('   manager_rating:', review?.manager_rating ? parseFloat(review.manager_rating.toString()) : null);
   console.log('   manager_final_rating:', review?.manager_final_rating ? parseFloat(review.manager_final_rating.toString()) : null);
-  console.log('   manager_final_rating_percentage:', review?.manager_final_rating_percentage ? parseFloat(review.manager_final_rating_percentage.toString()) : null);
+  console.log('   ⭐ manager_final_rating_percentage:', review?.manager_final_rating_percentage ? parseFloat(review.manager_final_rating_percentage.toString()) : null);
+  console.log('   ⭐ manager_final_rating_percentage DISPLAY VALUE:', review?.manager_final_rating_percentage ? parseFloat(review.manager_final_rating_percentage.toString()).toFixed(2) + '%' : 'N/A');
   console.log('===============================================');
   console.log('');
 

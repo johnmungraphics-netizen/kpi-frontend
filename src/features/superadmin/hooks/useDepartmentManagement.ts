@@ -58,11 +58,15 @@ export const useDepartmentManagement = () => {
 
   const handleAddDepartment = async (name: string) => {
     try {
-      await departmentService.createDepartment(name, parseInt(selectedCompany));
+      const companyId = parseInt(selectedCompany);
+      console.log('[useDepartmentManagement] Creating department:', { name, companyId, selectedCompany });
+      await departmentService.createDepartment(name, companyId);
+      console.log('[useDepartmentManagement] Department created successfully');
       toast.success('Department created successfully');
       setShowAddModal(false);
       fetchDepartments();
     } catch (error: any) {
+      console.error('[useDepartmentManagement] Error creating department:', error);
       toast.error(error.response?.data?.error || 'Failed to create department');
       throw error;
     }

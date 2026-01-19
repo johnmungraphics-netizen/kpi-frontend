@@ -738,9 +738,37 @@ export const useManagerKPIReview = (): UseManagerKPIReviewReturn => {
           improvement_needed_manager_comment: improvementNeededManagerComment,
           accomplishments: accomplishments,
           average_manager_rating: roundedRating, // Include rounded average for kpi_reviews table
+          manager_final_rating_percentage: managerFinalRatingPercentage, // ⭐ Send calculated percentage from frontend
         };
 
         console.log('📤 [handleSubmit] Manager review payload:', payload);
+        
+        // ⭐ LOG: Manager ratings being sent
+        console.log('⭐ [handleSubmit] MANAGER RATINGS BEING SENT TO BACKEND:', {
+          average_manager_rating: roundedRating,
+          manager_final_rating_percentage: managerFinalRatingPercentage,
+          managerAvg_calculated: managerAvg,
+          kpi_period: kpi?.period
+        });
+        
+        // 🏆 DETAILED LOG: Accomplishments being sent to backend
+        console.log('🏆 [handleSubmit] ACCOMPLISHMENTS PAYLOAD DETAILS:', {
+          hasAccomplishments: !!accomplishments,
+          isArray: Array.isArray(accomplishments),
+          count: accomplishments ? accomplishments.length : 0,
+          accomplishments: accomplishments ? accomplishments.map(acc => ({
+            id: acc.id,
+            title: acc.title,
+            description: acc.description?.substring(0, 50),
+            employee_rating: acc.employee_rating,
+            employee_comment: acc.employee_comment?.substring(0, 30),
+            manager_rating: acc.manager_rating,  // ⭐ CRITICAL FIELD
+            manager_comment: acc.manager_comment?.substring(0, 30),  // ⭐ CRITICAL FIELD
+            item_order: acc.item_order,
+            review_id: acc.review_id
+          })) : null
+        });
+        
         console.log('🔍 [handleSubmit] Detailed payload breakdown:');
         
         // Log each item's data to verify what's being sent

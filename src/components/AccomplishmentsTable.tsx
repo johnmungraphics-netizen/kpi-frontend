@@ -24,10 +24,30 @@ export const AccomplishmentsTable: React.FC<AccomplishmentsTableProps> = ({
   readonly = false
 }) => {
   const actualManagerRatingOptions = managerRatingOptions || ratingOptions;
+  
   const handleChange = (index: number, field: keyof Accomplishment, value: any) => {
     if (!onChange || readonly) return;
     const updated = [...accomplishments];
     updated[index] = { ...updated[index], [field]: value };
+    
+    // 🏆 LOG: Track manager rating changes for accomplishments
+    if (field === 'manager_rating' || field === 'manager_comment') {
+      console.log('🏆 [AccomplishmentsTable] Manager rating/comment changed:', {
+        index,
+        accomplishmentId: updated[index].id,
+        accomplishmentTitle: updated[index].title,
+        field,
+        value,
+        updatedAccomplishment: {
+          id: updated[index].id,
+          title: updated[index].title,
+          employee_rating: updated[index].employee_rating,
+          manager_rating: updated[index].manager_rating,
+          manager_comment: updated[index].manager_comment?.substring(0, 30)
+        }
+      });
+    }
+    
     onChange(updated);
   };
 

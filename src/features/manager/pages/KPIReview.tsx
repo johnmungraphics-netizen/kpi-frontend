@@ -720,9 +720,90 @@ const ManagerKPIReview: React.FC = () => {
             </tbody>
           </table>
         </div>
+      </div>
 
-        {/* Average Ratings Summary */}
-        <div className="p-6 bg-gray-50 border-t border-gray-200">
+      {/* Employee Accomplishments & Disappointments - Hide when self-rating is disabled */}
+      {!isSelfRatingDisabled && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Employee Performance Reflection</h2>
+        
+        <div className="space-y-6">
+          {/* Accomplishments Table - Always show */}
+          <div>
+            <AccomplishmentsTable
+              accomplishments={accomplishments}
+              onChange={setAccomplishments}
+              mode="manager"
+              ratingOptions={ratingOptions.map(opt => ({ 
+                value: parseFloat(String(opt.rating_value)), 
+                label: `${parseFloat(String(opt.rating_value)).toFixed(2)} - ${opt.label}` 
+              }))}
+              managerRatingOptions={ratingOptions.map(opt => ({ 
+                value: parseFloat(String(opt.rating_value)), 
+                label: `${parseFloat(String(opt.rating_value)).toFixed(2)} - ${opt.label}` 
+              }))}
+            />
+          </div>
+
+          {/* Disappointments */}
+          {review.disappointments && (
+            <div className="border border-gray-200 rounded-lg p-4">
+              <h3 className="text-sm font-semibold text-gray-900 mb-2">Employee's Challenges & Disappointments</h3>
+              <div className="bg-orange-50 p-4 rounded-lg mb-4">
+                <p className="text-sm text-gray-700 whitespace-pre-wrap">{review.disappointments}</p>
+              </div>
+              
+              <h3 className="text-sm font-semibold text-gray-900 mb-2">Your Guidance</h3>
+              <textarea
+                value={disappointmentsManagerComment}
+                onChange={(e) => setDisappointmentsManagerComment(e.target.value)}
+                placeholder="Provide guidance on addressing challenges..."
+                rows={3}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+              />
+            </div>
+          )}
+
+          {/* Improvement Needed */}
+          {review.improvement_needed && (
+            <div className="border border-gray-200 rounded-lg p-4">
+              <h3 className="text-sm font-semibold text-gray-900 mb-2">Employee's Suggestions for Organizational Improvement</h3>
+              <div className="bg-blue-50 p-4 rounded-lg mb-4">
+                <p className="text-sm text-gray-700 whitespace-pre-wrap">{review.improvement_needed}</p>
+              </div>
+              
+              <h3 className="text-sm font-semibold text-gray-900 mb-2">Your Response</h3>
+              <textarea
+                value={improvementNeededManagerComment}
+                onChange={(e) => setImprovementNeededManagerComment(e.target.value)}
+                placeholder="Acknowledge employee's suggestions and provide response..."
+                rows={3}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+              />
+            </div>
+          )}
+
+          {/* Future Plan */}
+          {review.future_plan && (
+            <div className="border border-gray-200 rounded-lg p-4">
+              <h3 className="text-sm font-semibold text-gray-900 mb-2">Employee's Future Plans & Goals</h3>
+              <div className="bg-purple-50 p-4 rounded-lg">
+                <p className="text-sm text-gray-700 whitespace-pre-wrap">{review.future_plan}</p>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+      )}
+
+      {/* Performance Results Summary */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+        <div className="p-6 border-b border-gray-200">
+          <h2 className="text-lg font-semibold text-gray-900">Performance Results Summary</h2>
+          <p className="text-sm text-gray-600 mt-1">Review of ratings and final scores</p>
+        </div>
+        
+        <div className="p-6 bg-gray-50">
           <div className="grid grid-cols-2 gap-6">
             {/* Employee Section - Show if self-rating enabled and not Actual vs Target */}
             {!isSelfRatingDisabled && !calculationMethodName.includes('Actual vs Target') && (
@@ -871,80 +952,6 @@ const ManagerKPIReview: React.FC = () => {
           </div>
         </div>
       </div>
-
-      {/* Employee Accomplishments & Disappointments - Hide when self-rating is disabled */}
-      {!isSelfRatingDisabled && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Employee Performance Reflection</h2>
-        
-        <div className="space-y-6">
-          {/* Accomplishments Table - Always show */}
-          <div>
-            <AccomplishmentsTable
-              accomplishments={accomplishments}
-              onChange={setAccomplishments}
-              mode="manager"
-              ratingOptions={ratingOptions.map(opt => ({ 
-                value: parseFloat(String(opt.rating_value)), 
-                label: `${parseFloat(String(opt.rating_value)).toFixed(2)} - ${opt.label}` 
-              }))}
-              managerRatingOptions={ratingOptions.map(opt => ({ 
-                value: parseFloat(String(opt.rating_value)), 
-                label: `${parseFloat(String(opt.rating_value)).toFixed(2)} - ${opt.label}` 
-              }))}
-            />
-          </div>
-
-          {/* Disappointments */}
-          {review.disappointments && (
-            <div className="border border-gray-200 rounded-lg p-4">
-              <h3 className="text-sm font-semibold text-gray-900 mb-2">Employee's Challenges & Disappointments</h3>
-              <div className="bg-orange-50 p-4 rounded-lg mb-4">
-                <p className="text-sm text-gray-700 whitespace-pre-wrap">{review.disappointments}</p>
-              </div>
-              
-              <h3 className="text-sm font-semibold text-gray-900 mb-2">Your Guidance</h3>
-              <textarea
-                value={disappointmentsManagerComment}
-                onChange={(e) => setDisappointmentsManagerComment(e.target.value)}
-                placeholder="Provide guidance on addressing challenges..."
-                rows={3}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-              />
-            </div>
-          )}
-
-          {/* Improvement Needed */}
-          {review.improvement_needed && (
-            <div className="border border-gray-200 rounded-lg p-4">
-              <h3 className="text-sm font-semibold text-gray-900 mb-2">Employee's Suggestions for Organizational Improvement</h3>
-              <div className="bg-blue-50 p-4 rounded-lg mb-4">
-                <p className="text-sm text-gray-700 whitespace-pre-wrap">{review.improvement_needed}</p>
-              </div>
-              
-              <h3 className="text-sm font-semibold text-gray-900 mb-2">Your Response</h3>
-              <textarea
-                value={improvementNeededManagerComment}
-                onChange={(e) => setImprovementNeededManagerComment(e.target.value)}
-                placeholder="Acknowledge employee's suggestions and provide response..."
-                rows={3}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-              />
-            </div>
-          )}
-
-          {/* Future Plan */}
-          {review.future_plan && (
-            <div className="border border-gray-200 rounded-lg p-4">
-              <h3 className="text-sm font-semibold text-gray-900 mb-2">Employee's Future Plans & Goals</h3>
-              <div className="bg-purple-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-700 whitespace-pre-wrap">{review.future_plan}</p>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-      )}
 
       {/* Overall Manager Comments */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">

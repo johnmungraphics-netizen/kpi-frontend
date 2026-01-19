@@ -7,9 +7,11 @@ export { default as EmployeeDashboard } from './pages/Dashboard';
 export { default as KPIAcknowledgement } from './pages/KPIAcknowledgementSign';
 export { default as KPIDetails } from './pages/KPIDetails';
 export { default as Reviews } from './pages/Reviews';
-export { default as SelfRating } from './pages/SelfRating';
+export { default as SelfRating } from './pages/KPIReview';
 export { default as KPIList } from './pages/KPIList';
 export { default as KPIConfirmation } from './pages/KPIConfirmation';
+export { default as ConfirmReview } from './pages/ConfirmReview';
+export { default as AcknowledgeList } from './pages/AcknowledgeList';
 
 // Export components
 export * from './components';

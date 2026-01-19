@@ -33,6 +33,8 @@ interface FormData {
   role_id: string;
   department_id: string;
   manager_id: string;
+  password: string;
+  confirmPassword: string;
 }
 
 const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onSuccess, companyId, companyName, preSelectedRoleId }) => {
@@ -47,6 +49,8 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onSuccess,
     role_id: preSelectedRoleId || '4',
     department_id: '',
     manager_id: '',
+    password: '',
+    confirmPassword: '',
   });
 
   const [departments, setDepartments] = useState<Department[]>([]);
@@ -139,6 +143,24 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onSuccess,
       setError('Role is required');
       return false;
     }
+    
+    // Password validation for Manager (role_id: 2) and HR (role_id: 3)
+    const isManagerOrHR = formData.role_id === '2' || formData.role_id === '3';
+    if (isManagerOrHR) {
+      if (!formData.password) {
+        setError('Password is required for Managers and HR');
+        return false;
+      }
+      if (formData.password.length < 6) {
+        setError('Password must be at least 6 characters long');
+        return false;
+      }
+      if (formData.password !== formData.confirmPassword) {
+        setError('Passwords do not match');
+        return false;
+      }
+    }
+    
     return true;
   };
 
@@ -158,6 +180,8 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onSuccess,
     });
 
     try {
+      const isManagerOrHR = formData.role_id === '2' || formData.role_id === '3';
+      
       const payload = {
         company_id: companyId,
         name: formData.name.trim(),
@@ -169,10 +193,11 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onSuccess,
         role_id: parseInt(formData.role_id),
         department_id: formData.department_id ? parseInt(formData.department_id) : null,
         manager_id: formData.manager_id ? parseInt(formData.manager_id) : null,
-        // Password will be set to default 'Africa.1' by backend
+        // Include password only for managers and HR, employees get default 'Africa.1'
+        ...(isManagerOrHR && formData.password ? { password: formData.password } : {}),
       };
 
-      console.log('[AddUserModal] 📦 Payload:', payload);
+      console.log('[AddUserModal] 📦 Payload:', { ...payload, password: payload.password ? '***' : undefined });
 
       const response = await api.post('/users/create', payload);
       
@@ -190,6 +215,8 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onSuccess,
         role_id: preSelectedRoleId || '4',
         department_id: '',
         manager_id: '',
+        password: '',
+        confirmPassword: '',
       });
 
       onSuccess();
@@ -215,6 +242,8 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onSuccess,
         role_id: preSelectedRoleId || '4',
         department_id: '',
         manager_id: '',
+        password: '',
+        confirmPassword: '',
       });
       setError('');
       onClose();
@@ -456,17 +485,84 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onSuccess,
                 </div>
               </div>
 
-              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                <div className="flex items-start space-x-3">
-                  <FiLock className="text-blue-600 text-lg mt-0.5 flex-shrink-0" />
-                  <div>
-                    <h4 className="font-semibold text-blue-900 mb-1">Default Password</h4>
-                    <p className="text-sm text-blue-700">
-                      User will be created with default password <strong>"Africa.1"</strong> and will be required to change it on first login.
+              {/* Password Section - Only for Managers and HR */}
+              {(() => {
+                const isManagerOrHR = formData.role_id === '2' || formData.role_id === '3';
+                console.log('[AddUserModal] Password section check:', { 
+                  role_id: formData.role_id, 
+                  isManagerOrHR,
+                  preSelectedRoleId 
+                });
+                return isManagerOrHR;
+              })() && (
+                <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                  <h4 className="font-semibold text-purple-900 mb-3">Password Settings</h4>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Password <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="password"
+                        name="password"
+                        value={formData.password}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        placeholder="Enter password (min. 6 characters)"
+                        disabled={loading}
+                        required
+                        minLength={6}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Confirm Password <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="password"
+                        name="confirmPassword"
+                        value={formData.confirmPassword}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        placeholder="Confirm password"
+                        disabled={loading}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="mt-3 flex items-start space-x-2">
+                    <FiLock className="text-purple-600 text-sm mt-0.5 flex-shrink-0" />
+                    <p className="text-xs text-purple-700">
+                      For security, managers and HR must set their own secure password (minimum 6 characters).
                     </p>
                   </div>
                 </div>
-              </div>
+              )}
+
+              {/* Default Password Info - Only for Employees */}
+              {(() => {
+                const isEmployee = formData.role_id === '4';
+                console.log('[AddUserModal] Default password section check:', { 
+                  role_id: formData.role_id, 
+                  isEmployee 
+                });
+                return isEmployee;
+              })() && (
+                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                  <div className="flex items-start space-x-3">
+                    <FiLock className="text-blue-600 text-lg mt-0.5 flex-shrink-0" />
+                    <div>
+                      <h4 className="font-semibold text-blue-900 mb-1">Default Password</h4>
+                      <p className="text-sm text-blue-700">
+                        Employee will be created with default password <strong>"Africa.1"</strong> and will be required to change it on first login.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200">

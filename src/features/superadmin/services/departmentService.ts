@@ -20,8 +20,12 @@ export const departmentService = {
   },
 
   createDepartment: async (name: string, companyId: number): Promise<Department> => {
-    const response = await api.post('/departments', { name, companyId });
-    return response.data.department;
+    console.log('[departmentService] Creating department:', { name, companyId });
+    const payload = { name, companyId };
+    console.log('[departmentService] Request payload:', JSON.stringify(payload));
+    const response = await api.post('/departments', payload);
+    console.log('[departmentService] Create department response:', response.data);
+    return response.data.department || response.data.data;
   },
 
   updateDepartment: async (id: number, name: string): Promise<Department> => {
