@@ -78,33 +78,60 @@ export const useEmployeeKPIConfirmation = () => {
   };
 
   const handleSubmit = async () => {
+    console.log('🚀 [handleSubmit] START', {
+      action,
+      rejectionNote,
+      signature,
+      reviewId,
+      hasReviewId: !!reviewId
+    });
+    
     const validation = validateConfirmation(action, rejectionNote, signature);
+    console.log('✅ [handleSubmit] Validation result:', validation);
+    
     if (!validation.valid) {
+      console.error('❌ [handleSubmit] Validation FAILED:', validation.error);
       setError(validation.error!);
       return;
     }
 
+    console.log('📤 [handleSubmit] Setting submitting to true...');
     setSubmitting(true);
     setError('');
 
     try {
-      await employeeService.submitConfirmation(parseInt(reviewId!), {
+      console.log('📤 [handleSubmit] Calling employeeService.submitConfirmation with:', {
+        reviewId: parseInt(reviewId!),
+        payload: {
+          confirmation_status: action === 'approve' ? 'approved' : 'rejected',
+          rejection_note: action === 'reject' ? rejectionNote : null,
+          signature: action === 'approve' ? signature : null,
+        }
+      });
+      
+      const response = await employeeService.submitConfirmation(parseInt(reviewId!), {
         confirmation_status: action === 'approve' ? 'approved' : 'rejected',
         rejection_note: action === 'reject' ? rejectionNote : null,
         signature: action === 'approve' ? signature : null,
       });
+      
+      console.log('✅ [handleSubmit] Submission successful! Response:', response);
 
       toast.success(
         action === 'approve'
           ? 'Review approved successfully!'
           : 'Review rejected successfully. Your manager and HR have been notified.'
       );
-
+      
+      console.log('🔄 [handleSubmit] Navigating to dashboard...');
       navigate('/employee/dashboard');
     } catch (error: any) {
-      console.error('Error confirming review:', error);
+      console.error('❌ [handleSubmit] Error confirming review:', error);
+      console.error('❌ [handleSubmit] Error response:', error.response);
+      console.error('❌ [handleSubmit] Error data:', error.response?.data);
       setError(error.response?.data?.error || 'Failed to confirm review');
     } finally {
+      console.log('🏁 [handleSubmit] Setting submitting to false...');
       setSubmitting(false);
     }
   };

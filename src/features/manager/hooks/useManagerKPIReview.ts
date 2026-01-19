@@ -5,7 +5,7 @@
  * Handles complex review workflow with ratings, comments, and signatures.
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import api from '../../../services/api';
 import { useToast } from '../../../context/ToastContext';
@@ -76,6 +76,9 @@ interface UseManagerKPIReviewReturn {
   managerAvg: number;
   employeeFinalRating: number;
   managerFinalRating: number;
+  employeeRatingPercentage: number | null;
+  employeeFinalRatingPercentage: number | null;
+  managerFinalRatingPercentage: number | null;
   
   // Actions
   setManagerRatings: (ratings: ItemRatingsMap) => void;
@@ -290,6 +293,16 @@ export const useManagerKPIReview = (): UseManagerKPIReviewReturn => {
       console.log('📦 [fetchReview] Response received:', response.data);
       const reviewData = response.data.review;
       
+      console.log('🔍 [fetchReview] Review data employee fields:', {
+        employee_rating: reviewData.employee_rating,
+        employee_final_rating: reviewData.employee_final_rating,
+        employee_rating_percentage: reviewData.employee_rating_percentage,
+        employee_final_rating_percentage: reviewData.employee_final_rating_percentage,
+        manager_rating: reviewData.manager_rating,
+        manager_final_rating: reviewData.manager_final_rating,
+        manager_final_rating_percentage: reviewData.manager_final_rating_percentage
+      });
+      
       // If review doesn't have an ID, it means it's a new review from KPI
       if (!reviewData.id && reviewData.kpi_id) {
         // This is KPI data formatted as review - review doesn't exist yet
@@ -412,6 +425,9 @@ export const useManagerKPIReview = (): UseManagerKPIReviewReturn => {
         if (Object.keys(mgrRatings).length > 0) {
           console.log('✅ [fetchReview] Setting manager ratings:', mgrRatings);
           setManagerRatings(mgrRatings);
+          console.log('✅ [fetchReview] Manager ratings state updated');
+        } else {
+          console.log('⚠️ [fetchReview] No manager ratings to set (review not submitted yet)');
         }
         if (Object.keys(mgrComments).length > 0) {
           console.log('✅ [fetchReview] Setting manager comments:', mgrComments);
@@ -431,9 +447,26 @@ export const useManagerKPIReview = (): UseManagerKPIReviewReturn => {
         }
 
         // Load accomplishments from review
+        console.log('🏆 [fetchReview] Loading accomplishments:', {
+          hasAccomplishments: !!reviewData.accomplishments,
+          isArray: Array.isArray(reviewData.accomplishments),
+          count: reviewData.accomplishments?.length || 0,
+          accomplishments: reviewData.accomplishments?.map((acc: Accomplishment) => ({
+            id: acc.id,
+            title: acc.title,
+            employee_rating: acc.employee_rating,
+            manager_rating: acc.manager_rating,
+            item_order: acc.item_order
+          }))
+        });
+        
         if (reviewData.accomplishments && Array.isArray(reviewData.accomplishments)) {
+          console.log('✅ [fetchReview] Setting accomplishments state:', {
+            count: reviewData.accomplishments.length
+          });
           setAccomplishments(reviewData.accomplishments);
         } else {
+          console.warn('⚠️ [fetchReview] No accomplishments found, setting empty array');
           // Set empty array so table still shows for manager
           setAccomplishments([]);
         }
@@ -798,19 +831,150 @@ export const useManagerKPIReview = (): UseManagerKPIReviewReturn => {
     return getRatingLabelUtil(rating);
   };
 
-  // Calculate averages - use backend final ratings if available, otherwise calculate
-  const employeeAvg = typeof review?.employee_rating === 'number' 
-    ? review.employee_rating 
-    : (kpi ? calculateAverageRating(kpi.items || [], employeeRatings) : 0);
-  const managerAvg = typeof review?.manager_rating === 'number' 
-    ? review.manager_rating 
-    : (kpi ? calculateAverageRating(kpi.items || [], managerRatings) : 0);
-  const employeeFinalRating = typeof review?.employee_final_rating === 'number' 
-    ? review.employee_final_rating 
+  // EMPLOYEE ratings: Fetch from backend (employee already submitted)
+  // Backend returns strings from PostgreSQL, need to parse to numbers
+  const employeeAvg = review?.employee_rating 
+    ? parseFloat(review.employee_rating.toString())
+    : 0;
+  const employeeFinalRating = review?.employee_final_rating
+    ? parseFloat(review.employee_final_rating.toString())
     : employeeAvg;
+  
+  // Employee percentages from backend (calculated when employee submitted)
+  const employeeRatingPercentage = review?.employee_rating_percentage
+    ? parseFloat(review.employee_rating_percentage.toString())
+    : null;
+  const employeeFinalRatingPercentage = review?.employee_final_rating_percentage
+    ? parseFloat(review.employee_final_rating_percentage.toString())
+    : null;
+  
+  console.log('📊 [useManagerKPIReview] Employee data from backend (RAW):', {
+    employee_rating: review?.employee_rating,
+    employee_final_rating: review?.employee_final_rating,
+    employee_rating_percentage: review?.employee_rating_percentage,
+    employee_final_rating_percentage: review?.employee_final_rating_percentage
+  });
+  
+  console.log('✅ [useManagerKPIReview] Employee data PARSED to numbers:', {
+    employeeAvg,
+    employeeFinalRating,
+    employeeRatingPercentage,
+    employeeFinalRatingPercentage
+  });
+  
+  // MANAGER ratings: Calculate in REAL-TIME as manager is rating (like SelfRating.tsx)
+  // Use IIFE pattern instead of useMemo for immediate recalculation
+  const managerAvg = (() => {
+    console.log('🔄 [managerAvg calculation] START', {
+      hasBackendValue: typeof review?.manager_rating === 'number',
+      backendValue: review?.manager_rating,
+      hasKpi: !!kpi,
+      kpiItemsCount: kpi?.items?.length,
+      managerRatingsCount: Object.keys(managerRatings).length,
+      managerRatings: managerRatings,
+      accomplishmentsCount: accomplishments.length
+    });
+    
+    // If already submitted, use backend value
+    if (typeof review?.manager_rating === 'number') {
+      console.log('✅ [managerAvg] Using backend value:', review.manager_rating);
+      return review.manager_rating;
+    }
+    
+    // Calculate from current form state (like SelfRating does)
+    if (!kpi || !kpi.items) {
+      console.log('⚠️ [managerAvg] No KPI data, returning 0');
+      return 0;
+    }
+    
+    // Get items with ratings (exclude qualitative and excluded items)
+    const itemsWithRatings = kpi.items.filter((item: any) => 
+      !item.is_qualitative && 
+      managerRatings[item.id] && 
+      managerRatings[item.id] > 0 &&
+      (!item.exclude_from_calculation || item.exclude_from_calculation === 0)
+    );
+    
+    const itemRatingsSum = itemsWithRatings.reduce((acc, item: any) => 
+      acc + (managerRatings[item.id] || 0), 0);
+    
+    // Include accomplishments with manager_rating
+    const accomplishmentRatings = accomplishments
+      .filter(acc => acc.manager_rating !== null && acc.manager_rating !== undefined && acc.manager_rating > 0)
+      .map(acc => Number(acc.manager_rating) || 0);
+    const accomplishmentsSum = accomplishmentRatings.reduce((acc: number, rating: number) => acc + rating, 0);
+    
+    const totalCount = itemsWithRatings.length + accomplishmentRatings.length;
+    
+    console.log('🔢 [managerAvg] Calculation details:', {
+      itemsWithRatingsCount: itemsWithRatings.length,
+      itemRatingsSum,
+      accomplishmentRatingsCount: accomplishmentRatings.length,
+      accomplishmentsSum,
+      totalCount
+    });
+    
+    if (totalCount === 0) {
+      console.log('⚠️ [managerAvg] No ratings yet, returning 0');
+      return 0;
+    }
+    
+    const average = (itemRatingsSum + accomplishmentsSum) / totalCount;
+    console.log('✅ [managerAvg] Calculated average:', average);
+    return average;
+  })();
+  
   const managerFinalRating = typeof review?.manager_final_rating === 'number' 
     ? review.manager_final_rating 
     : managerAvg;
+  
+  // Manager percentage: Calculate in real-time (like SelfRating does)
+  const managerFinalRatingPercentage = (() => {
+    console.log('🔄 [managerPercentage calculation] START', {
+      hasBackendValue: typeof review?.manager_final_rating_percentage === 'number',
+      backendValue: review?.manager_final_rating_percentage,
+      managerAvg,
+      ratingOptionsCount: ratingOptions.length
+    });
+    
+    // If already submitted, use backend value
+    if (typeof review?.manager_final_rating_percentage === 'number') {
+      console.log('✅ [managerPercentage] Using backend value:', review.manager_final_rating_percentage);
+      return review.manager_final_rating_percentage;
+    }
+    
+    // Calculate percentage in real-time
+    if (managerAvg === 0) {
+      console.log('⚠️ [managerPercentage] Manager average is 0, returning null');
+      return null;
+    }
+    
+    if (ratingOptions.length === 0) {
+      console.log('⚠️ [managerPercentage] No rating options, returning null');
+      return null;
+    }
+    
+    const maxRating = Math.max(...ratingOptions.map(opt => parseFloat(String(opt.rating_value))));
+    console.log('🔢 [managerPercentage] MaxRating:', maxRating);
+    
+    if (maxRating === 0) {
+      console.log('⚠️ [managerPercentage] MaxRating is 0, returning null');
+      return null;
+    }
+    
+    const percentage = (managerAvg / maxRating) * 100;
+    console.log('✅ [managerPercentage] Calculated percentage:', percentage);
+    return percentage;
+  })();
+  
+  console.log('📊 [useManagerKPIReview] Manager data (real-time):', {
+    manager_rating_from_backend: review?.manager_rating,
+    manager_final_rating_percentage_from_backend: review?.manager_final_rating_percentage,
+    computed_managerAvg: managerAvg,
+    computed_managerFinalRating: managerFinalRating,
+    computed_managerFinalRatingPercentage: managerFinalRatingPercentage,
+    ratingOptionsCount: ratingOptions.length
+  });
 
   return {
     // State
@@ -844,6 +1008,9 @@ export const useManagerKPIReview = (): UseManagerKPIReviewReturn => {
     managerAvg,
     employeeFinalRating,
     managerFinalRating,
+    employeeRatingPercentage,
+    employeeFinalRatingPercentage,
+    managerFinalRatingPercentage,
     
     // Actions
     setManagerRatings,

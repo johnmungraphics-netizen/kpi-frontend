@@ -46,7 +46,7 @@ export const RatingSummaryCard: React.FC<RatingSummaryCardProps> = ({
                 </span>
               </div>
               <span className="text-lg text-gray-500">
-                ({((displayEmployeeFinal * 100) / 1.5).toFixed(1)}%)
+                ({((displayEmployeeFinal * 100) / 1.25).toFixed(1)}%)
               </span>
             </div>
             <p className="text-xs text-gray-500 mt-1">{getPerformanceLevel(displayEmployeeFinal)}</p>
@@ -70,7 +70,7 @@ export const RatingSummaryCard: React.FC<RatingSummaryCardProps> = ({
               </span>
             </div>
             <span className="text-lg text-gray-500">
-              ({((displayManagerFinal * 100) / 1.5).toFixed(1)}%)
+              ({((displayManagerFinal * 100) / 1.25).toFixed(1)}%)
             </span>
           </div>
           <p className="text-xs text-gray-500 mt-1">{getPerformanceLevel(displayManagerFinal)}</p>

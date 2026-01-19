@@ -39,6 +39,9 @@ const ManagerKPIReview: React.FC = () => {
     managerAvg,
     employeeFinalRating,
     managerFinalRating,
+    employeeRatingPercentage,
+    employeeFinalRatingPercentage,
+    managerFinalRatingPercentage,
     setQualitativeRatings,
     setQualitativeComments,
     setOverallComment,
@@ -265,10 +268,17 @@ const ManagerKPIReview: React.FC = () => {
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap" style={{ minWidth: '180px' }}>CURRENT PERFORMANCE STATUS</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap" style={{ minWidth: '150px' }}>TARGET VALUE</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap" style={{ minWidth: '150px' }}>ACTUAL VALUE ACHIEVED</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap" style={{ minWidth: '150px' }}>PERCENTAGE VALUE OBTAINED</th>
+                {/* Percentage Value Obtained - Only for Actual vs Target */}
+                {calculationMethodName.includes('Actual vs Target') && (
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap" style={{ minWidth: '150px' }}>PERCENTAGE VALUE OBTAINED</th>
+                )}
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap" style={{ minWidth: '120px' }}>MEASURE UNIT</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap" style={{ minWidth: '150px' }}>EXPECTED COMPLETION DATE</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap" style={{ minWidth: '120px' }}>GOAL WEIGHT</th>
+                {/* Goal Weight - Show for all methods but emphasize when needed */}
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap" style={{ minWidth: '120px' }}>
+                  GOAL WEIGHT{(calculationMethodName.includes('Goal Weight') || calculationMethodName.includes('Actual vs Target')) && <span className="text-red-600">*</span>}
+                </th>
+                {/* Employee Self Rating - Only when enabled */}
                 {!isSelfRatingDisabled && (
                   <>
                     <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap" style={{ minWidth: '150px' }}>EMPLOYEE SELF RATING</th>
@@ -276,7 +286,10 @@ const ManagerKPIReview: React.FC = () => {
                   </>
                 )}
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap" style={{ minWidth: '200px' }}>MANAGER RATING</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap" style={{ minWidth: '150px' }}>MANAGER RATING %</th>
+                {/* Manager Rating % - Only for Actual vs Target and Goal Weight */}
+                {(calculationMethodName.includes('Actual vs Target') || calculationMethodName.includes('Goal Weight')) && (
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap" style={{ minWidth: '150px' }}>MANAGER RATING %</th>
+                )}
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap" style={{ minWidth: '200px' }}>MANAGER COMMENT</th>
               </tr>
             </thead>
@@ -293,7 +306,12 @@ const ManagerKPIReview: React.FC = () => {
                   const currentStatus = currentPerformanceStatuses[item.id] || item.current_performance_status || '';
                   const targetValueNum = targetValue ? parseFloat(String(targetValue)) : 0;
                   
-                  // Calculate percentage value obtained: (actual / target) * 100
+                  // Determine calculation method
+                  const isActualValueMethod = calculationMethodName.includes('Actual vs Target');
+                  const isGoalWeightMethod = calculationMethodName.includes('Goal Weight');
+                  const isNormalCalculation = calculationMethodName.includes('Normal');
+                  
+                  // Calculate percentage value obtained: (actual / target) * 100 (for Actual vs Target)
                   const percentageValueObtainedNum = actualValue && targetValueNum > 0 
                     ? (parseFloat(actualValue) / targetValueNum) * 100
                     : 0;
@@ -301,32 +319,28 @@ const ManagerKPIReview: React.FC = () => {
                     ? percentageValueObtainedNum.toFixed(2) + '%'
                     : 'N/A';
                   
-                  // Calculate manager rating percentage
-                  // For Actual vs Target method: Percentage Value Obtained * Goal Weight
-                  // For other methods: (rating / max_rating) * 100
+                  // Parse goal weight
                   const goalWeightNum = goalWeight ? parseFloat(String(goalWeight).replace('%', '')) / 100 : 0;
-                  const isActualValueMethod = calculationMethodName.includes('Actual vs Target');
                   
-                  // Debug logging
-                  if (item.id && actualValue) {
-                    console.log(`📊 [KPI ${item.id}] Calculation Method: ${calculationMethodName}`);
-                    console.log(`📊 [KPI ${item.id}] Is Actual Value Method: ${isActualValueMethod}`);
-                    console.log(`📊 [KPI ${item.id}] Actual: ${actualValue}, Target: ${targetValue}, Goal Weight: ${goalWeight}`);
-                    console.log(`📊 [KPI ${item.id}] Percentage Obtained: ${percentageValueObtainedNum.toFixed(2)}%, Goal Weight Num: ${goalWeightNum}`);
-                  }
+                  // Calculate manager rating percentage based on method
+                  let managerRatingPercentage = 'N/A';
                   
-                  const managerRatingPercentage = isActualValueMethod
-                    ? (percentageValueObtainedNum > 0 && goalWeightNum > 0
-                        ? (percentageValueObtainedNum * goalWeightNum).toFixed(2) + '%'
-                        : 'N/A')
-                    : (mgrRating > 0 
-                        ? ((mgrRating / 1.5) * 100).toFixed(2) + '%'
-                        : 'N/A');
-                  
-                  if (item.id && actualValue) {
-                    console.log(`✅ [KPI ${item.id}] Manager Rating %: ${managerRatingPercentage}`);
-                    if (isActualValueMethod) {
-                      console.log(`✅ [KPI ${item.id}] Formula: ${percentageValueObtainedNum.toFixed(2)}% * ${goalWeightNum} = ${managerRatingPercentage}`);
+                  if (isActualValueMethod) {
+                    // Actual vs Target: Percentage Value Obtained * Goal Weight
+                    if (percentageValueObtainedNum > 0 && goalWeightNum > 0) {
+                      managerRatingPercentage = (percentageValueObtainedNum * goalWeightNum).toFixed(2) + '%';
+                    }
+                  } else if (isGoalWeightMethod) {
+                    // Goal Weight: (rating / max_rating) * goal_weight
+                    if (mgrRating > 0 && goalWeightNum > 0) {
+                      const ratingPercentage = (mgrRating / 1.25) * 100; // Max rating is 1.25
+                      managerRatingPercentage = (ratingPercentage * goalWeightNum).toFixed(2) + '%';
+                    }
+                  } else if (isNormalCalculation) {
+                    // Normal Calculation: Individual rating percentage (for display only)
+                    // Final calculation is done at the summary level
+                    if (mgrRating > 0) {
+                      managerRatingPercentage = ((mgrRating / 1.25) * 100).toFixed(2) + '%';
                     }
                   }
                   
@@ -403,18 +417,20 @@ const ManagerKPIReview: React.FC = () => {
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                         />
                       </td>
-                      {/* Percentage Value Obtained */}
-                      <td className="px-6 py-4">
-                        <span className={`text-sm font-semibold ${
-                          actualValue && targetValueNum > 0 ? 
-                            (parseFloat(actualValue) / targetValueNum) >= 1 ? 'text-green-600' : 
-                            (parseFloat(actualValue) / targetValueNum) >= 0.7 ? 'text-orange-600' : 
-                            'text-red-600'
-                          : 'text-gray-400'
-                        }`}>
-                          {percentageValueObtained}
-                        </span>
-                      </td>
+                      {/* Percentage Value Obtained - Only for Actual vs Target */}
+                      {isActualValueMethod && (
+                        <td className="px-6 py-4">
+                          <span className={`text-sm font-semibold ${
+                            actualValue && targetValueNum > 0 ? 
+                              (parseFloat(actualValue) / targetValueNum) >= 1 ? 'text-green-600' : 
+                              (parseFloat(actualValue) / targetValueNum) >= 0.7 ? 'text-orange-600' : 
+                              'text-red-600'
+                            : 'text-gray-400'
+                          }`}>
+                            {percentageValueObtained}
+                          </span>
+                        </td>
+                      )}
                       {/* Measure Unit */}
                       <td className="px-6 py-4">
                         <span className={`inline-flex items-center px-2 py-1 rounded text-sm whitespace-nowrap ${item.is_qualitative ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
@@ -555,32 +571,34 @@ const ManagerKPIReview: React.FC = () => {
                           </div>
                         )}
                       </td>
-                      {/* Manager Rating % */}
-                      <td className="px-6 py-4">
-                        <input
-                          type="text"
-                          value={managerRatingPercentages[item.id] || managerRatingPercentage.replace('%', '')}
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            setManagerRatingPercentages({ 
-                              ...managerRatingPercentages, 
-                              [item.id]: value 
-                            });
-                          }}
-                          placeholder="0.00"
-                          className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-sm font-semibold ${
-                            isActualValueMethod ? (
-                              percentageValueObtainedNum >= 100 ? 'text-green-600' :
-                              percentageValueObtainedNum >= 70 ? 'text-orange-600' :
-                              percentageValueObtainedNum > 0 ? 'text-red-600' : 'text-gray-400'
-                            ) : (
-                              mgrRating >= 1.5 ? 'text-green-600' : 
-                              mgrRating >= 1.25 ? 'text-orange-600' : 
-                              mgrRating > 0 ? 'text-red-600' : 'text-gray-400'
-                            )
-                          }`}
-                        />
-                      </td>
+                      {/* Manager Rating % - Only for Actual vs Target and Goal Weight */}
+                      {(isActualValueMethod || isGoalWeightMethod) && (
+                        <td className="px-6 py-4">
+                          <input
+                            type="text"
+                            value={managerRatingPercentages[item.id] || managerRatingPercentage.replace('%', '')}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              setManagerRatingPercentages({ 
+                                ...managerRatingPercentages, 
+                                [item.id]: value 
+                              });
+                            }}
+                            placeholder="0.00"
+                            className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-sm font-semibold ${
+                              isActualValueMethod ? (
+                                percentageValueObtainedNum >= 100 ? 'text-green-600' :
+                                percentageValueObtainedNum >= 70 ? 'text-orange-600' :
+                                percentageValueObtainedNum > 0 ? 'text-red-600' : 'text-gray-400'
+                              ) : (
+                                mgrRating >= 1.5 ? 'text-green-600' : 
+                                mgrRating >= 1.25 ? 'text-orange-600' : 
+                                mgrRating > 0 ? 'text-red-600' : 'text-gray-400'
+                              )
+                            }`}
+                          />
+                        </td>
+                      )}
                       {/* Manager Comment */}
                       <td className="px-6 py-4">
                         <div className="flex items-start space-x-2">
@@ -706,12 +724,19 @@ const ManagerKPIReview: React.FC = () => {
         {/* Average Ratings Summary */}
         <div className="p-6 bg-gray-50 border-t border-gray-200">
           <div className="grid grid-cols-2 gap-6">
+            {/* Employee Section - Show if self-rating enabled and not Actual vs Target */}
             {!isSelfRatingDisabled && !calculationMethodName.includes('Actual vs Target') && (
               <div>
                 <p className="text-sm font-medium text-gray-600 mb-1">Employee Average Rating</p>
                 <p className="text-lg font-semibold text-gray-700">
                   {employeeAvg > 0 ? employeeAvg.toFixed(2) : 'N/A'}
                 </p>
+                {/* Show employee rating percentage only for Normal Calculation */}
+                {calculationMethodName.includes('Normal') && employeeRatingPercentage !== null && (
+                  <p className="text-sm font-medium text-blue-600 mt-1">
+                    Rating %: {employeeRatingPercentage.toFixed(2)}%
+                  </p>
+                )}
                 <p className="text-sm font-medium text-gray-600 mt-3 mb-1">Employee Final Rating</p>
                 <p className="text-2xl font-bold text-blue-600">
                   {employeeFinalRating > 0 ? employeeFinalRating.toFixed(2) : 'N/A'}
@@ -719,22 +744,27 @@ const ManagerKPIReview: React.FC = () => {
                 {employeeFinalRating > 0 && (
                   <>
                     <p className="text-sm text-gray-500 mt-1">({getRatingLabel(employeeFinalRating)})</p>
-                    <p className="text-sm font-medium text-blue-600 mt-2">
-                      {((employeeFinalRating / 1.5) * 100).toFixed(2)}%
-                    </p>
+                    {/* Show employee final rating percentage only for Normal Calculation */}
+                    {calculationMethodName.includes('Normal') && employeeFinalRatingPercentage !== null && (
+                      <p className="text-sm font-medium text-blue-600 mt-2">
+                        Final Rating %: {employeeFinalRatingPercentage.toFixed(2)}%
+                      </p>
+                    )}
                   </>
                 )}
               </div>
             )}
             <div className={isSelfRatingDisabled || calculationMethodName.includes('Actual vs Target') ? 'col-span-2' : ''}>
               {calculationMethodName.includes('Actual vs Target') ? (
+                // Actual vs Target: Sum of all Manager Rating % values (exclude items with exclude_from_calculation = 1)
                 <div>
-                  <p className="text-sm font-medium text-gray-600 mb-1">Final Rating Percentage</p>
+                  <p className="text-sm font-medium text-gray-600 mb-1">Manager Final Rating Percentage</p>
                   <p className="text-4xl font-bold text-purple-600">
                     {(() => {
-                      // Calculate sum of all Manager Rating % values
                       let totalRatingPercentage = 0;
-                      kpi?.items?.forEach(item => {
+                      // Filter out items excluded from calculation
+                      const includedItems = kpi?.items?.filter(item => !item.exclude_from_calculation || item.exclude_from_calculation === 0) || [];
+                      includedItems.forEach(item => {
                         const actualValue = actualValues[item.id];
                         const targetValue = targetValues[item.id] || item.target_value;
                         const goalWeight = goalWeights[item.id] || item.goal_weight || item.measure_criteria;
@@ -750,8 +780,68 @@ const ManagerKPIReview: React.FC = () => {
                       return totalRatingPercentage > 0 ? `${totalRatingPercentage.toFixed(2)}%` : 'Not calculated';
                     })()}
                   </p>
+                  <p className="text-xs text-gray-500 mt-2">
+                    Sum of (Actual/Target × 100) × Goal Weight for all items
+                  </p>
+                </div>
+              ) : calculationMethodName.includes('Goal Weight') ? (
+                // Goal Weight: Sum of weighted scores (exclude items with exclude_from_calculation = 1)
+                // Include accomplishments in calculation
+                <div>
+                  <p className="text-sm font-medium text-gray-600 mb-1">Manager Final Weighted Percentage</p>
+                  <p className="text-4xl font-bold text-purple-600">
+                    {(() => {
+                      let totalWeightedScore = 0;
+                      // Filter out items excluded from calculation
+                      const includedItems = kpi?.items?.filter(item => !item.exclude_from_calculation || item.exclude_from_calculation === 0) || [];
+                      includedItems.forEach(item => {
+                        const mgrRating = managerRatings[item.id] || 0;
+                        const goalWeight = goalWeights[item.id] || item.goal_weight || item.measure_criteria;
+                        const goalWeightNum = goalWeight ? parseFloat(String(goalWeight).replace('%', '')) / 100 : 0;
+                        
+                        if (mgrRating > 0 && goalWeightNum > 0) {
+                          const ratingPercentage = (mgrRating / 1.25) * 100;
+                          const weightedScore = ratingPercentage * goalWeightNum;
+                          totalWeightedScore += weightedScore;
+                        }
+                      });
+                      
+                      // Include accomplishments with manager_rating in calculation
+                      // Note: Accomplishments don't have explicit weights, so we distribute remaining weight equally
+                      const accomplishmentsWithRatings = accomplishments.filter(acc => 
+                        (acc.manager_rating !== null && acc.manager_rating !== undefined && acc.manager_rating > 0)
+                      );
+                      if (accomplishmentsWithRatings.length > 0) {
+                        const totalItemWeight = includedItems.reduce((sum, item) => {
+                          const goalWeight = goalWeights[item.id] || item.goal_weight || item.measure_criteria;
+                          const goalWeightNum = goalWeight ? parseFloat(String(goalWeight).replace('%', '')) / 100 : 0;
+                          return sum + goalWeightNum;
+                        }, 0);
+                        const remainingWeight = Math.max(0, 1 - totalItemWeight);
+                        const accomplishmentWeight = accomplishmentsWithRatings.length > 0 
+                          ? remainingWeight / accomplishmentsWithRatings.length 
+                          : 0;
+                        
+                        accomplishmentsWithRatings.forEach(acc => {
+                          const rating = acc.manager_rating;
+                          if (rating !== null && rating !== undefined && rating > 0) {
+                            const ratingPercentage = (rating / 1.25) * 100;
+                            const weightedScore = ratingPercentage * accomplishmentWeight;
+                            totalWeightedScore += weightedScore;
+                          }
+                        });
+                      }
+                      
+                      return totalWeightedScore > 0 ? `${totalWeightedScore.toFixed(2)}%` : 'Not calculated';
+                    })()}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-2">
+                    Sum of (Rating/Max × 100) × Goal Weight for all items. Goal weights should total 100%.
+                  </p>
                 </div>
               ) : (
+                // Normal Calculation: Display ratings and percentages
+                // Employee percentages from backend, Manager percentages calculated in real-time
                 <>
                   <p className="text-sm font-medium text-gray-600 mb-1">Manager Average Rating</p>
                   <p className="text-lg font-semibold text-gray-700">
@@ -764,11 +854,17 @@ const ManagerKPIReview: React.FC = () => {
                   {managerFinalRating > 0 && (
                     <>
                       <p className="text-sm text-gray-500 mt-1">({getRatingLabel(managerFinalRating)})</p>
-                      <p className="text-sm font-medium text-purple-600 mt-2">
-                        Final Rating %: {((managerFinalRating / 1.5) * 100).toFixed(2)}%
-                      </p>
+                      {/* Show manager final rating percentage - calculated in real-time or from backend */}
+                      {managerFinalRatingPercentage !== null && (
+                        <p className="text-sm font-medium text-purple-600 mt-2">
+                          Manager Final Rating %: {managerFinalRatingPercentage.toFixed(2)}%
+                        </p>
+                      )}
                     </>
                   )}
+                  <p className="text-xs text-gray-500 mt-3">
+                    Percentage: (Total Score / Total Possible Score) × 100
+                  </p>
                 </>
               )}
             </div>

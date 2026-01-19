@@ -147,6 +147,7 @@ export const getRatingLabel = (rating: number): string => {
 
 /**
  * Calculate average rating from item ratings and accomplishments
+ * Excludes items marked with exclude_from_calculation = 1
  */
 export const calculateAverageRating = (
   items: KPIItem[],
@@ -154,13 +155,20 @@ export const calculateAverageRating = (
   accomplishments?: any[]
 ): number => {
   if (!items || items.length === 0) return 0;
-  const itemRatings = items.map((item) => ratingsMap[item.id] || 0).filter(r => r > 0);
   
-  // Include manager ratings from accomplishments if available
+  // Filter out items excluded from calculation (exclude_from_calculation === 1)
+  const includedItems = items.filter(item => !item.exclude_from_calculation || item.exclude_from_calculation === 0);
+  const itemRatings = includedItems.map((item) => ratingsMap[item.id] || 0).filter(r => r > 0);
+  
+  // Include ratings from accomplishments if available
+  // Use manager_rating if available, otherwise use employee_rating
   const accomplishmentRatings = accomplishments 
     ? accomplishments
-        .filter(acc => acc.manager_rating !== null && acc.manager_rating !== undefined && acc.manager_rating > 0)
-        .map(acc => acc.manager_rating)
+        .filter(acc => {
+          const rating = acc.manager_rating ?? acc.employee_rating;
+          return rating !== null && rating !== undefined && rating > 0;
+        })
+        .map(acc => acc.manager_rating ?? acc.employee_rating)
     : [];
   
   const allRatings = [...itemRatings, ...accomplishmentRatings];
@@ -180,6 +188,7 @@ export const roundToAllowedRating = (averageRating: number): number => {
 
 /**
  * Validate all KPI items are rated
+ * Note: Items excluded from calculation (exclude_from_calculation === 1) still need to be rated
  */
 export const validateAllItemsRated = (
   items: KPIItem[],
@@ -194,11 +203,11 @@ export const validateAllItemsRated = (
   const missingItems: Array<{ item_id: number; title: string; type: 'qualitative' | 'quantitative'; value: any; parsed?: number | null }> = [];
 
   const allValid = items.every((item) => {
-    // Validate qualitative items
+    // Validate qualitative items (still required even if excluded from calculation)
     if (item.is_qualitative) {
       const qualRating = qualitativeRatings[item.id];
       const hasValue = qualRating !== undefined && qualRating !== null && String(qualRating).trim().length > 0;
-      console.log(`📝 Qualitative item ${item.id} (${item.title}): rating="${qualRating}", valid=${hasValue}`);
+      console.log(`📝 Qualitative item ${item.id} (${item.title}): rating="${qualRating}", valid=${hasValue}, excluded=${item.exclude_from_calculation === 1}`);
       if (!hasValue) {
         missingItems.push({ item_id: item.id, title: item.title || '', type: 'qualitative', value: qualRating ?? null, parsed: null });
         return false;
@@ -206,11 +215,11 @@ export const validateAllItemsRated = (
       return true;
     }
 
-    // Validate quantitative items - accept any numeric rating > 0
+    // Validate quantitative items - accept any numeric rating > 0 (still required even if excluded from calculation)
     const rating = managerRatings[item.id];
     const ratingNum = !isNaN(parseFloat(String(rating))) ? parseFloat(String(rating)) : NaN;
     const isValid = rating !== undefined && rating !== null && !isNaN(ratingNum) && ratingNum > 0;
-    console.log(`📝 Quantitative item ${item.id} (${item.title}): rating=${rating}, parsed=${ratingNum}, valid=${isValid}`);
+    console.log(`📝 Quantitative item ${item.id} (${item.title}): rating=${rating}, parsed=${ratingNum}, valid=${isValid}, excluded=${item.exclude_from_calculation === 1}`);
     if (!isValid) {
       missingItems.push({ item_id: item.id, title: item.title || '', type: 'quantitative', value: rating ?? null, parsed: isNaN(ratingNum) ? null : ratingNum });
       return false;

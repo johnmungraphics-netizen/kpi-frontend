@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
 import { useToast } from '../../../context/ToastContext';
+import { useCompanyFeatures } from '../../../hooks/useCompanyFeatures';
 import api from '../../../services/api';
 import { KPI, Accomplishment } from '../../../types';
 import { RatingOption } from '../types';
@@ -28,6 +29,7 @@ export const useEmployeeSelfRating = () => {
   const [saving, setSaving] = useState(false);
   const [ratings, setRatings] = useState<Record<number, number>>({});
   const [comments, setComments] = useState<Record<number, string>>({});
+  const [goalWeights, setGoalWeights] = useState<Record<number, string>>({});
   const [employeeSignature, setEmployeeSignature] = useState('');
   const [reviewDate, setReviewDate] = useState<Date | null>(new Date()); // Changed to Date | null
   const [ratingOptions, setRatingOptions] = useState<RatingOption[]>([]);
@@ -45,6 +47,9 @@ export const useEmployeeSelfRating = () => {
     title: '',
     value: '',
   });
+
+  // Get calculation method from department features
+  const { getCalculationMethodName } = useCompanyFeatures(Number(kpiId));
 
   useEffect(() => {
     console.log('🔄 [useEmployeeSelfRating] useEffect triggered with kpiId:', kpiId);
@@ -299,8 +304,9 @@ export const useEmployeeSelfRating = () => {
     try {
       setSaving(true);
       
-      // Calculate average rating (from numeric items + accomplishments)
-      const itemRatingValues = itemsNeedingRatings.map((item: any) => ratings[item.id] || 0);
+      // Calculate average rating (from numeric items + accomplishments) - exclude items marked with exclude_from_calculation = 1
+      const itemsIncludedInCalculation = itemsNeedingRatings.filter((item: any) => !item.exclude_from_calculation || item.exclude_from_calculation === 0);
+      const itemRatingValues = itemsIncludedInCalculation.map((item: any) => ratings[item.id] || 0);
       const accomplishmentRatings = accomplishments
         .filter(acc => acc.employee_rating !== null && acc.employee_rating !== undefined && acc.employee_rating > 0)
         .map(acc => Number(acc.employee_rating) || 0);
@@ -342,14 +348,45 @@ export const useEmployeeSelfRating = () => {
         payload: {
           overall_rating: roundedRating,
           average_rating: averageRating,
+          employee_rating_percentage: employeeRatingPercentage,
           item_ratings_count: itemRatings.length,
           accomplishments_count: accomplishments.length
         }
       });
 
-      await api.post(`/kpi-review/${kpiId}/self-rating`, {
+      console.log('🏆 [useEmployeeSelfRating] Accomplishments being submitted:', {
+        count: accomplishments.length,
+        accomplishments: accomplishments.map(acc => ({
+          id: acc.id,
+          title: acc.title,
+          description: acc.description?.substring(0, 50),
+          employee_rating: acc.employee_rating,
+          employee_comment: acc.employee_comment?.substring(0, 30),
+          item_order: acc.item_order,
+          review_id: acc.review_id
+        }))
+      });
+
+      console.log('📤 [useEmployeeSelfRating] FULL REQUEST PAYLOAD:', {
         overall_rating: roundedRating,
         average_rating: averageRating,
+        employee_rating_percentage: employeeRatingPercentage,
+        item_ratings: itemRatings.length,
+        employee_signature: employeeSignature?.substring(0, 50),
+        review_period: kpi?.period || 'quarterly',
+        review_quarter: kpi?.quarter,
+        review_year: kpi?.year,
+        major_accomplishments: majorAccomplishments?.substring(0, 50),
+        disappointments: disappointments?.substring(0, 50),
+        improvement_needed: improvementNeeded?.substring(0, 50),
+        accomplishments: accomplishments,
+        future_plan: futurePlan?.substring(0, 50)
+      });
+
+      const submitResponse = await api.post(`/kpi-review/${kpiId}/self-rating`, {
+        overall_rating: roundedRating,
+        average_rating: averageRating,
+        employee_rating_percentage: employeeRatingPercentage,
         item_ratings: itemRatings,
         employee_signature: employeeSignature,
         review_period: kpi?.period || 'quarterly',
@@ -363,6 +400,11 @@ export const useEmployeeSelfRating = () => {
       });
       
       console.log('✅ [useEmployeeSelfRating] Self-rating submitted successfully');
+      console.log('📥 [useEmployeeSelfRating] Backend response:', {
+        status: submitResponse.status,
+        data: submitResponse.data,
+        review_id: submitResponse.data?.review?.id || submitResponse.data?.id
+      });
       
       // Clear draft
       localStorage.removeItem(`self-rating-draft-${kpiId}`);
@@ -406,9 +448,13 @@ export const useEmployeeSelfRating = () => {
     setTextModal((prev) => ({ ...prev, value }));
   };
 
-  // Calculate average rating (from items + accomplishments)
+  // Calculate average rating (from items + accomplishments) - exclude items marked with exclude_from_calculation = 1
   const averageRating = (() => {
-    const itemsWithRatings = kpi?.items?.filter((item: any) => !item.is_qualitative && ratings[item.id]) || [];
+    const itemsWithRatings = kpi?.items?.filter((item: any) => 
+      !item.is_qualitative && 
+      ratings[item.id] && 
+      (!item.exclude_from_calculation || item.exclude_from_calculation === 0)
+    ) || [];
     const itemRatingsSum = itemsWithRatings.reduce((acc, item: any) => acc + (ratings[item.id] || 0), 0);
     
     const accomplishmentRatings = accomplishments
@@ -420,6 +466,119 @@ export const useEmployeeSelfRating = () => {
     if (totalCount === 0) return 0;
     
     return (itemRatingsSum + accomplishmentsSum) / totalCount;
+  })();
+
+  // Calculate employee rating percentage based on calculation method
+  const employeeRatingPercentage = (() => {
+    if (!kpi) return 0;
+    
+    const calculationMethodName = kpi.period ? getCalculationMethodName(kpi.period) : 'Normal Calculation';
+    const includedItems = kpi.items?.filter((item: any) => 
+      !item.is_qualitative && 
+      (!item.exclude_from_calculation || item.exclude_from_calculation === 0)
+    ) || [];
+    
+    // Include accomplishments with employee_rating
+    const accomplishmentsWithRatings = accomplishments.filter(acc => 
+      acc.employee_rating !== null && acc.employee_rating !== undefined && acc.employee_rating > 0
+    );
+    
+    // Get the maximum rating value from rating options based on KPI period
+    console.log('🔍 [employeeRatingPercentage] Rating Options:', {
+      kpiPeriod: kpi.period,
+      ratingOptionsCount: ratingOptions.length,
+      ratingOptions: ratingOptions.map(opt => ({ value: opt.rating_value, label: opt.label })),
+      calculationMethod: calculationMethodName
+    });
+    
+    const maxRating = ratingOptions.length > 0 
+      ? Math.max(...ratingOptions.map(option => option.rating_value)) 
+      : 0;
+    
+    console.log('📊 [employeeRatingPercentage] Max Rating Calculated:', {
+      maxRating,
+      hasRatingOptions: ratingOptions.length > 0,
+      includedItemsCount: includedItems.length,
+      accomplishmentsCount: accomplishmentsWithRatings.length
+    });
+    
+    if (maxRating === 0) {
+      console.error('❌ [employeeRatingPercentage] ERROR: maxRating is 0! Cannot calculate percentage.');
+      return 0;
+    }
+    
+    if (calculationMethodName.includes('Goal Weight')) {
+      // Goal Weight Calculation: Sum of (rating / max_rating * 100) × weight
+      console.log('⚖️ [Goal Weight Calculation] Starting calculation with maxRating:', maxRating);
+      let totalWeightedScore = 0;
+      
+      // Calculate for items
+      includedItems.forEach(item => {
+        const empRating = ratings[item.id] || 0;
+        const goalWeight = goalWeights[item.id] || item.goal_weight || item.measure_criteria;
+        const goalWeightNum = goalWeight ? parseFloat(String(goalWeight).replace('%', '')) / 100 : 0;
+        
+        if (empRating > 0 && goalWeightNum > 0) {
+          const ratingPercentage = (empRating / maxRating) * 100;
+          const weightedScore = ratingPercentage * goalWeightNum;
+          totalWeightedScore += weightedScore;
+        }
+      });
+      
+      // Include accomplishments - distribute remaining weight equally
+      if (accomplishmentsWithRatings.length > 0) {
+        const totalItemWeight = includedItems.reduce((sum, item) => {
+          const goalWeight = goalWeights[item.id] || item.goal_weight || item.measure_criteria;
+          const goalWeightNum = goalWeight ? parseFloat(String(goalWeight).replace('%', '')) / 100 : 0;
+          return sum + goalWeightNum;
+        }, 0);
+        const remainingWeight = Math.max(0, 1 - totalItemWeight);
+        const accomplishmentWeight = accomplishmentsWithRatings.length > 0 
+          ? remainingWeight / accomplishmentsWithRatings.length 
+          : 0;
+        
+        accomplishmentsWithRatings.forEach(acc => {
+          const rating = acc.employee_rating;
+          if (rating !== null && rating !== undefined && rating > 0) {
+            const ratingPercentage = (Number(rating) / maxRating) * 100;
+            const weightedScore = ratingPercentage * accomplishmentWeight;
+            totalWeightedScore += weightedScore;
+          }
+        });
+      }
+      
+      return totalWeightedScore;
+    } else {
+      // Normal Calculation: (total score / total possible score) × 100
+      const totalQuestions = includedItems.length + accomplishmentsWithRatings.length;
+      const totalPossibleScore = totalQuestions * maxRating;
+      
+      // Sum ratings for included items
+      const totalItemScore = includedItems.reduce((sum, item) => sum + (ratings[item.id] || 0), 0);
+      
+      // Sum ratings for accomplishments
+      const totalAccomplishmentScore = accomplishmentsWithRatings.reduce((sum, acc) => {
+        return sum + (Number(acc.employee_rating) || 0);
+      }, 0);
+      
+      const totalScore = totalItemScore + totalAccomplishmentScore;
+      const percentage = totalPossibleScore > 0 ? (totalScore / totalPossibleScore) * 100 : 0;
+      
+      console.log('📊 [Normal Calculation] Final Calculation:', {
+        kpiPeriod: kpi.period,
+        calculationMethod: calculationMethodName,
+        totalQuestions,
+        maxRating,
+        totalPossibleScore,
+        totalItemScore,
+        totalAccomplishmentScore,
+        totalScore,
+        formula: `(${totalScore} / ${totalPossibleScore}) * 100`,
+        percentage: percentage.toFixed(2) + '%'
+      });
+      
+      return percentage;
+    }
   })();
 
   // Calculate completion percentage
@@ -437,6 +596,7 @@ export const useEmployeeSelfRating = () => {
     saving,
     ratings,
     comments,
+    goalWeights,
     employeeSignature,
     reviewDate,
     ratingOptions,
@@ -449,6 +609,7 @@ export const useEmployeeSelfRating = () => {
     textModal,
     averageRating,
     completion,
+    employeeRatingPercentage,
     setEmployeeSignature,
     setReviewDate, // Now returns Date | null
     setMajorAccomplishments,

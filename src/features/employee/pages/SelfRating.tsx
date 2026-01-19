@@ -7,6 +7,7 @@ import TextModal from '../../../components/TextModal';
 import AccomplishmentsTable from '../../../components/AccomplishmentsTable';
 import { useEmployeeSelfRating } from '../hooks';
 import { getRatingLabel } from '../hooks/selfRatingUtils';
+import { useCompanyFeatures } from '../../../hooks/useCompanyFeatures';
 import { KPIItem } from '../../../types';
 import { RatingOption } from '../types';
 
@@ -30,6 +31,8 @@ const SelfRating: React.FC = () => {
     textModal,
     averageRating,
     completion,
+    employeeRatingPercentage,
+    goalWeights,
     setEmployeeSignature,
     setReviewDate,
     setMajorAccomplishments,
@@ -47,7 +50,22 @@ const SelfRating: React.FC = () => {
     navigate,
   } = useEmployeeSelfRating();
 
-  console.log('🎨 [SelfRating] Component render:', { loading, hasKpi: !!kpi, kpiId: kpi?.id });
+  // Department feature detection for calculation method
+  const { getCalculationMethodName, isEmployeeSelfRatingEnabled } = useCompanyFeatures(kpi?.id);
+  
+  // Get calculation method based on KPI period
+  const kpiPeriod = kpi?.period?.toLowerCase() === 'yearly' ? 'yearly' : 'quarterly';
+  const calculationMethodName = kpi?.period ? getCalculationMethodName(kpi.period) : 'Normal Calculation';
+  const isSelfRatingEnabled = kpi?.period ? isEmployeeSelfRatingEnabled(kpiPeriod) : false;
+
+  console.log('🎨 [SelfRating] Component render:', { 
+    loading, 
+    hasKpi: !!kpi, 
+    kpiId: kpi?.id,
+    calculationMethodName,
+    kpiPeriod,
+    isSelfRatingEnabled
+  });
 
   if (loading) {
     console.log('⏳ [SelfRating] Showing loading state');
@@ -105,22 +123,50 @@ const SelfRating: React.FC = () => {
         </div>
       </div>
 
-      {/* Instructions */}
-      <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
-        <h3 className="font-semibold text-blue-900 mb-3">Self-Rating Instructions</h3>
-        <ul className="space-y-2 text-sm text-blue-800 list-disc list-inside">
-          <li>
-            Provide honest and accurate self-assessments based on your actual achievements during
-            this quarter
-          </li>
-          <li>
-            Add comments to explain your rating, highlight achievements, or note any challenges
-            faced
-          </li>
-          <li>
-            Your self-rating will be reviewed by your manager during the KPI review meeting
-          </li>
-        </ul>
+      {/* Instructions and Calculation Settings */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Self-Rating Instructions */}
+        <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
+          <h3 className="font-semibold text-blue-900 mb-3">Self-Rating Instructions</h3>
+          <ul className="space-y-2 text-sm text-blue-800 list-disc list-inside">
+            <li>
+              Provide honest and accurate self-assessments based on your actual achievements during
+              this quarter
+            </li>
+            <li>
+              Add comments to explain your rating, highlight achievements, or note any challenges
+              faced
+            </li>
+            <li>
+              Your self-rating will be reviewed by your manager during the KPI review meeting
+            </li>
+          </ul>
+        </div>
+
+        {/* Department Calculation Settings */}
+        <div className="bg-gradient-to-br from-purple-50 to-blue-50 border border-purple-200 rounded-xl p-6">
+          <h3 className="font-semibold text-purple-900 mb-4">Department Calculation Settings</h3>
+          <div className="space-y-4">
+            <div>
+              <p className="text-sm font-medium text-gray-700 mb-1">
+                Calculation Method for {kpi?.period || 'Quarterly'} KPIs:
+              </p>
+              <p className="text-base font-semibold text-purple-700">
+                {calculationMethodName}
+              </p>
+            </div>
+            <div className="border-t border-purple-200 pt-4">
+              <p className="text-sm font-medium text-gray-700 mb-1">
+                Self-Rating Status:
+              </p>
+              <p className={`text-base font-semibold ${
+                isSelfRatingEnabled ? 'text-green-600' : 'text-orange-600'
+              }`}>
+                {isSelfRatingEnabled ? '✓ Enabled' : '✗ Disabled'}
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* KPI Review Table */}
@@ -520,38 +566,6 @@ const SelfRating: React.FC = () => {
             </tbody>
           </table>
         </div>
-
-        {/* Summary */}
-        <div className="p-6 border-t border-gray-200 bg-gray-50">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div>
-                <p className="text-sm text-gray-600">Average Self-Rating:</p>
-                <div className="flex items-center space-x-2 mt-1">
-                  <span className="text-sm font-semibold text-gray-900">
-                    {averageRating > 0 ? `${averageRating.toFixed(2)}` : '0.00'}
-                  </span>
-                  {averageRating > 0 && (
-                    <span className="text-xs text-gray-500">
-                      ({getRatingLabel(averageRating)})
-                    </span>
-                  )}
-                </div>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Completion:</p>
-                <p
-                  className={`text-sm font-semibold mt-1 ${
-                    completion === 100 ? 'text-green-600' : 'text-orange-600'
-                  }`}
-                >
-                  {completion}%
-                </p>
-              </div>
-            </div>
-            <p className="text-xs text-gray-500">*All ratings are required before submission</p>
-          </div>
-        </div>
       </div>
 
       {/* Major Accomplishments & Disappointments */}
@@ -640,6 +654,49 @@ const SelfRating: React.FC = () => {
               rows={6}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
             />
+          </div>
+        </div>
+      </div>
+
+      {/* Summary Section - Moved before Employee Confirmation */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">Self-Rating Summary</h2>
+        <div className="p-6 bg-gray-50 rounded-lg">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-8">
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Average Self-Rating:</p>
+                <div className="flex items-center space-x-2">
+                  <span className="text-2xl font-bold text-gray-900">
+                    {averageRating > 0 ? `${averageRating.toFixed(2)}` : '0.00'}
+                  </span>
+                  {averageRating > 0 && (
+                    <span className="text-sm text-gray-600">
+                      ({getRatingLabel(averageRating)})
+                    </span>
+                  )}
+                </div>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Final Rating %:</p>
+                <p className="text-2xl font-bold text-purple-600">
+                  {employeeRatingPercentage !== null && employeeRatingPercentage !== undefined 
+                    ? `${employeeRatingPercentage.toFixed(2)}%` 
+                    : '0.00%'}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Completion:</p>
+                <p
+                  className={`text-2xl font-bold ${
+                    completion === 100 ? 'text-green-600' : 'text-orange-600'
+                  }`}
+                >
+                  {completion}%
+                </p>
+              </div>
+            </div>
+            <p className="text-sm text-gray-500 italic">*All ratings are required before submission</p>
           </div>
         </div>
       </div>

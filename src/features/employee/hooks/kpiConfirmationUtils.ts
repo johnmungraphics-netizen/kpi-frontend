@@ -79,7 +79,7 @@ export const calculateRatingSummary = (
 };
 
 export const getRatingPercentage = (rating: number): string => {
-  return ((rating * 100) / 1.5).toFixed(1);
+  return ((rating * 100) / 1.25).toFixed(1);
 };
 
 export const getRatingDescription = (rating: number): string => {

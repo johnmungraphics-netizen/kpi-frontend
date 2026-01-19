@@ -13,6 +13,7 @@ export interface KPIRow {
   measure_unit: string;
   goal_weight: string;
   is_qualitative: boolean;
+  exclude_from_calculation?: number;  // 0 = included, 1 = excluded from calculation
 }
 
 export interface KPIFormData {

@@ -46,7 +46,7 @@ interface UseManagerKPITemplateFormReturn {
   totalGoalWeight: number;
   handleAddRow: () => void;
   handleRemoveRow: (index: number) => void;
-  updateKPIItem: (index: number, field: string, value: string | boolean) => void;
+  updateKPIItem: (index: number, field: string, value: string | boolean | number) => void;
   handleQualitativeToggle: (index: number, isQualitative: boolean) => void;  // Added
   openTextModal: (title: string, value: string, field: keyof KPIItem, rowIndex: number) => void;
   closeTextModal: () => void;
@@ -120,6 +120,7 @@ export const useManagerKPITemplateForm = (): UseManagerKPITemplateFormReturn => 
           measure_unit: item.measure_unit || '',
           goal_weight: item.goal_weight || '',
           is_qualitative: item.is_qualitative || false,  // Load from backend
+          exclude_from_calculation: item.exclude_from_calculation || 0,  // Load from backend
         })));
       }
     } catch (error) {
@@ -143,6 +144,7 @@ export const useManagerKPITemplateForm = (): UseManagerKPITemplateFormReturn => 
         measure_unit: '',
         goal_weight: '',
         is_qualitative: false,
+        exclude_from_calculation: 0,
       },
     ]);
   };
@@ -155,8 +157,8 @@ export const useManagerKPITemplateForm = (): UseManagerKPITemplateFormReturn => 
     setKpiItems(kpiItems.filter((_, i) => i !== index));
   };
 
-  // Handle both string and boolean values
-  const updateKPIItem = (index: number, field: string, value: string | boolean) => {
+  // Handle string, boolean, and number values
+  const updateKPIItem = (index: number, field: string, value: string | boolean | number) => {
     const updated = [...kpiItems];
     if (field === 'is_qualitative' && typeof value === 'boolean') {
       updated[index] = { 
@@ -170,6 +172,8 @@ export const useManagerKPITemplateForm = (): UseManagerKPITemplateFormReturn => 
           goal_weight: ''
         } : {})
       };
+    } else if (field === 'exclude_from_calculation' && typeof value === 'number') {
+      updated[index] = { ...updated[index], exclude_from_calculation: value };
     } else if (typeof value === 'string') {
       updated[index] = { ...updated[index], [field]: value };
     }
@@ -292,6 +296,7 @@ export const useManagerKPITemplateForm = (): UseManagerKPITemplateFormReturn => 
           measure_unit: item.measure_unit,
           goal_weight: item.goal_weight,
           is_qualitative: item.is_qualitative || false,  // Send to backend
+          exclude_from_calculation: item.exclude_from_calculation || 0,  // Send to backend
         })),
       };
 

@@ -199,7 +199,7 @@ const EmployeePerformance: React.FC = () => {
   // Convert rating (out of 1.5) to percentage
   const ratingToPercent = (rating: number): number => {
     if (!rating || isNaN(rating)) return 0;
-    const pct = (rating / 1.5) * 100;
+    const pct = (rating / 1.25) * 100;
     return Math.max(0, Math.min(100, pct));
   };
 
@@ -418,7 +418,7 @@ const EmployeePerformance: React.FC = () => {
               {graphData.map((yearData) => {
                 const quarters = ['Q1', 'Q2', 'Q3', 'Q4'];
                 const values = quarters.map(q => yearData.quarters[q] ?? null);
-                const maxValue = Math.max(1.5, ...values.filter(v => v !== null).map(v => v || 0));
+                const maxValue = Math.max(1.25, ...values.filter(v => v !== null).map(v => v || 0));
                 const minValue = 0;
                 const range = maxValue - minValue;
                 const graphHeight = 300;

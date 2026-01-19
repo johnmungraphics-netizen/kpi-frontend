@@ -15,6 +15,7 @@ export interface KPIRowData {
   expected_completion_date: string;
   goal_weight: string;
   is_qualitative: boolean;  // Required, not optional
+  exclude_from_calculation?: number;  // 0 = included, 1 = excluded from calculation
   measure_criteria?: string;
 }
 
@@ -47,8 +48,8 @@ interface KPIFormTableProps {
   onKpiRowsChange?: (rows: KPIRowData[]) => void;
   minRows?: number;
 
-  // Handlers - Accept both string and boolean
-  handleKpiChange: (index: number, field: string, value: string | boolean) => void;
+  // Handlers - Accept string, boolean, and number (for exclude_from_calculation)
+  handleKpiChange: (index: number, field: string, value: string | boolean | number) => void;
   handleQualitativeToggle?: (index: number, isQualitative: boolean) => void;
   handleAddRow: () => void;
   handleRemoveRow: (index: number) => void;
@@ -279,6 +280,21 @@ export const KPIFormTable: React.FC<KPIFormTableProps> = ({
                             {kpi.is_qualitative ? 'Qualitative' : 'Quantitative'}
                           </span>
                         </label>
+                        
+                        {/* Exclude from Calculation Checkbox - Only show for qualitative items */}
+                        {kpi.is_qualitative && (
+                          <label className="flex items-center space-x-2 cursor-pointer mt-2 pt-2 border-t border-gray-200">
+                            <input
+                              type="checkbox"
+                              checked={kpi.exclude_from_calculation === 1}
+                              onChange={(e) => handleKpiChange(index, 'exclude_from_calculation', e.target.checked ? 1 : 0)}
+                              className="w-4 h-4 text-orange-600 rounded focus:ring-orange-500"
+                            />
+                            <span className="text-xs text-orange-600 font-medium" title="This item will be rated but not included in final score calculations">
+                              Exclude from calculation
+                            </span>
+                          </label>
+                        )}
                       </td>
                     )}
 
@@ -367,13 +383,14 @@ export const KPIFormTable: React.FC<KPIFormTableProps> = ({
                         <option value="Number">Number</option>
                         <option value="Currency">Currency</option>
                         <option value="Days">Days</option>
+                        <option value="Behavioural">Behavioural</option>
                       </select>
                     </td>
 
                     <td className="border border-gray-200 p-2">
                       <input
                         type="date"
-                        value={kpi.expected_completion_date}
+                        value={kpi.expected_completion_date ? new Date(kpi.expected_completion_date).toISOString().split('T')[0] : ''}
                         onChange={(e) => handleKpiChange(index, 'expected_completion_date', e.target.value)}
                         className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-purple-500"
                       />

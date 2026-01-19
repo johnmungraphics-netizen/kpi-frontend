@@ -443,7 +443,7 @@ const ConfirmReview: React.FC = () => {
                             <div className="space-y-1">
                               <div className="flex items-center space-x-2">
                                 <span className="text-sm font-semibold text-purple-600">{empRating.toFixed(2)}</span>
-                                <span className="text-xs text-gray-500">({((empRating * 100) / 1.5).toFixed(1)}%)</span>
+                                <span className="text-xs text-gray-500">({((empRating * 100) / 1.25).toFixed(1)}%)</span>
                               </div>
                               <p className="text-xs text-gray-500">
                                 {empRating === 1.00 ? 'Below Expectation' :
@@ -473,7 +473,7 @@ const ConfirmReview: React.FC = () => {
                           <div className="flex items-center space-x-2">
                             <span className="text-sm font-semibold text-green-600">{mgrRating.toFixed(2)}</span>
                             {!isActualValueMethod && (
-                              <span className="text-xs text-gray-500">({((mgrRating * 100) / 1.5).toFixed(1)}%)</span>
+                              <span className="text-xs text-gray-500">({((mgrRating * 100) / 1.25).toFixed(1)}%)</span>
                             )}
                           </div>
                           <p className="text-xs text-gray-500">

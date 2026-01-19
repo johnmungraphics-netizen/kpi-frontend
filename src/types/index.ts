@@ -36,6 +36,7 @@ export interface KPIItem {
   qualitative_comment?: string;
   percentage_value_obtained?: number;  // Percentage achieved from actual vs target
   manager_rating_percentage?: number;  // Manager's rating as percentage for actual vs target method
+  exclude_from_calculation?: number;  // 0 = included, 1 = excluded from rating calculation (qualitative items only)
 }
 
 // NEW: Accomplishment interface for structured major accomplishments

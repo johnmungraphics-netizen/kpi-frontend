@@ -64,7 +64,7 @@ interface UseManagerKPISettingReturn {
   setManagerSignature: (signature: string) => void;
   setSelectedPeriodSetting: (setting: any) => void;
   setTextModal: (modal: TextModalState) => void;
-  handleKpiChange: (index: number, field: string, value: string | boolean) => void; // Changed to accept boolean
+  handleKpiChange: (index: number, field: string, value: string | boolean | number) => void; // Changed to accept boolean and number
   handleQualitativeToggle: (index: number, checked: boolean) => void;
   handleAddRow: () => void;
   handleRemoveRow: (index: number) => void;
@@ -193,22 +193,30 @@ export const useManagerKPISetting = (): UseManagerKPISettingReturn => {
 
   const fetchAvailablePeriods = async () => {
     try {
+      console.log('🔵 [fetchAvailablePeriods] Called in mode:', { isTemplateMode, employeeId });
       const response = await api.get('/settings/available-periods');
       setAvailablePeriods(response.data.periods || []);
+      
+      // DON'T set defaults in template mode - template will set its own period
+      if (isTemplateMode) {
+        console.log('✅ [fetchAvailablePeriods] Template mode - skipping default period settings');
+        return;
+      }
       
       // Check if draft exists before setting defaults
       if (employeeId) {
         const draftData = loadDraftFromStorage(employeeId);
         if (draftData) {
-          console.log('Draft exists, skipping default period settings');
+          console.log('✅ [fetchAvailablePeriods] Draft exists - skipping default period settings');
           return;
         }
       }
       
-      // Set default to first active quarterly period if available (only if no draft)
+      // Set default to first active quarterly period if available (only if no draft and not template mode)
       const quarterlyPeriods = response.data.periods?.filter((p: any) => p.period_type === 'quarterly' && p.is_active) || [];
       if (quarterlyPeriods.length > 0) {
         const firstPeriod = quarterlyPeriods[0];
+        console.log('🔧 [fetchAvailablePeriods] Setting default quarterly period:', firstPeriod.quarter, firstPeriod.year);
         setPeriod('quarterly');
         setQuarter(firstPeriod.quarter || 'Q1');
         setYear(firstPeriod.year);
@@ -218,7 +226,7 @@ export const useManagerKPISetting = (): UseManagerKPISettingReturn => {
         setSelectedPeriodSetting(firstPeriod);
       }
     } catch (error) {
-      console.error('Error fetching available periods:', error);
+      console.error('❌ [fetchAvailablePeriods] Error:', error);
     }
   };
 
@@ -240,10 +248,12 @@ export const useManagerKPISetting = (): UseManagerKPISettingReturn => {
     }
   };
 
-  const handleKpiChange = (index: number, field: string, value: string | boolean) => {
+  const handleKpiChange = (index: number, field: string, value: string | boolean | number) => {
     const updated = [...kpiRows];
     if (field === 'is_qualitative' && typeof value === 'boolean') {
       updated[index] = { ...updated[index], is_qualitative: value };
+    } else if (field === 'exclude_from_calculation' && typeof value === 'number') {
+      updated[index] = { ...updated[index], exclude_from_calculation: value };
     } else if (typeof value === 'string') {
       updated[index] = { ...updated[index], [field]: value };
     }
@@ -377,24 +387,49 @@ export const useManagerKPISetting = (): UseManagerKPISettingReturn => {
     console.log('🔵 [loadTemplate] Fetching template:', tid);
     try {
       const response = await api.get(`/templates/${tid}`);
-      const template = response.data.data || response.data;
+      console.log('📥 [loadTemplate] Raw API response:', response.data);
+      console.log('📥 [loadTemplate] Response structure:', Object.keys(response.data));
       
-      console.log('✅ [loadTemplate] Template loaded:', template);
+      // Backend returns: { success: true, template: {...}, items: [...] }
+      const templateData = response.data.template;
+      const templateItems = response.data.items;
+      
+      if (!templateData) {
+        console.error('❌ [loadTemplate] No template data in response!');
+        toast.error('Failed to load template - no data');
+        return;
+      }
+      
+      console.log('✅ [loadTemplate] Template data:', {
+        name: templateData.template_name,
+        period: templateData.period,
+        quarter: templateData.quarter,
+        year: templateData.year
+      });
       
       // Auto-populate form with template data
-      if (template.period) {
-        setPeriod(template.period);
+      if (templateData.period) {
+        console.log('🔧 [loadTemplate] Setting period:', templateData.period);
+        // Convert 'annual' to 'yearly' for frontend
+        const frontendPeriod = templateData.period === 'annual' ? 'yearly' : templateData.period;
+        setPeriod(frontendPeriod as 'quarterly' | 'yearly');
+      } else {
+        console.warn('⚠️ [loadTemplate] No period in template data!');
       }
-      if (template.quarter) {
-        setQuarter(template.quarter);
+      
+      if (templateData.quarter) {
+        console.log('🔧 [loadTemplate] Setting quarter:', templateData.quarter);
+        setQuarter(templateData.quarter);
       }
-      if (template.year) {
-        setYear(template.year);
+      
+      if (templateData.year) {
+        console.log('🔧 [loadTemplate] Setting year:', templateData.year);
+        setYear(templateData.year);
       }
       
       // Load template items into kpiRows
-      if (template.items && Array.isArray(template.items)) {
-        const templateRows: KPIRow[] = template.items.map((item: any) => ({
+      if (templateItems && Array.isArray(templateItems)) {
+        const templateRows: KPIRow[] = templateItems.map((item: any) => ({
           title: item.title || '',
           description: item.description || '',
           current_performance_status: item.current_performance_status || '',
@@ -403,9 +438,12 @@ export const useManagerKPISetting = (): UseManagerKPISettingReturn => {
           measure_unit: item.measure_unit || '',
           goal_weight: item.goal_weight || '',
           is_qualitative: item.is_qualitative || false,
+          exclude_from_calculation: item.exclude_from_calculation || 0,
         }));
         setKpiRows(templateRows);
         console.log('✅ [loadTemplate] Loaded KPI items:', templateRows.length);
+      } else {
+        console.warn('⚠️ [loadTemplate] No items in template!');
       }
     } catch (error) {
       console.error('❌ [loadTemplate] Error:', error);
