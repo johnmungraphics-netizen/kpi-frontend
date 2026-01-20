@@ -10,7 +10,6 @@ export { default as Reviews } from './pages/Reviews';
 export { default as SelfRating } from './pages/KPIReview';
 export { default as KPIList } from './pages/KPIList';
 export { default as KPIConfirmation } from './pages/KPIConfirmation';
-export { default as ConfirmReview } from './pages/ConfirmReview';
 export { default as AcknowledgeList } from './pages/AcknowledgeList';
 
 // Export components

@@ -70,7 +70,6 @@ export const useApplyKPITemplate = (): UseApplyKPITemplateReturn => {
       const employees = users.filter((u: any) => u.role_id !== 1 && u.role_id !== 2 && u.role_id !== 3);
       setEmployees(employees);
     } catch (error: any) {
-      console.error('Error fetching data:', error);
       toast.error(error.response?.data?.error || 'Failed to load template');
       navigate('/manager/kpi-templates');
     } finally {
@@ -132,7 +131,6 @@ export const useApplyKPITemplate = (): UseApplyKPITemplateReturn => {
       toast.success(`KPIs assigned successfully to ${selectedEmployees.length} employee(s)!`);
       navigate('/manager/kpi-templates');
     } catch (error: any) {
-      console.error('Error applying template:', error);
       toast.error(error.response?.data?.error || 'Failed to apply template');
     } finally {
       setSubmitting(false);

@@ -9,7 +9,6 @@ export { default as Reviews } from './Reviews';
 export { default as KPISettingCompleted } from '../../shared/pages/KPISettingCompleted';
 export { default as CompletedReviews } from '../../shared/pages/CompletedReviews';
 export { default as KPIDetails } from './KPIDetails';
-export { default as ConfirmReview } from './ConfirmReview';
 export { default as SelfRating } from './SelfRating';
 export { default as KPIList } from './KPIList';
 export { default as KPIConfirmation } from './KPIConfirmation';

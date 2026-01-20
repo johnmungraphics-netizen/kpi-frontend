@@ -48,7 +48,6 @@ export const parseEmployeeData = (employeeComment: string, itemRatings?: any): {
       const ratingValue = parseFloat(ratingData.rating);
       ratings[id] = ratingValue;
       comments[id] = String(ratingData.comment || '');
-      console.log(`📊 [KPIReview Utils] Structured - Item ${id} - Rating: ${ratingValue}`);
     });
     return { ratings, comments };
   }
@@ -56,13 +55,11 @@ export const parseEmployeeData = (employeeComment: string, itemRatings?: any): {
   // FALLBACK: Parse from JSON (backward compatibility)
   try {
     const employeeData = JSON.parse(employeeComment || '{}');
-    console.log('📋 [KPIReview Utils] Parsed employee data:', employeeData);
     
     if (employeeData.items && Array.isArray(employeeData.items)) {
       employeeData.items.forEach((item: any) => {
         if (item.item_id) {
           const ratingValue = parseFloat(String(item.rating || 0));
-          console.log(`📊 [KPIReview Utils] Item ${item.item_id} - Rating: ${item.rating}, Parsed: ${ratingValue}`);
           ratings[item.item_id] = ratingValue;
           comments[item.item_id] = String(item.comment || '');
         }
@@ -195,10 +192,6 @@ export const validateAllItemsRated = (
   managerRatings: ItemRatingsMap,
   qualitativeRatings: QualitativeRatingsMap
 ): { valid: boolean; missingItems: Array<{ item_id: number; title: string; type: 'qualitative' | 'quantitative'; value: any; parsed?: number | null }> } => {
-  console.log('🔍 [validateAllItemsRated] Starting validation');
-  console.log('📊 Items to validate:', items.length);
-  console.log('📊 Manager ratings:', managerRatings);
-  console.log('📊 Qualitative ratings:', qualitativeRatings);
 
   const missingItems: Array<{ item_id: number; title: string; type: 'qualitative' | 'quantitative'; value: any; parsed?: number | null }> = [];
 
@@ -207,7 +200,6 @@ export const validateAllItemsRated = (
     if (item.is_qualitative) {
       const qualRating = qualitativeRatings[item.id];
       const hasValue = qualRating !== undefined && qualRating !== null && String(qualRating).trim().length > 0;
-      console.log(`📝 Qualitative item ${item.id} (${item.title}): rating="${qualRating}", valid=${hasValue}, excluded=${item.exclude_from_calculation === 1}`);
       if (!hasValue) {
         missingItems.push({ item_id: item.id, title: item.title || '', type: 'qualitative', value: qualRating ?? null, parsed: null });
         return false;
@@ -219,7 +211,6 @@ export const validateAllItemsRated = (
     const rating = managerRatings[item.id];
     const ratingNum = !isNaN(parseFloat(String(rating))) ? parseFloat(String(rating)) : NaN;
     const isValid = rating !== undefined && rating !== null && !isNaN(ratingNum) && ratingNum > 0;
-    console.log(`📝 Quantitative item ${item.id} (${item.title}): rating=${rating}, parsed=${ratingNum}, valid=${isValid}, excluded=${item.exclude_from_calculation === 1}`);
     if (!isValid) {
       missingItems.push({ item_id: item.id, title: item.title || '', type: 'quantitative', value: rating ?? null, parsed: isNaN(ratingNum) ? null : ratingNum });
       return false;
@@ -227,9 +218,7 @@ export const validateAllItemsRated = (
     return true;
   });
 
-  console.log(`✅ Validation result: ${allValid ? 'PASSED' : 'FAILED'}`);
   if (!allValid) {
-    console.error('❌ [validateAllItemsRated] Missing or invalid ratings for items:', missingItems);
   }
 
   return { valid: allValid, missingItems };
@@ -334,7 +323,6 @@ export const loadReviewDraft = (reviewId: string): Partial<ReviewDraftData> | nu
     if (!savedDraft) return null;
     return JSON.parse(savedDraft);
   } catch (error) {
-    console.error('Error loading review draft:', error);
     return null;
   }
 };

@@ -21,6 +21,7 @@ export interface ParsedReviewData {
 
 /**
  * Parse review data to extract item ratings and comments
+ * UPDATED: Now uses structured item_ratings data (same as KPIConfirmation)
  */
 export const parseReviewData = (review: KPIReview | null): ParsedReviewData => {
   const employeeItemRatings: ItemRatings = {};
@@ -29,10 +30,56 @@ export const parseReviewData = (review: KPIReview | null): ParsedReviewData => {
   const managerItemComments: ItemComments = {};
 
   if (!review) {
+    console.log('⚠️ [parseReviewData] No review provided');
     return { employeeItemRatings, employeeItemComments, managerItemRatings, managerItemComments };
   }
 
-  // Parse employee ratings/comments
+  console.log('🔍 [parseReviewData] Parsing review:', {
+    reviewId: review.id,
+    hasItemRatings: !!(review as any).item_ratings,
+    itemRatingsStructure: (review as any).item_ratings,
+    employeeComment: review.employee_comment,
+    managerComment: review.manager_comment
+  });
+
+  // PRIORITY 1: Use structured `item_ratings` data (same as KPIConfirmation.tsx)
+  if ((review as any).item_ratings) {
+    console.log('✅ [parseReviewData] Using structured item_ratings data');
+    
+    // Parse employee ratings from structured data
+    if ((review as any).item_ratings.employee) {
+      Object.entries((review as any).item_ratings.employee).forEach(([itemId, ratingData]: [string, any]) => {
+        const id = parseInt(itemId);
+        employeeItemRatings[id] = parseFloat(String(ratingData.rating)) || 0;
+        employeeItemComments[id] = ratingData.comment || '';
+        console.log(`  📊 Employee Item ${id}: rating=${employeeItemRatings[id]}, comment="${employeeItemComments[id]}"`);
+      });
+    }
+
+    // Parse manager ratings from structured data
+    if ((review as any).item_ratings.manager) {
+      Object.entries((review as any).item_ratings.manager).forEach(([itemId, ratingData]: [string, any]) => {
+        const id = parseInt(itemId);
+        managerItemRatings[id] = parseFloat(String(ratingData.rating)) || 0;
+        managerItemComments[id] = ratingData.comment || '';
+        console.log(`  📊 Manager Item ${id}: rating=${managerItemRatings[id]}, comment="${managerItemComments[id]}"`);
+      });
+    }
+
+    console.log('✅ [parseReviewData] Parsed structured data:', {
+      employeeRatingsCount: Object.keys(employeeItemRatings).length,
+      managerRatingsCount: Object.keys(managerItemRatings).length,
+      employeeItemRatings,
+      managerItemRatings
+    });
+
+    return { employeeItemRatings, employeeItemComments, managerItemRatings, managerItemComments };
+  }
+
+  // FALLBACK: Try legacy JSON format in comment fields
+  console.log('⚠️ [parseReviewData] No structured item_ratings, trying legacy JSON format');
+
+  // Parse employee ratings/comments from JSON in comment field
   try {
     const empData = JSON.parse(review.employee_comment || '{}');
     if (empData.items && Array.isArray(empData.items)) {
@@ -42,12 +89,13 @@ export const parseReviewData = (review: KPIReview | null): ParsedReviewData => {
           employeeItemComments[item.item_id] = item.comment || '';
         }
       });
+      console.log('✅ [parseReviewData] Parsed employee data from JSON');
     }
-  } catch {
-    // Not JSON, use legacy format
+  } catch (error) {
+    console.log('⚠️ [parseReviewData] Could not parse employee_comment as JSON:', error);
   }
 
-  // Parse manager ratings/comments
+  // Parse manager ratings/comments from JSON in comment field
   try {
     const mgrData = JSON.parse(review.manager_comment || '{}');
     if (mgrData.items && Array.isArray(mgrData.items)) {
@@ -57,10 +105,18 @@ export const parseReviewData = (review: KPIReview | null): ParsedReviewData => {
           managerItemComments[item.item_id] = item.comment || '';
         }
       });
+      console.log('✅ [parseReviewData] Parsed manager data from JSON');
     }
-  } catch {
-    // Not JSON, use legacy format
+  } catch (error) {
+    console.log('⚠️ [parseReviewData] Could not parse manager_comment as JSON:', error);
   }
+
+  console.log('📊 [parseReviewData] Final parsed data:', {
+    employeeRatingsCount: Object.keys(employeeItemRatings).length,
+    managerRatingsCount: Object.keys(managerItemRatings).length,
+    employeeItemRatings,
+    managerItemRatings
+  });
 
   return { employeeItemRatings, employeeItemComments, managerItemRatings, managerItemComments };
 };

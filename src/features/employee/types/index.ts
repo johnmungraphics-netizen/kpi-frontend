@@ -91,8 +91,13 @@ export interface KPIReviewConfirmation {
   employee_id: number;
   manager_id: number;
   employee_rating: number;
+  employee_final_rating?: number;
+  employee_rating_percentage?: number;
+  employee_final_rating_percentage?: number;
   employee_comment: string;
   manager_rating: number;
+  manager_final_rating?: number;
+  manager_final_rating_percentage?: number;
   manager_comment: string;
   overall_comment: string;
   overall_manager_comment?: string;

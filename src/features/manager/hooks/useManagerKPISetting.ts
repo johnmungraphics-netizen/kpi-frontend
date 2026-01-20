@@ -54,6 +54,10 @@ interface UseManagerKPISettingReturn {
   departments: any[];
   employeesLoading: boolean;
   selectedEmployeeIds: number[];
+  // Template titles state
+  templateTitles: any[];
+  isDepartmentTemplateEnabled: boolean;
+  employeeDepartmentId: number | null;
   
   // Actions
   setKpiRows: (rows: KPIRow[]) => void;
@@ -117,6 +121,11 @@ export const useManagerKPISetting = (): UseManagerKPISettingReturn => {
   const [departments, setDepartments] = useState<any[]>([]);
   const [employeesLoading, setEmployeesLoading] = useState(false);
   const [selectedEmployeeIds, setSelectedEmployeeIds] = useState<number[]>([]);
+  
+  // Template titles state
+  const [templateTitles, setTemplateTitles] = useState<any[]>([]);
+  const [isDepartmentTemplateEnabled, setIsDepartmentTemplateEnabled] = useState(false);
+  const [employeeDepartmentId, setEmployeeDepartmentId] = useState<number | null>(null);
 
   // Load template data or employee data based on mode
   useEffect(() => {
@@ -240,11 +249,41 @@ export const useManagerKPISetting = (): UseManagerKPISettingReturn => {
       const employee = users.find((u: any) => u.id === parseInt(employeeId));
       if (employee) {
         setEmployee(employee);
+        // Fetch template titles if department has feature enabled
+        if (employee.department_id) {
+          setEmployeeDepartmentId(employee.department_id);
+          await fetchDepartmentTemplateSettings(employee.department_id);
+        }
       }
     } catch (error) {
       console.error('Error fetching employee:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchDepartmentTemplateSettings = async (departmentId: number) => {
+    try {
+      // Check if department has template titles enabled
+      const checkResponse = await api.get(`/kpi-template-titles/department/${departmentId}/check`);
+      if (checkResponse.data.success && checkResponse.data.enabled) {
+        setIsDepartmentTemplateEnabled(true);
+        // Fetch template titles
+        await fetchTemplateTitles();
+      }
+    } catch (error) {
+      console.error('Error checking department template settings:', error);
+    }
+  };
+
+  const fetchTemplateTitles = async () => {
+    try {
+      const response = await api.get('/kpi-template-titles');
+      if (response.data.success) {
+        setTemplateTitles(response.data.data || []);
+      }
+    } catch (error) {
+      console.error('Error fetching template titles:', error);
     }
   };
 
@@ -573,6 +612,10 @@ export const useManagerKPISetting = (): UseManagerKPISettingReturn => {
     departments,
     employeesLoading,
     selectedEmployeeIds,
+    // Template titles state
+    templateTitles,
+    isDepartmentTemplateEnabled,
+    employeeDepartmentId,
     
     // Actions
     setKpiRows,

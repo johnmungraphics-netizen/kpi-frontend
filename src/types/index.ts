@@ -91,11 +91,14 @@ export interface KPIReview {
   employee_id: number;
   employee_rating: number;
   employee_final_rating?: number;
+  employee_rating_percentage?: number;
+  employee_final_rating_percentage?: number;
   employee_comment: string;
   employee_signature?: string;
   employee_self_rating_signed_at?: string;
   manager_rating: number;
   manager_final_rating?: number;
+  manager_final_rating_percentage?: number;
   manager_comment: string;
   manager_signature?: string;
   manager_review_signed_at?: string;

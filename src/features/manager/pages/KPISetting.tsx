@@ -49,6 +49,10 @@ const ManagerKPISetting: React.FC = () => {
     // Template mode handlers
     handleSubmitToEmployees,
     handleEmployeeSelectionChange,
+    // Template titles
+    templateTitles,
+    isDepartmentTemplateEnabled,
+    employeeDepartmentId,
   } = useManagerKPISetting();
 
   // Debug logging
@@ -192,6 +196,9 @@ const ManagerKPISetting: React.FC = () => {
         onSignatureChange={setManagerSignature}
         textModal={textModal}
         setTextModal={setTextModal}
+        templateTitles={templateTitles}
+        isDepartmentTemplateEnabled={isDepartmentTemplateEnabled}
+        employeeDepartmentId={employeeDepartmentId || undefined}
       />
 
       <ConfirmDialog

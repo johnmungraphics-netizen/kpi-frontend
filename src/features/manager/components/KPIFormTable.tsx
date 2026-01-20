@@ -19,6 +19,16 @@ export interface KPIRowData {
   measure_criteria?: string;
 }
 
+// Template title interface
+export interface TemplateTitle {
+  id: number;
+  title: string;
+  description: string;
+  is_active: number;
+  created_at: string;
+  updated_at: string;
+}
+
 interface TextModalState {
   isOpen: boolean;
   title: string;
@@ -64,6 +74,11 @@ interface KPIFormTableProps {
 
   // Mode
   mode?: 'setting' | 'template';
+
+  // Template Titles (for departments with enable_template_titles = 1)
+  templateTitles?: TemplateTitle[];
+  isDepartmentTemplateEnabled?: boolean;
+  employeeDepartmentId?: number;
 }
 
 export const KPIFormTable: React.FC<KPIFormTableProps> = ({
@@ -87,6 +102,9 @@ export const KPIFormTable: React.FC<KPIFormTableProps> = ({
   textModal,
   setTextModal,
   mode = 'setting',
+  templateTitles = [],
+  isDepartmentTemplateEnabled = false,
+  employeeDepartmentId,
 }) => {
   const canRemoveRow = (_index: number) => kpiRows.length > minRows;
 
@@ -299,11 +317,35 @@ export const KPIFormTable: React.FC<KPIFormTableProps> = ({
                     )}
 
                     <td className="border border-gray-200 p-2">
+                      {/* Template Dropdown - Only show if department has feature enabled */}
+                      {isDepartmentTemplateEnabled && templateTitles.length > 0 && (
+                        <select
+                          onChange={(e) => {
+                            const selectedId = parseInt(e.target.value);
+                            if (selectedId) {
+                              const template = templateTitles.find(t => t.id === selectedId);
+                              if (template) {
+                                handleKpiChange(index, 'title', template.title);
+                                handleKpiChange(index, 'description', template.description);
+                              }
+                            }
+                          }}
+                          className="w-full px-3 py-2 mb-2 border border-gray-300 rounded focus:ring-2 focus:ring-purple-500 bg-purple-50"
+                        >
+                          <option value="">Select from template or enter custom...</option>
+                          {templateTitles.map((template) => (
+                            <option key={template.id} value={template.id}>
+                              {template.title}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                      {/* Custom Text Input - Always available */}
                       <input
                         type="text"
                         value={kpi.title}
                         onChange={(e) => handleKpiChange(index, 'title', e.target.value)}
-                        placeholder="e.g., Increase Monthly Sales Revenue"
+                        placeholder={isDepartmentTemplateEnabled ? "Or enter custom KPI title..." : "e.g., Increase Monthly Sales Revenue"}
                         className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-purple-500"
                       />
                     </td>

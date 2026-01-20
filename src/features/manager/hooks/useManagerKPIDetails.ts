@@ -6,6 +6,7 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import api from '../../../services/api';
 import { managerService } from '../services';
 import { TextModalState } from '../types';
 import { KPI, KPIReview } from '../../../types';
@@ -24,6 +25,15 @@ export const useManagerKPIDetails = () => {
     title: '',
     value: '',
   });
+  
+  // Actual vs Target data (from kpi_item_ratings table)
+  const [actualValues, setActualValues] = useState<Record<number, string>>({});
+  const [targetValues, setTargetValues] = useState<Record<number, string>>({});
+  const [goalWeights, setGoalWeights] = useState<Record<number, string>>({});
+  const [currentPerformanceStatuses, setCurrentPerformanceStatuses] = useState<Record<number, string>>({});
+  const [percentageValuesObtained, setPercentageValuesObtained] = useState<Record<number, number>>({});
+  const [managerRatingPercentages, setManagerRatingPercentages] = useState<Record<number, number>>({});
+  const [finalRatingPercentage, setFinalRatingPercentage] = useState<number>(0);
 
   // Initial data fetch
   useEffect(() => {
@@ -47,13 +57,107 @@ export const useManagerKPIDetails = () => {
 
       // Find review for this specific KPI
       const kpiReview = reviewsData.find((r: KPIReview) => r.kpi_id === parseInt(kpiId!));
+      
+      console.log('📊 [useManagerKPIDetails] Review Data Check:');
+      console.log('   All reviews count:', reviewsData.length);
+      console.log('   Looking for kpi_id:', parseInt(kpiId!));
+      console.log('   Found kpiReview:', !!kpiReview);
+      console.log('   kpiReview.id:', kpiReview?.id);
+      console.log('   kpiReview.accomplishments (from list):', kpiReview?.accomplishments);
+      
       if (kpiReview) {
-        setReview(kpiReview);
+        // Fetch the full review details by ID to get accomplishments
+        console.log('🔄 [useManagerKPIDetails] Fetching full review details by ID:', kpiReview.id);
+        try {
+          const fullReviewResponse = await api.get(`/kpi-review/${kpiReview.id}`);
+          const fullReview = fullReviewResponse.data.review;
+          console.log('✅ [useManagerKPIDetails] Full review fetched:', {
+            id: fullReview.id,
+            accomplishments: fullReview.accomplishments,
+            accomplishments_length: fullReview.accomplishments?.length,
+            disappointments: fullReview.disappointments,
+            improvement_needed: fullReview.improvement_needed,
+            future_plan: fullReview.future_plan
+          });
+          console.log('📦 [useManagerKPIDetails] Full Review Object:', JSON.stringify(fullReview, null, 2));
+          setReview(fullReview);
+        } catch (reviewError) {
+          console.error('❌ [useManagerKPIDetails] Error fetching full review details:', reviewError);
+          // Fallback to the review from the list
+          setReview(kpiReview);
+        }
+        
+        console.log('✅ [useManagerKPIDetails] Review set, now fetching ratings data...');
+        // Fetch ratings data for this review
+        await fetchRatingsData(kpiReview.id);
+      } else {
+        console.warn('⚠️ [useManagerKPIDetails] No review found for kpi_id:', parseInt(kpiId!));
       }
     } catch (error) {
-      console.error('Error fetching KPI details:', error);
     } finally {
       setLoading(false);
+    }
+  };
+  
+  // Fetch ratings data with actual values and percentages (same as KPIConfirmation)
+  const fetchRatingsData = async (reviewId: number) => {
+    try {
+      const response = await api.get(`/kpi-review/${reviewId}/ratings`);
+      
+      // Backend returns { review, ratings } from kpi_item_ratings table
+      const ratings = response.data.ratings;
+      
+      
+      if (!ratings || !Array.isArray(ratings)) {
+        return;
+      }
+      
+      // Extract actual values and percentages from kpi_item_ratings table
+      const actualVals: Record<number, string> = {};
+      const targetVals: Record<number, string> = {};
+      const goalWeightsMap: Record<number, string> = {};
+      const statusMap: Record<number, string> = {};
+      const percentages: Record<number, number> = {};
+      const managerPercentages: Record<number, number> = {};
+      let totalPercentage = 0;
+      
+      ratings.forEach((rating: any) => {
+      
+        
+        // Only extract data from manager ratings
+        if (rating.kpi_item_id && rating.rater_role === 'manager') {
+          if (rating.actual_value) {
+            actualVals[rating.kpi_item_id] = rating.actual_value;
+          }
+          if (rating.target_value) {
+            targetVals[rating.kpi_item_id] = rating.target_value;
+          }
+          if (rating.goal_weight) {
+            goalWeightsMap[rating.kpi_item_id] = rating.goal_weight;
+          }
+          if (rating.current_performance_status) {
+            statusMap[rating.kpi_item_id] = rating.current_performance_status;
+          }
+          if (rating.percentage_value_obtained !== null && rating.percentage_value_obtained !== undefined) {
+            percentages[rating.kpi_item_id] = parseFloat(rating.percentage_value_obtained);
+          }
+          if (rating.manager_rating_percentage !== null && rating.manager_rating_percentage !== undefined) {
+            managerPercentages[rating.kpi_item_id] = parseFloat(rating.manager_rating_percentage);
+            totalPercentage += parseFloat(rating.manager_rating_percentage);
+          }
+        }
+      });
+      
+      setActualValues(actualVals);
+      setTargetValues(targetVals);
+      setGoalWeights(goalWeightsMap);
+      setCurrentPerformanceStatuses(statusMap);
+      setPercentageValuesObtained(percentages);
+      setManagerRatingPercentages(managerPercentages);
+      setFinalRatingPercentage(totalPercentage);
+      
+   
+    } catch (err) {
     }
   };
 
@@ -166,6 +270,15 @@ export const useManagerKPIDetails = () => {
     textModal,
     parsedReviewData,
     stageInfo: getStageInfo(),
+    
+    // Actual vs Target data
+    actualValues,
+    targetValues,
+    goalWeights,
+    currentPerformanceStatuses,
+    percentageValuesObtained,
+    managerRatingPercentages,
+    finalRatingPercentage,
     
     // Actions
     openTextModal,
