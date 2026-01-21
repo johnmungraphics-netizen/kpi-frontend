@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { FiArrowLeft, FiSave } from 'react-icons/fi';
 import { Button, ConfirmDialog } from '../../../components/common';
 import { KPIFormTable } from '../components/KPIFormTable';
@@ -37,9 +37,43 @@ const KPITemplateForm: React.FC = () => {
     handleCancel,
   } = useManagerKPITemplateForm();
 
+  console.log('🎨 [KPITemplateForm] Component rendered:', {
+    isEditMode,
+    loading,
+    templateName,
+    description,
+    kpiItemsCount: kpiItems.length,
+    timestamp: new Date().toISOString()
+  });
+
+  useEffect(() => {
+    console.log('🔄 [KPITemplateForm] KPI Items changed:', {
+      count: kpiItems.length,
+      items: kpiItems.map((item, idx) => ({
+        index: idx,
+        title: item.title,
+        hasDescription: !!item.description,
+        hasTarget: !!item.target_value,
+        hasMeasure: !!item.measure_unit,
+        hasGoalWeight: !!item.goal_weight
+      }))
+    });
+  }, [kpiItems]);
+
+  useEffect(() => {
+    console.log('🔄 [KPITemplateForm] Template Name changed:', templateName);
+  }, [templateName]);
+
+  useEffect(() => {
+    console.log('🔄 [KPITemplateForm] Description changed:', description);
+  }, [description]);
+
   if (loading) {
+    console.log('⏳ [KPITemplateForm] Still loading...');
     return <div className="p-6">Loading...</div>;
   }
+
+  console.log('✅ [KPITemplateForm] Rendering form with data');
 
   return (
     <div className="space-y-6">

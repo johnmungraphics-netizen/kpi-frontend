@@ -72,48 +72,34 @@ export const useManagerDashboard = () => {
   const fetchInitialData = async () => {
     try {
       setLoading(true);
-      console.log('[useManagerDashboard] Starting fetchInitialData');
       
       // Fetch Redux-managed data
-      console.log('[useManagerDashboard] Dispatching Redux actions...');
       dispatch(fetchKPIs({}));
       dispatch(fetchDepartmentStatistics({}));
       dispatch(fetchPeriodSettings());
       dispatch(fetchDepartments());
 
       // Fetch manager-specific data in parallel
-      console.log('[useManagerDashboard] Fetching manager-specific data...');
       const [reviewsData, notificationsData, activityData, employeesData, departmentsData] = 
         await Promise.all([
           managerService.fetchReviews().catch(err => {
-            console.error('[useManagerDashboard] fetchReviews failed:', err);
             return [];
           }),
           managerService.fetchNotifications(5).catch(err => {
-            console.error('[useManagerDashboard] fetchNotifications failed:', err);
             return [];
           }),
           managerService.fetchRecentActivity().catch(err => {
-            console.error('[useManagerDashboard] fetchRecentActivity failed:', err);
             return [];
           }),
           managerService.fetchEmployees().catch(err => {
-            console.error('[useManagerDashboard] fetchEmployees failed:', err);
             return [];
           }),
           managerService.fetchManagerDepartments().catch(err => {
-            console.error('[useManagerDashboard] fetchManagerDepartments failed:', err);
             return [];
           }),
         ]);
 
-      console.log('[useManagerDashboard] Data fetched successfully:', {
-        reviews: reviewsData.length,
-        notifications: notificationsData.length,
-        activities: activityData.length,
-        employees: employeesData.length,
-        departments: departmentsData.length,
-      });
+      
 
       setReviews(reviewsData);
       setNotifications(notificationsData);
@@ -129,12 +115,9 @@ export const useManagerDashboard = () => {
 
   const fetchCategoryEmployees = async (department: string, category: string) => {
     try {
-      console.log('[useManagerDashboard] Fetching category employees:', { department, category });
       const data = await managerService.fetchEmployeesByCategory(department, category);
-      console.log('[useManagerDashboard] Category employees fetched:', data.length);
       setCategoryEmployees(data);
     } catch (error) {
-      console.error('[useManagerDashboard] Error fetching employees by category:', error);
       setCategoryEmployees([]);
     }
   };

@@ -44,9 +44,7 @@ export const useManagerKPITemplates = (): UseManagerKPITemplatesReturn => {
 
   const fetchTemplates = async () => {
     try {
-      console.log('📥 [useManagerKPITemplates] Fetching templates from /templates');
       const response = await api.get('/templates');
-      console.log('✅ [useManagerKPITemplates] Templates received:', response.data.templates?.length || 0);
       setTemplates(response.data.templates || []);
     } catch (error) {
       console.error('❌ [useManagerKPITemplates] Error fetching templates:', error);
@@ -67,13 +65,10 @@ export const useManagerKPITemplates = (): UseManagerKPITemplatesReturn => {
     }
 
     try {
-      console.log('🗑️ [useManagerKPITemplates] Deleting template:', id);
       await api.delete(`/templates/${id}`);
-      console.log('✅ [useManagerKPITemplates] Template deleted successfully');
       toast.success('Template deleted successfully!');
       fetchTemplates();
     } catch (error: any) {
-      console.error('❌ [useManagerKPITemplates] Error deleting template:', error);
       toast.error(error.response?.data?.error || 'Failed to delete template');
     }
   };

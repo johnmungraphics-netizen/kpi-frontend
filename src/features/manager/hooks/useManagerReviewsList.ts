@@ -43,7 +43,6 @@ export const useManagerReviewsList = (): UseManagerReviewsListReturn => {
   }, []);
 
   const fetchData = async () => {
-    console.log('🔍 [useManagerReviewsList] Fetching reviews and acknowledged KPIs...');
     try {
       // Fetch both reviews and acknowledged KPIs waiting for review
       const [reviewsResponse, kpisResponse] = await Promise.all([
@@ -51,21 +50,12 @@ export const useManagerReviewsList = (): UseManagerReviewsListReturn => {
         api.get('/kpis/acknowledged-review-pending')
       ]);
       
-      console.log('📦 [useManagerReviewsList] Raw responses:', {
-        reviewsResponse: reviewsResponse.data,
-        kpisResponse: kpisResponse.data
-      });
-      
+     
       // Handle nested response structure: response.data.data.kpis OR response.data.kpis
       const acknowledgedKPIsData = kpisResponse.data.data?.kpis || kpisResponse.data.kpis || [];
       const reviewsData = reviewsResponse.data.data?.reviews || reviewsResponse.data.reviews || [];
       
-      console.log('✅ [useManagerReviewsList] Data extracted:', {
-        reviews: reviewsData.length,
-        acknowledgedKPIs: acknowledgedKPIsData.length
-      });
-      console.log('✅ [useManagerReviewsList] Reviews data:', reviewsData);
-      console.log('✅ [useManagerReviewsList] Acknowledged KPIs:', acknowledgedKPIsData);
+     
       
       // Extract unique employee department IDs from acknowledged KPIs
       const employeeDeptIds = [...new Set(
@@ -74,7 +64,6 @@ export const useManagerReviewsList = (): UseManagerReviewsListReturn => {
           .filter((id: any) => id != null)
       )] as number[];
       
-      console.log('🔍 [useManagerReviewsList] Fetching features for employee departments:', employeeDeptIds);
       
       // Fetch department features for all employee departments
       const newCache: Record<number, DepartmentFeatures> = {};
@@ -83,16 +72,12 @@ export const useManagerReviewsList = (): UseManagerReviewsListReturn => {
           const features = await fetchDepartmentFeaturesById(deptId);
           if (features) {
             newCache[deptId] = features;
-            console.log(`✅ [useManagerReviewsList] Cached features for dept ${deptId}:`, {
-              quarterly: features.enable_employee_self_rating_quarterly,
-              yearly: features.enable_employee_self_rating_yearly
-            });
+        
           }
         })
       );
       
       setEmployeeDeptFeaturesCache(newCache);
-      console.log('✅ [useManagerReviewsList] Department features cache built:', Object.keys(newCache));
       
       setReviews(reviewsData);
       setAcknowledgedKPIs(acknowledgedKPIsData);
@@ -106,32 +91,18 @@ export const useManagerReviewsList = (): UseManagerReviewsListReturn => {
   // Check if a KPI should be shown as "Manager to initiate" based on period and settings
   // NOW CHECKS THE EMPLOYEE'S DEPARTMENT FEATURES, NOT THE MANAGER'S
   const shouldShowAsManagerInitiated = (kpi: KPI & { employee_department_id?: number }): boolean => {
-    console.log(`🔍 [shouldShowAsManagerInitiated] Checking KPI ${kpi.id}:`, {
-      kpiId: kpi.id,
-      period: kpi.period,
-      employee_department_id: kpi.employee_department_id,
-      hasEmployeeDeptId: !!kpi.employee_department_id
-    });
-
+   
     // If employee_department_id is available, use cached department features
     if (kpi.employee_department_id && employeeDeptFeaturesCache[kpi.employee_department_id]) {
       const employeeFeatures = employeeDeptFeaturesCache[kpi.employee_department_id];
       const kpiPeriod = kpi.period?.toLowerCase() === 'yearly' ? 'yearly' : 'quarterly';
-      
-      console.log(`✅ [shouldShowAsManagerInitiated] Using EMPLOYEE's dept ${kpi.employee_department_id} features:`, {
-        kpiId: kpi.id,
-        period: kpiPeriod,
-        quarterly_self_rating: employeeFeatures.enable_employee_self_rating_quarterly,
-        yearly_self_rating: employeeFeatures.enable_employee_self_rating_yearly
-      });
+    
       
       if (kpiPeriod === 'yearly') {
         const result = employeeFeatures.enable_employee_self_rating_yearly === false;
-        console.log(`📊 [shouldShowAsManagerInitiated] KPI ${kpi.id} (yearly): ${result ? '🔴 Manager initiates' : '🟢 Employee self-rates'}`);
         return result;
       } else {
         const result = employeeFeatures.enable_employee_self_rating_quarterly === false;
-        console.log(`📊 [shouldShowAsManagerInitiated] KPI ${kpi.id} (quarterly): ${result ? '🔴 Manager initiates' : '🟢 Employee self-rates'}`);
         return result;
       }
     }
@@ -143,21 +114,13 @@ export const useManagerReviewsList = (): UseManagerReviewsListReturn => {
     }
     
     const kpiPeriod = kpi.period?.toLowerCase() === 'yearly' ? 'yearly' : 'quarterly';
-    
-    console.log(`⚠️ [shouldShowAsManagerInitiated] FALLBACK to manager's features for KPI ${kpi.id}:`, {
-      period: kpi.period,
-      determinedPeriod: kpiPeriod,
-      quarterly_self_rating: features.enable_employee_self_rating_quarterly,
-      yearly_self_rating: features.enable_employee_self_rating_yearly
-    });
+  
     
     if (kpiPeriod === 'yearly') {
       const result = features.enable_employee_self_rating_yearly === false;
-      console.log(`📊 [shouldShowAsManagerInitiated] KPI ${kpi.id} (yearly - fallback): ${result ? '🔴 Manager initiates' : '🟢 Employee self-rates'}`);
       return result;
     } else {
       const result = features.enable_employee_self_rating_quarterly === false;
-      console.log(`📊 [shouldShowAsManagerInitiated] KPI ${kpi.id} (quarterly - fallback): ${result ? '🔴 Manager initiates' : '🟢 Employee self-rates'}`);
       return result;
     }
   };

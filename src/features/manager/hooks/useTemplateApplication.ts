@@ -34,15 +34,10 @@ export const useTemplateApplication = (): UseTemplateApplicationReturn => {
     setLoading(true);
     try {
       const response = await api.get('/users/managers/employees-for-template');
-      console.log('✅ [useTemplateApplication] Received data:', response.data);
       
       setEmployees(response.data.employees || []);
       setDepartments(response.data.departments || []);
-      
-      console.log('📊 [useTemplateApplication] State updated:', {
-        employeesCount: response.data.employees?.length || 0,
-        departmentsCount: response.data.departments?.length || 0,
-      });
+    
     } catch (error: any) {
       console.error('❌ [useTemplateApplication] Error fetching data:', error);
       toast.error(error.response?.data?.error || 'Failed to load employees');
@@ -54,14 +49,12 @@ export const useTemplateApplication = (): UseTemplateApplicationReturn => {
   };
 
   const openModal = async (templateId: number) => {
-    console.log('🚀 [useTemplateApplication] Opening modal for template:', templateId);
     setCurrentTemplateId(templateId);
     setIsModalOpen(true);
     await fetchEmployeesAndDepartments();
   };
 
   const closeModal = () => {
-    console.log('🔴 [useTemplateApplication] Closing modal');
     setIsModalOpen(false);
     setCurrentTemplateId(null);
     setEmployees([]);
@@ -74,11 +67,7 @@ export const useTemplateApplication = (): UseTemplateApplicationReturn => {
       return;
     }
 
-    console.log('📤 [useTemplateApplication] Applying template:', {
-      templateId: currentTemplateId,
-      employeeCount: selectedEmployeeIds.length,
-      employeeIds: selectedEmployeeIds,
-    });
+   
 
     setApplying(true);
     try {
@@ -86,14 +75,12 @@ export const useTemplateApplication = (): UseTemplateApplicationReturn => {
         employee_ids: selectedEmployeeIds,
       });
 
-      console.log('✅ [useTemplateApplication] Template applied successfully:', response.data);
 
       const successCount = response.data.results?.success || selectedEmployeeIds.length;
       toast.success(`Template applied to ${successCount} employee${successCount !== 1 ? 's' : ''} successfully!`);
       
       closeModal();
     } catch (error: any) {
-      console.error('❌ [useTemplateApplication] Error applying template:', error);
       toast.error(error.response?.data?.error || 'Failed to apply template');
     } finally {
       setApplying(false);

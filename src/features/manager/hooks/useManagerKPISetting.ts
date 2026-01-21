@@ -85,19 +85,13 @@ interface UseManagerKPISettingReturn {
 }
 
 export const useManagerKPISetting = (): UseManagerKPISettingReturn => {
-  console.log('🔵🔵🔵 [useManagerKPISetting] HOOK CALLED!');
   const { employeeId, templateId } = useParams<{ employeeId?: string; templateId?: string }>();
-  console.log('🔵 [useManagerKPISetting] URL params:', { employeeId, templateId });
-  console.log('🔵 [useManagerKPISetting] Current pathname:', window.location.pathname);
   const navigate = useNavigate();
   const toast = useToast();
   const { confirm, confirmState, handleConfirm, handleCancel } = useConfirm();
   
   // Determine mode
   const isTemplateMode = !!templateId;
-  console.log('🔵 [useManagerKPISetting] isTemplateMode:', isTemplateMode);
-  console.log('🔵 [useManagerKPISetting] templateId raw:', templateId);
-  console.log('🔵 [useManagerKPISetting] employeeId raw:', employeeId);
   
   const [employee, setEmployee] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -129,18 +123,13 @@ export const useManagerKPISetting = (): UseManagerKPISettingReturn => {
 
   // Load template data or employee data based on mode
   useEffect(() => {
-    console.log('🔵🔵 [useManagerKPISetting] useEffect triggered!');
-    console.log('🔵 [useManagerKPISetting] isTemplateMode:', isTemplateMode);
-    console.log('🔵 [useManagerKPISetting] templateId:', templateId);
-    console.log('🔵 [useManagerKPISetting] employeeId:', employeeId);
+   
     
     if (isTemplateMode && templateId) {
-      console.log('✅ [useManagerKPISetting] TEMPLATE MODE - Loading template:', templateId);
       loadTemplate(parseInt(templateId));
       fetchEmployeesForTemplate();
       fetchAvailablePeriods();
     } else if (employeeId) {
-      console.log('✅ [useManagerKPISetting] EMPLOYEE MODE - Loading employee:', employeeId);
       loadDraft();
       fetchEmployee();
       fetchAvailablePeriods();
@@ -170,7 +159,6 @@ export const useManagerKPISetting = (): UseManagerKPISettingReturn => {
     
     const draftData = loadDraftFromStorage(employeeId);
     if (draftData) {
-      console.log('Loading draft for employee:', employeeId, draftData);
       
       if (draftData.period) {
         setPeriod(draftData.period);
@@ -202,13 +190,11 @@ export const useManagerKPISetting = (): UseManagerKPISettingReturn => {
 
   const fetchAvailablePeriods = async () => {
     try {
-      console.log('🔵 [fetchAvailablePeriods] Called in mode:', { isTemplateMode, employeeId });
       const response = await api.get('/settings/available-periods');
       setAvailablePeriods(response.data.periods || []);
       
       // DON'T set defaults in template mode - template will set its own period
       if (isTemplateMode) {
-        console.log('✅ [fetchAvailablePeriods] Template mode - skipping default period settings');
         return;
       }
       
@@ -216,7 +202,6 @@ export const useManagerKPISetting = (): UseManagerKPISettingReturn => {
       if (employeeId) {
         const draftData = loadDraftFromStorage(employeeId);
         if (draftData) {
-          console.log('✅ [fetchAvailablePeriods] Draft exists - skipping default period settings');
           return;
         }
       }
@@ -225,7 +210,6 @@ export const useManagerKPISetting = (): UseManagerKPISettingReturn => {
       const quarterlyPeriods = response.data.periods?.filter((p: any) => p.period_type === 'quarterly' && p.is_active) || [];
       if (quarterlyPeriods.length > 0) {
         const firstPeriod = quarterlyPeriods[0];
-        console.log('🔧 [fetchAvailablePeriods] Setting default quarterly period:', firstPeriod.quarter, firstPeriod.year);
         setPeriod('quarterly');
         setQuarter(firstPeriod.quarter || 'Q1');
         setYear(firstPeriod.year);
@@ -245,7 +229,6 @@ export const useManagerKPISetting = (): UseManagerKPISettingReturn => {
     try {
       const response = await api.get('/users/list');
       const users = response.data.data?.users || response.data.users || [];
-      console.log('[fetchEmployee] Users response:', { users: Array.isArray(users), count: users.length });
       const employee = users.find((u: any) => u.id === parseInt(employeeId));
       if (employee) {
         setEmployee(employee);
@@ -423,11 +406,8 @@ export const useManagerKPISetting = (): UseManagerKPISettingReturn => {
 
   // Template mode functions
   const loadTemplate = async (tid: number) => {
-    console.log('🔵 [loadTemplate] Fetching template:', tid);
     try {
       const response = await api.get(`/templates/${tid}`);
-      console.log('📥 [loadTemplate] Raw API response:', response.data);
-      console.log('📥 [loadTemplate] Response structure:', Object.keys(response.data));
       
       // Backend returns: { success: true, template: {...}, items: [...] }
       const templateData = response.data.template;
@@ -448,7 +428,6 @@ export const useManagerKPISetting = (): UseManagerKPISettingReturn => {
       
       // Auto-populate form with template data
       if (templateData.period) {
-        console.log('🔧 [loadTemplate] Setting period:', templateData.period);
         // Convert 'annual' to 'yearly' for frontend
         const frontendPeriod = templateData.period === 'annual' ? 'yearly' : templateData.period;
         setPeriod(frontendPeriod as 'quarterly' | 'yearly');
@@ -457,12 +436,10 @@ export const useManagerKPISetting = (): UseManagerKPISettingReturn => {
       }
       
       if (templateData.quarter) {
-        console.log('🔧 [loadTemplate] Setting quarter:', templateData.quarter);
         setQuarter(templateData.quarter);
       }
       
       if (templateData.year) {
-        console.log('🔧 [loadTemplate] Setting year:', templateData.year);
         setYear(templateData.year);
       }
       
@@ -480,7 +457,6 @@ export const useManagerKPISetting = (): UseManagerKPISettingReturn => {
           exclude_from_calculation: item.exclude_from_calculation || 0,
         }));
         setKpiRows(templateRows);
-        console.log('✅ [loadTemplate] Loaded KPI items:', templateRows.length);
       } else {
         console.warn('⚠️ [loadTemplate] No items in template!');
       }
@@ -497,14 +473,11 @@ export const useManagerKPISetting = (): UseManagerKPISettingReturn => {
     setEmployeesLoading(true);
     try {
       const response = await api.get('/users/managers/employees-for-template');
-      console.log('✅ [fetchEmployeesForTemplate] Response:', response.data);
       
       setEmployees(response.data.employees || []);
       setDepartments(response.data.departments || []);
       
-      console.log('✅ [fetchEmployeesForTemplate] Loaded employees:', response.data.employees?.length, 'departments:', response.data.departments?.length);
     } catch (error) {
-      console.error('❌ [fetchEmployeesForTemplate] Error:', error);
       toast.error('Failed to load employees');
     } finally {
       setEmployeesLoading(false);
@@ -512,7 +485,6 @@ export const useManagerKPISetting = (): UseManagerKPISettingReturn => {
   };
 
   const handleSubmitToEmployees = async (selectedEmployeeIds: number[]) => {
-    console.log('🔵 [handleSubmitToEmployees] Selected employees:', selectedEmployeeIds);
     
     if (selectedEmployeeIds.length === 0) {
       toast.error('Please select at least one employee');
@@ -578,7 +550,6 @@ export const useManagerKPISetting = (): UseManagerKPISettingReturn => {
       toast.success(`KPI successfully sent to ${selectedEmployeeIds.length} employee(s)!`);
       navigate('/manager/dashboard');
     } catch (error: any) {
-      console.error('❌ [handleSubmitToEmployees] Error:', error);
       toast.error(error.response?.data?.error || 'Failed to send KPIs to employees');
     } finally {
       setSaving(false);
@@ -586,7 +557,6 @@ export const useManagerKPISetting = (): UseManagerKPISettingReturn => {
   };
 
   const handleEmployeeSelectionChange = (employeeIds: number[]) => {
-    console.log('🔵 [handleEmployeeSelectionChange] Employee selection changed:', employeeIds);
     setSelectedEmployeeIds(employeeIds);
   };
 

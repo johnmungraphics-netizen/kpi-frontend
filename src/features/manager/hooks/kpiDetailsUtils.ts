@@ -34,17 +34,10 @@ export const parseReviewData = (review: KPIReview | null): ParsedReviewData => {
     return { employeeItemRatings, employeeItemComments, managerItemRatings, managerItemComments };
   }
 
-  console.log('🔍 [parseReviewData] Parsing review:', {
-    reviewId: review.id,
-    hasItemRatings: !!(review as any).item_ratings,
-    itemRatingsStructure: (review as any).item_ratings,
-    employeeComment: review.employee_comment,
-    managerComment: review.manager_comment
-  });
+ 
 
   // PRIORITY 1: Use structured `item_ratings` data (same as KPIConfirmation.tsx)
   if ((review as any).item_ratings) {
-    console.log('✅ [parseReviewData] Using structured item_ratings data');
     
     // Parse employee ratings from structured data
     if ((review as any).item_ratings.employee) {
@@ -52,7 +45,6 @@ export const parseReviewData = (review: KPIReview | null): ParsedReviewData => {
         const id = parseInt(itemId);
         employeeItemRatings[id] = parseFloat(String(ratingData.rating)) || 0;
         employeeItemComments[id] = ratingData.comment || '';
-        console.log(`  📊 Employee Item ${id}: rating=${employeeItemRatings[id]}, comment="${employeeItemComments[id]}"`);
       });
     }
 
@@ -62,22 +54,15 @@ export const parseReviewData = (review: KPIReview | null): ParsedReviewData => {
         const id = parseInt(itemId);
         managerItemRatings[id] = parseFloat(String(ratingData.rating)) || 0;
         managerItemComments[id] = ratingData.comment || '';
-        console.log(`  📊 Manager Item ${id}: rating=${managerItemRatings[id]}, comment="${managerItemComments[id]}"`);
       });
     }
 
-    console.log('✅ [parseReviewData] Parsed structured data:', {
-      employeeRatingsCount: Object.keys(employeeItemRatings).length,
-      managerRatingsCount: Object.keys(managerItemRatings).length,
-      employeeItemRatings,
-      managerItemRatings
-    });
+    
 
     return { employeeItemRatings, employeeItemComments, managerItemRatings, managerItemComments };
   }
 
   // FALLBACK: Try legacy JSON format in comment fields
-  console.log('⚠️ [parseReviewData] No structured item_ratings, trying legacy JSON format');
 
   // Parse employee ratings/comments from JSON in comment field
   try {
@@ -89,7 +74,6 @@ export const parseReviewData = (review: KPIReview | null): ParsedReviewData => {
           employeeItemComments[item.item_id] = item.comment || '';
         }
       });
-      console.log('✅ [parseReviewData] Parsed employee data from JSON');
     }
   } catch (error) {
     console.log('⚠️ [parseReviewData] Could not parse employee_comment as JSON:', error);
@@ -111,13 +95,7 @@ export const parseReviewData = (review: KPIReview | null): ParsedReviewData => {
     console.log('⚠️ [parseReviewData] Could not parse manager_comment as JSON:', error);
   }
 
-  console.log('📊 [parseReviewData] Final parsed data:', {
-    employeeRatingsCount: Object.keys(employeeItemRatings).length,
-    managerRatingsCount: Object.keys(managerItemRatings).length,
-    employeeItemRatings,
-    managerItemRatings
-  });
-
+ 
   return { employeeItemRatings, employeeItemComments, managerItemRatings, managerItemComments };
 };
 

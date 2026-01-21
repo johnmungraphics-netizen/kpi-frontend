@@ -57,13 +57,7 @@ export const useManagerKPIDetails = () => {
 
       // Find review for this specific KPI
       const kpiReview = reviewsData.find((r: KPIReview) => r.kpi_id === parseInt(kpiId!));
-      
-      console.log('📊 [useManagerKPIDetails] Review Data Check:');
-      console.log('   All reviews count:', reviewsData.length);
-      console.log('   Looking for kpi_id:', parseInt(kpiId!));
-      console.log('   Found kpiReview:', !!kpiReview);
-      console.log('   kpiReview.id:', kpiReview?.id);
-      console.log('   kpiReview.accomplishments (from list):', kpiReview?.accomplishments);
+   
       
       if (kpiReview) {
         // Fetch the full review details by ID to get accomplishments
@@ -71,15 +65,7 @@ export const useManagerKPIDetails = () => {
         try {
           const fullReviewResponse = await api.get(`/kpi-review/${kpiReview.id}`);
           const fullReview = fullReviewResponse.data.review;
-          console.log('✅ [useManagerKPIDetails] Full review fetched:', {
-            id: fullReview.id,
-            accomplishments: fullReview.accomplishments,
-            accomplishments_length: fullReview.accomplishments?.length,
-            disappointments: fullReview.disappointments,
-            improvement_needed: fullReview.improvement_needed,
-            future_plan: fullReview.future_plan
-          });
-          console.log('📦 [useManagerKPIDetails] Full Review Object:', JSON.stringify(fullReview, null, 2));
+        
           setReview(fullReview);
         } catch (reviewError) {
           console.error('❌ [useManagerKPIDetails] Error fetching full review details:', reviewError);
@@ -87,7 +73,6 @@ export const useManagerKPIDetails = () => {
           setReview(kpiReview);
         }
         
-        console.log('✅ [useManagerKPIDetails] Review set, now fetching ratings data...');
         // Fetch ratings data for this review
         await fetchRatingsData(kpiReview.id);
       } else {
