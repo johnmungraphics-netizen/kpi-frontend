@@ -79,7 +79,7 @@ const ManagerKPISetting: React.FC = () => {
   return (
     <div className="flex gap-6">{/* Changed from space-y-6 to flex layout */}
       {/* Main Form - Left Side */}
-      <div className={`flex-1 space-y-6 ${isTemplateMode ? 'pr-6' : ''}`}>
+      <div className={`flex-1 min-w-0 space-y-6 ${isTemplateMode ? 'pr-6' : ''}`}>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
@@ -213,7 +213,7 @@ const ManagerKPISetting: React.FC = () => {
 
       {/* Employee Selection Panel - Right Side (only in template mode) */}
       {isTemplateMode && (
-        <div className="w-96 sticky top-6 h-fit">
+        <div className="w-80 sticky top-6 h-fit">
           <EmployeeSelectionModal
             isOpen={true}
             onClose={() => {}} // No close in inline mode

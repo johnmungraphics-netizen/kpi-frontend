@@ -11,6 +11,7 @@ const ManagerKPITemplates: React.FC = () => {
     loading,
     confirmState,
     handleDelete,
+    handleCopy,
     handleCreateTemplate,
     handleEditTemplate,
     handleBack,
@@ -18,18 +19,10 @@ const ManagerKPITemplates: React.FC = () => {
     handleCancel,
   } = useManagerKPITemplates();
 
-  console.log('🏗️ [KPITemplates] Component state:', {
-    templatesCount: templates.length,
-    loading,
-  });
+  
 
   const handleUseTemplate = (templateId: number) => {
-    console.log('🚀🚀🚀 [KPITemplates] Use Template clicked!');
-    console.log('🚀 [KPITemplates] Template ID:', templateId);
-    console.log('🚀 [KPITemplates] Current location:', window.location.pathname);
     const targetPath = `/manager/kpi-setting/template/${templateId}`;
-    console.log('🚀 [KPITemplates] Target path:', targetPath);
-    console.log('🚀 [KPITemplates] Calling navigate...');
     navigate(targetPath);
     console.log('🚀 [KPITemplates] Navigate called successfully');
   };
@@ -145,12 +138,20 @@ const ManagerKPITemplates: React.FC = () => {
                   Edit
                 </Button>
                 <Button
+                  onClick={() => handleCopy(template.id, template.template_name)}
+                  variant="secondary"
+                  icon={FiCopy}
+                  size="sm"
+                  fullWidth
+                >
+                  Copy
+                </Button>
+                <Button
                   onClick={() => handleDelete(template.id, template.template_name)}
                   variant="danger"
                   icon={FiTrash2}
                   size="sm"
                   fullWidth
-                  className="col-span-2"
                 >
                   Delete
                 </Button>

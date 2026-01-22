@@ -46,19 +46,8 @@ export const useEmployeeKPIConfirmation = () => {
       if (reviewData?.kpi_id) {
         const kpiData = await employeeService.fetchKPIById(reviewData.kpi_id);
         console.log('📥 [useEmployeeKPIConfirmation] fetched kpiData:', kpiData);
-        
-        // If review already has items (from backend getById), use them
-        // Otherwise use items from KPI fetch
-        if (reviewData.items && reviewData.items.length > 0) {
-          console.log('✅ Using items from review.items:', reviewData.items);
-          setKpi({
-            ...kpiData,
-            items: reviewData.items,
-          });
-        } else {
-          console.log('✅ Using items from kpiData:', kpiData);
-          setKpi(kpiData);
-        }
+        console.log('✅ Using items from kpiData:', kpiData);
+        setKpi(kpiData);
       }
     } catch (error: any) {
       console.error('Error fetching review:', error);

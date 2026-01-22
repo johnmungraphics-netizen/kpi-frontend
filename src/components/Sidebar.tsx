@@ -32,17 +32,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 
   // Debug logging
   useEffect(() => {
-    console.log('[Sidebar] 🔍 Component rendered');
-    console.log('[Sidebar] 👤 User object:', user);
-    console.log('[Sidebar] 🎭 User role:', user?.role);
-    console.log('[Sidebar] 🎭 User role_id:', user?.role_id);
-    console.log('[Sidebar] 🎭 User role type:', typeof user?.role);
-    console.log('[Sidebar] 🎭 User role_id type:', typeof user?.role_id);
-    console.log('[Sidebar] 🚪 Sidebar isOpen:', isOpen);
-    console.log('[Sidebar] 🔍 isHR result:', isHR(user));
-    console.log('[Sidebar] 🔍 isManager result:', isManager(user));
-    console.log('[Sidebar] 🔍 isEmployee result:', isEmployee(user));
-    console.log('[Sidebar] 🔍 isSuperAdmin result:', isSuperAdmin(user));
+ 
   }, [user, isOpen]);
 
   // Debug logging
@@ -82,7 +72,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       const response = await api.get('/kpi-review/pending/count');
       setPendingReviewsCount(response.data.count || 0);
     } catch (error) {
-      console.error('Error fetching pending reviews count:', error);
       setPendingReviewsCount(0);
     }
   };
@@ -109,7 +98,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       }).length;
       setPendingEmployeeReviewsCount(needReview);
     } catch (error) {
-      console.error('Error fetching employee counts:', error);
       setPendingAcknowledgementsCount(0);
       setPendingEmployeeReviewsCount(0);
     }

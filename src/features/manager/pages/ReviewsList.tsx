@@ -21,17 +21,9 @@ const ReviewsList: React.FC = () => {
 
   const { features, loading: featuresLoading } = useCompanyFeatures();
 
-  console.log('📋 [ReviewsList] Component render:', {
-    loading,
-    featuresLoading,
-    reviewsCount: reviews.length,
-    acknowledgedKPIsCount: acknowledgedKPIs.length,
-    pendingCount
-  });
-  console.log('📋 [ReviewsList] Company features:', features);
+  
 
   if (loading || featuresLoading) {
-    console.log('⏳ [ReviewsList] Showing loading state');
     return <div className="p-6">Loading...</div>;
   }
 
@@ -40,14 +32,7 @@ const ReviewsList: React.FC = () => {
   const managerInitiateKPIs = acknowledgedKPIs.filter(shouldShowAsManagerInitiated);
   const employeeSelfRateKPIs = acknowledgedKPIs.filter(kpi => !shouldShowAsManagerInitiated(kpi));
   
-  console.log('📋 [ReviewsList] Manager-initiate KPIs:', {
-    count: managerInitiateKPIs.length,
-    kpis: managerInitiateKPIs.map(k => ({ id: k.id, title: k.title, period: k.period, employee: k.employee_name }))
-  });
-  console.log('📋 [ReviewsList] Employee self-rate KPIs:', {
-    count: employeeSelfRateKPIs.length,
-    kpis: employeeSelfRateKPIs.map(k => ({ id: k.id, title: k.title, period: k.period, employee: k.employee_name }))
-  });
+ 
 
   // Check if we have any yearly or quarterly KPIs requiring manager initiation
   const yearlyManagerKPIs = managerInitiateKPIs.filter(k => k.period?.toLowerCase() === 'yearly');

@@ -7,8 +7,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import api from '../../../services/api';
-import { managerService } from '../services';
-import { TextModalState } from '../types';
+import { managerService } from '../../manager/services';
+import { TextModalState } from '../../manager/types';
 import { KPI, KPIReview } from '../../../types';
 import { filterKPIItems, parseReviewData } from './kpiDetailsUtils';
 

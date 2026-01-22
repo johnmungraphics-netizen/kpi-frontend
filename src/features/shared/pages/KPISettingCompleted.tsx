@@ -48,25 +48,62 @@ const KPISettingCompleted: React.FC = () => {
 
   const fetchData = async () => {
     try {
+      console.log('🚀 [KPISettingCompleted] fetchData START');
+      console.log('👤 [KPISettingCompleted] Current user:', user);
+      
       // Fetch acknowledged KPIs (status = 'acknowledged')
+      console.log('📡 [KPISettingCompleted] Making API call to /kpis/setting-completed');
       const kpisRes = await api.get('/kpis/setting-completed', {
         params: {
           status: 'acknowledged', // Filter for acknowledged status
         }
       }).catch(err => {
-        console.error('Error fetching acknowledged KPIs:', err);
+        console.error('❌ [KPISettingCompleted] Error fetching acknowledged KPIs:', err);
+        console.error('❌ [KPISettingCompleted] Error details:', {
+          message: err.message,
+          response: err.response?.data,
+          status: err.response?.status
+        });
         return { data: { kpis: [] } };
       });
 
+      console.log('📦 [KPISettingCompleted] Raw API response:', kpisRes.data);
+      console.log('📊 [KPISettingCompleted] Response structure:', {
+        hasSuccess: 'success' in kpisRes.data,
+        hasData: 'data' in kpisRes.data,
+        hasKpis: 'kpis' in kpisRes.data,
+        successValue: kpisRes.data.success,
+        dataKeys: kpisRes.data.data ? Object.keys(kpisRes.data.data) : 'no data key'
+      });
+
       // Filter for acknowledged status on frontend as well (double-check)
-      const allKpis = kpisRes.data.kpis || [];
+      const allKpis = kpisRes.data.data?.kpis || kpisRes.data.kpis || [];
+      
+      if (allKpis.length > 0) {
+        console.log('📝 [KPISettingCompleted] First KPI sample:', {
+          id: allKpis[0].id,
+          employee_name: allKpis[0].employee_name,
+          status: allKpis[0].status,
+          period: allKpis[0].period,
+          quarter: allKpis[0].quarter,
+          year: allKpis[0].year,
+          employee_signature: allKpis[0].employee_signature ? 'EXISTS' : 'NULL',
+          manager_signature: allKpis[0].manager_signature ? 'EXISTS' : 'NULL'
+        });
+      } else {
+        console.warn('⚠️ [KPISettingCompleted] No KPIs returned from API');
+      }
+
       const acknowledgedKPIs = allKpis.filter((kpi: KPI) => kpi.status === 'acknowledged');
+      console.log('✅ [KPISettingCompleted] Filtered acknowledged KPIs:', acknowledgedKPIs.length);
       
       setKpis(acknowledgedKPIs);
+      console.log('💾 [KPISettingCompleted] KPIs set to state');
     } catch (error) {
-      console.error('Error fetching acknowledged KPIs:', error);
+      console.error('❌ [KPISettingCompleted] Error fetching acknowledged KPIs:', error);
     } finally {
       setLoading(false);
+      console.log('🏁 [KPISettingCompleted] fetchData COMPLETE');
     }
   };
 
@@ -83,6 +120,31 @@ const KPISettingCompleted: React.FC = () => {
     
     return matchesType && matchesPeriod && matchesSearch;
   });
+
+  // Add logging for filtered results
+  console.log('🔍 [KPISettingCompleted] Filtering KPIs:', {
+    totalKpis: kpis.length,
+    kpiType: kpiType,
+    selectedPeriodId: selectedPeriodId,
+    searchQuery: searchQuery,
+    filteredCount: settingCompletedKPIs.length,
+    availablePeriodsCount: availablePeriods.length
+  });
+
+  if (kpis.length > 0 && settingCompletedKPIs.length === 0) {
+    console.warn('⚠️ [KPISettingCompleted] KPIs exist but none match filters!');
+    console.warn('📋 [KPISettingCompleted] Sample KPI for comparison:', {
+      period: kpis[0]?.period,
+      quarter: kpis[0]?.quarter,
+      year: kpis[0]?.year,
+      employee_name: kpis[0]?.employee_name
+    });
+    console.warn('🔍 [KPISettingCompleted] Current filters:', {
+      kpiType,
+      selectedPeriodId,
+      selectedPeriod: availablePeriods.find(p => p.id === selectedPeriodId)
+    });
+  }
 
   // UPDATED: Check if KPI was ever rejected
   const getStatus = (): { status: string; color: string } => {
@@ -356,8 +418,8 @@ const KPISettingCompleted: React.FC = () => {
                         <div className="flex items-center space-x-2">
                           <button
                             onClick={() => {
-                              // Navigate to shared completed reviews detail page
-                              navigate(`/completed-reviews/${kpi.id}`);
+                              // Navigate to KPI acknowledgement sign page
+                              navigate(`/kpi-acknowledgement/${kpi.id}`);
                             }}
                             className="flex items-center space-x-1 text-purple-600 hover:text-purple-700 font-medium text-sm"
                           >

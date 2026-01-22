@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { useAppDispatch, useAppSelector } from './store/hooks';
 import { initializeAuth } from './store/slices/authSlice';
@@ -33,7 +33,6 @@ import {
   KPIConfirmation,
   SelfRating,
   KPIList,
-  KPIDetails,
   Reviews,
 } from './features/employee';
 import AcknowledgeList from './features/employee/pages/AcknowledgeList';
@@ -55,10 +54,12 @@ import {
   AcknowledgedKPIs,
   KPISettingCompleted,
   CompletedReviews,
+  KPIAcknowledgementSign,
   Notifications,
   EditProfile,
   Employees,
   Profile,
+  KPIDetails as SharedKPIDetails,
 } from './features/shared';
 
 // Super Admin Pages
@@ -149,6 +150,18 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 function AppRoutes() {
   const { user } = useAppSelector((state) => state.auth);
   const { setUser: setAuthContextUser } = useAuth();
+  const location = useLocation();
+
+  // Log location changes for debugging
+  useEffect(() => {
+    console.log('🗺️ [AppRoutes] Location changed:', {
+      pathname: location.pathname,
+      search: location.search,
+      hash: location.hash,
+      state: location.state,
+      timestamp: new Date().toISOString()
+    });
+  }, [location]);
 
   // Sync Redux user to AuthContext whenever it changes
   useEffect(() => {
@@ -158,22 +171,43 @@ function AppRoutes() {
 
   // Root route handler - redirect based on auth state
   const RootRedirect = () => {
+    console.log('🔀 [RootRedirect] Triggered!');
+    console.log('👤 [RootRedirect] Current user:', user);
+    console.log('📍 [RootRedirect] Current location:', window.location.href);
+    console.log('🛤️ [RootRedirect] Current pathname:', window.location.pathname);
+    
     if (!user) {
+      console.log('❌ [RootRedirect] No user, redirecting to /login');
       return <Navigate to="/login" replace />;
     }
     
     // User is logged in, redirect to their dashboard
+    console.log('✅ [RootRedirect] User logged in, determining dashboard...');
+    console.log('🔍 [RootRedirect] User roles:', {
+      isSuperAdmin: isSuperAdmin(user),
+      isManager: isManager(user),
+      isHR: isHR(user),
+      isEmployee: isEmployee(user),
+      userRole: user.role,
+      userRoleId: user.role_id
+    });
+    
     if (isSuperAdmin(user)) {
+      console.log('👨‍💼 [RootRedirect] Redirecting to Super Admin dashboard');
       return <Navigate to="/super-admin/dashboard" replace />;
     } else if (isManager(user)) {
+      console.log('👔 [RootRedirect] Redirecting to Manager dashboard');
       return <Navigate to="/manager/dashboard" replace />;
     } else if (isHR(user)) {
+      console.log('👥 [RootRedirect] Redirecting to HR dashboard');
       return <Navigate to="/hr/dashboard" replace />;
     } else if (isEmployee(user)) {
+      console.log('👤 [RootRedirect] Redirecting to Employee dashboard');
       return <Navigate to="/employee/dashboard" replace />;
     }
     
     // Fallback - should never happen but prevents loops
+    console.warn('⚠️ [RootRedirect] Fallback redirect to /login (unexpected)');
     return <Navigate to="/login" replace />;
   };
 
@@ -578,7 +612,7 @@ function AppRoutes() {
         element={
           <ProtectedRoute allowedRoles={[ROLE_IDS.EMPLOYEE]}>
             <Layout>
-              <KPIDetails />
+              <SharedKPIDetails />
             </Layout>
           </ProtectedRoute>
         }
@@ -777,6 +811,16 @@ function AppRoutes() {
       />
 
       {/* Shared Routes */}
+      <Route
+        path="/kpi-acknowledgement/:kpiId"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <KPIAcknowledgementSign />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/profile"
         element={

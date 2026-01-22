@@ -2,7 +2,7 @@ import React from 'react';
 import { FiArrowLeft, FiCheckCircle, FiClock, FiFileText, FiUser, FiEdit, FiAlertCircle } from 'react-icons/fi';
 import TextModal from '../../../components/TextModal';
 import { Button } from '../../../components/common';
-import { useManagerKPIDetails } from '../hooks';
+import { useManagerKPIDetails } from '../../manager/hooks';
 import { useCompanyFeatures } from '../../../hooks/useCompanyFeatures';
 import {
   getRatingPercentage,
@@ -648,174 +648,191 @@ const ManagerKPIDetails: React.FC = () => {
             /* For Normal/Goal Weight: Show traditional rating cards */
             <div className="mt-6 p-6 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border-2 border-purple-200">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Total Rating Summary</h3>
+              {false && review && (() => {
+                const validReview = review!; // Non-null assertion for hidden code
+                return (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {!isSelfRatingDisabled && review.employee_rating && (
+                {!isSelfRatingDisabled && validReview.employee_rating && (
                   <div className="bg-white rounded-lg p-4 border border-purple-200">
                     <p className="text-sm text-gray-600 mb-2">Total Employee Rating</p>
                     <div className="flex items-baseline space-x-3">
                       <span className="text-3xl font-bold text-purple-600">
-                        {typeof review.employee_rating === 'number' 
-                          ? review.employee_rating.toFixed(2)
+                        {typeof validReview.employee_rating === 'number' 
+                          ? validReview.employee_rating.toFixed(2)
                           : '0.00'}
                       </span>
                       <span className="text-lg text-gray-500">
-                        ({getRatingPercentage(review.employee_rating || 0)}%)
+                        ({getRatingPercentage(validReview.employee_rating || 0)}%)
                       </span>
                     </div>
                     <p className="text-xs text-gray-500 mt-1">
-                      {getRatingDescription(review.employee_rating || 0)}
+                      {getRatingDescription(validReview.employee_rating || 0)}
                     </p>
                   </div>
                 )}
-                {review.manager_rating && (
+                {validReview.manager_rating && (
                   <div className="bg-white rounded-lg p-4 border border-yellow-200">
                     <p className="text-sm text-gray-600 mb-2">Total Manager Rating</p>
                     <div className="flex items-baseline space-x-3">
                       <span className="text-3xl font-bold text-yellow-600">
-                        {typeof review.manager_rating === 'number'
-                          ? review.manager_rating.toFixed(2)
+                        {typeof validReview.manager_rating === 'number'
+                          ? validReview.manager_rating.toFixed(2)
                           : '0.00'}
                       </span>
                       <span className="text-lg text-gray-500">
-                        ({getRatingPercentage(review.manager_rating || 0)}%)
+                        ({getRatingPercentage(validReview.manager_rating || 0)}%)
                       </span>
                     </div>
                     <p className="text-xs text-gray-500 mt-1">
-                      {getRatingDescription(review.manager_rating || 0)}
+                      {getRatingDescription(validReview.manager_rating || 0)}
                     </p>
                   </div>
                 )}
               </div>
+                );
+              })()}
               
               {/* Detailed Rating Breakdown for Normal Calculation */}
               {calculationMethodName === 'Normal Calculation' && (
                 <div className="mt-6 border-t border-purple-200 pt-6">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">📊 Detailed Rating Breakdown</h3>
                   
-                  {/* Employee Ratings from Backend */}
-                  {!isSelfRatingDisabled && review.employee_rating && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                      {/* Employee Average Rating */}
-                      <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-lg p-4 border-2 border-indigo-300">
-                        <p className="text-sm font-semibold text-indigo-900 mb-2">Employee Average Rating</p>
-                        <div className="flex items-baseline space-x-2">
-                          <span className="text-4xl font-bold text-indigo-600">
-                            {review.employee_rating 
-                              ? parseFloat(review.employee_rating.toString()).toFixed(2)
-                              : 'N/A'}
-                          </span>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* LEFT SIDE - Employee Ratings */}
+                    {!isSelfRatingDisabled && review.employee_rating && (
+                      <div className="space-y-4">
+                        <div className="flex items-center space-x-2 mb-3">
+                          <div className="w-1 h-8 bg-indigo-500 rounded"></div>
+                          <h4 className="text-md font-bold text-indigo-900">Employee Ratings</h4>
                         </div>
-                        <p className="text-xs text-indigo-600 mt-2">
-                          Calculated from employee self-ratings
-                        </p>
-                      </div>
-                      
-                      {/* Employee Final Rating */}
-                      {review.employee_final_rating && (
-                        <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg p-4 border-2 border-purple-300">
-                          <p className="text-sm font-semibold text-purple-900 mb-2">Employee Final Rating</p>
+                        
+                        {/* Employee Average Rating */}
+                        <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-lg p-4 border-2 border-indigo-300 shadow-sm">
+                          <p className="text-sm font-semibold text-indigo-900 mb-2">Employee Average Rating</p>
                           <div className="flex items-baseline space-x-2">
-                            <span className="text-4xl font-bold text-purple-600">
-                              {review.employee_final_rating
-                                ? parseFloat(review.employee_final_rating.toString()).toFixed(2)
+                            <span className="text-4xl font-bold text-indigo-600">
+                              {review.employee_rating 
+                                ? parseFloat(review.employee_rating.toString()).toFixed(2)
                                 : 'N/A'}
                             </span>
                           </div>
-                          <p className="text-xs text-purple-600 mt-2">
-                            Rounded to nearest rating option
+                          <p className="text-xs text-indigo-600 mt-2">
+                            Calculated from employee self-ratings
                           </p>
                         </div>
-                      )}
-                      
-                      {/* Employee Rating Percentage */}
-                      {(review as any).employee_rating_percentage && (
-                        <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-lg p-4 border-2 border-blue-300">
-                          <p className="text-sm font-semibold text-blue-900 mb-2">Employee Rating %</p>
-                          <div className="flex items-baseline space-x-2">
-                            <span className="text-4xl font-bold text-blue-600">
-                              {(review as any).employee_rating_percentage
-                                ? parseFloat((review as any).employee_rating_percentage.toString()).toFixed(2)
-                                : 'N/A'}%
-                            </span>
+                        
+                        {/* Employee Final Rating */}
+                        {review.employee_final_rating && (
+                          <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg p-4 border-2 border-purple-300 shadow-sm">
+                            <p className="text-sm font-semibold text-purple-900 mb-2">Employee Final Rating</p>
+                            <div className="flex items-baseline space-x-2">
+                              <span className="text-4xl font-bold text-purple-600">
+                                {review.employee_final_rating
+                                  ? parseFloat(review.employee_final_rating.toString()).toFixed(2)
+                                  : 'N/A'}
+                              </span>
+                            </div>
+                            <p className="text-xs text-purple-600 mt-2">
+                              Rounded to nearest rating option
+                            </p>
                           </div>
-                          <p className="text-xs text-blue-600 mt-2">
-                            (employee_rating / max_rating) × 100
-                          </p>
-                        </div>
-                      )}
-                      
-                      {/* Employee Final Rating Percentage */}
-                      {(review as any).employee_final_rating_percentage && (
-                        <div className="bg-gradient-to-br from-cyan-50 to-teal-50 rounded-lg p-4 border-2 border-cyan-300">
-                          <p className="text-sm font-semibold text-cyan-900 mb-2">Employee Final Rating %</p>
-                          <div className="flex items-baseline space-x-2">
-                            <span className="text-4xl font-bold text-cyan-600">
-                              {(review as any).employee_final_rating_percentage
-                                ? parseFloat((review as any).employee_final_rating_percentage.toString()).toFixed(2)
-                                : 'N/A'}%
-                            </span>
+                        )}
+                        
+                        {/* Employee Rating Percentage */}
+                        {(review as any).employee_rating_percentage && (
+                          <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-lg p-4 border-2 border-blue-300 shadow-sm">
+                            <p className="text-sm font-semibold text-blue-900 mb-2">Employee Rating %</p>
+                            <div className="flex items-baseline space-x-2">
+                              <span className="text-4xl font-bold text-blue-600">
+                                {(review as any).employee_rating_percentage
+                                  ? parseFloat((review as any).employee_rating_percentage.toString()).toFixed(2)
+                                  : 'N/A'}%
+                              </span>
+                            </div>
+                            <p className="text-xs text-blue-600 mt-2">
+                              (employee_rating / max_rating) × 100
+                            </p>
                           </div>
-                          <p className="text-xs text-cyan-600 mt-2">
-                            (employee_final_rating / max_rating) × 100
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  
-                  {/* Manager Ratings from Backend */}
-                  {review.manager_rating && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {/* Manager Average Rating */}
-                      <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-lg p-4 border-2 border-amber-300">
-                        <p className="text-sm font-semibold text-amber-900 mb-2">Manager Average Rating</p>
-                        <div className="flex items-baseline space-x-2">
-                          <span className="text-4xl font-bold text-amber-600">
-                            {review.manager_rating
-                              ? parseFloat(review.manager_rating.toString()).toFixed(2)
-                              : 'N/A'}
-                          </span>
-                        </div>
-                        <p className="text-xs text-amber-600 mt-2">
-                          Calculated from manager ratings
-                        </p>
+                        )}
+                        
+                        {/* Employee Final Rating Percentage */}
+                        {false && (review as any).employee_final_rating_percentage && (
+                          <div className="bg-gradient-to-br from-cyan-50 to-teal-50 rounded-lg p-4 border-2 border-cyan-300 shadow-sm">
+                            <p className="text-sm font-semibold text-cyan-900 mb-2">Employee Final Rating %</p>
+                            <div className="flex items-baseline space-x-2">
+                              <span className="text-4xl font-bold text-cyan-600">
+                                {(review as any).employee_final_rating_percentage
+                                  ? parseFloat((review as any).employee_final_rating_percentage.toString()).toFixed(2)
+                                  : 'N/A'}%
+                              </span>
+                            </div>
+                            <p className="text-xs text-cyan-600 mt-2">
+                              (employee_final_rating / max_rating) × 100
+                            </p>
+                          </div>
+                        )}
                       </div>
-                      
-                      {/* Manager Final Rating */}
-                      {review.manager_final_rating && (
-                        <div className="bg-gradient-to-br from-yellow-50 to-amber-50 rounded-lg p-4 border-2 border-yellow-300">
-                          <p className="text-sm font-semibold text-yellow-900 mb-2">Manager Final Rating</p>
+                    )}
+                    
+                    {/* RIGHT SIDE - Manager Ratings */}
+                    {review.manager_rating && (
+                      <div className="space-y-4">
+                        <div className="flex items-center space-x-2 mb-3">
+                          <div className="w-1 h-8 bg-amber-500 rounded"></div>
+                          <h4 className="text-md font-bold text-amber-900">Manager Ratings</h4>
+                        </div>
+                        
+                        {/* Manager Average Rating */}
+                        <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-lg p-4 border-2 border-amber-300 shadow-sm">
+                          <p className="text-sm font-semibold text-amber-900 mb-2">Manager Average Rating</p>
                           <div className="flex items-baseline space-x-2">
-                            <span className="text-4xl font-bold text-yellow-600">
-                              {review.manager_final_rating
-                                ? parseFloat(review.manager_final_rating.toString()).toFixed(2)
+                            <span className="text-4xl font-bold text-amber-600">
+                              {review.manager_rating
+                                ? parseFloat(review.manager_rating.toString()).toFixed(2)
                                 : 'N/A'}
                             </span>
                           </div>
-                          <p className="text-xs text-yellow-600 mt-2">
-                            Rounded to nearest rating option
+                          <p className="text-xs text-amber-600 mt-2">
+                            Calculated from manager ratings
                           </p>
                         </div>
-                      )}
-                      
-                      {/* Manager Final Rating Percentage */}
-                      {(review as any).manager_final_rating_percentage && (
-                        <div className="bg-gradient-to-br from-orange-50 to-red-50 rounded-lg p-4 border-2 border-orange-300 md:col-span-2">
-                          <p className="text-sm font-semibold text-orange-900 mb-2">Manager Final Rating %</p>
-                          <div className="flex items-baseline justify-center space-x-2">
-                            <span className="text-5xl font-bold text-orange-600">
-                              {(review as any).manager_final_rating_percentage
-                                ? parseFloat((review as any).manager_final_rating_percentage.toString()).toFixed(2)
-                                : 'N/A'}%
-                            </span>
+                        
+                        {/* Manager Final Rating */}
+                        {review.manager_final_rating && (
+                          <div className="bg-gradient-to-br from-yellow-50 to-amber-50 rounded-lg p-4 border-2 border-yellow-300 shadow-sm">
+                            <p className="text-sm font-semibold text-yellow-900 mb-2">Manager Final Rating</p>
+                            <div className="flex items-baseline space-x-2">
+                              <span className="text-4xl font-bold text-yellow-600">
+                                {review.manager_final_rating
+                                  ? parseFloat(review.manager_final_rating.toString()).toFixed(2)
+                                  : 'N/A'}
+                              </span>
+                            </div>
+                            <p className="text-xs text-yellow-600 mt-2">
+                              Rounded to nearest rating option
+                            </p>
                           </div>
-                          <p className="text-xs text-orange-600 mt-2 text-center">
-                            (manager_final_rating / max_rating) × 100
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  )}
+                        )}
+                        
+                        {/* Manager Final Rating Percentage */}
+                        {(review as any).manager_final_rating_percentage && (
+                          <div className="bg-gradient-to-br from-orange-50 to-red-50 rounded-lg p-4 border-2 border-orange-300 shadow-sm">
+                            <p className="text-sm font-semibold text-orange-900 mb-2">Manager Final Rating %</p>
+                            <div className="flex items-baseline space-x-2">
+                              <span className="text-4xl font-bold text-orange-600">
+                                {(review as any).manager_final_rating_percentage
+                                  ? parseFloat((review as any).manager_final_rating_percentage.toString()).toFixed(2)
+                                  : 'N/A'}%
+                              </span>
+                            </div>
+                            <p className="text-xs text-orange-600 mt-2">
+                              (manager_final_rating / max_rating) × 100
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>

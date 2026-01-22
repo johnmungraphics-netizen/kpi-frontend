@@ -79,6 +79,9 @@ interface KPIFormTableProps {
   templateTitles?: TemplateTitle[];
   isDepartmentTemplateEnabled?: boolean;
   employeeDepartmentId?: number;
+  // Control for showing dropdown
+  useTemplateDropdown?: boolean;
+  onUseTemplateDropdownChange?: (use: boolean) => void;
 }
 
 export const KPIFormTable: React.FC<KPIFormTableProps> = ({
@@ -105,6 +108,8 @@ export const KPIFormTable: React.FC<KPIFormTableProps> = ({
   templateTitles = [],
   isDepartmentTemplateEnabled = false,
   employeeDepartmentId,
+  useTemplateDropdown = false,
+  onUseTemplateDropdownChange,
 }) => {
   const canRemoveRow = (_index: number) => kpiRows.length > minRows;
 
@@ -239,6 +244,52 @@ export const KPIFormTable: React.FC<KPIFormTableProps> = ({
           )}
         </div>
 
+        {/* Use Template Dropdown Checkbox - Only in template mode */}
+        {(() => {
+          console.log('🎯 [KPIFormTable] Checkbox visibility check:', {
+            mode,
+            employeeDepartmentId,
+            hasOnUseTemplateDropdownChange: !!onUseTemplateDropdownChange,
+            useTemplateDropdown,
+            willShow: mode === 'template' && employeeDepartmentId && onUseTemplateDropdownChange
+          });
+          return null;
+        })()}
+        {mode === 'template' && employeeDepartmentId && onUseTemplateDropdownChange && (
+          <div className="border-t border-gray-200 pt-4 pb-2">
+            <label className="flex items-start space-x-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={useTemplateDropdown}
+                onChange={(e) => {
+                  console.log('✅ [KPIFormTable] Use Dropdown toggled:', e.target.checked);
+                  onUseTemplateDropdownChange(e.target.checked);
+                }}
+                className="w-5 h-5 text-purple-600 rounded focus:ring-purple-500 mt-0.5"
+              />
+              <div className="flex-1">
+                <span className="text-sm font-medium text-gray-900">Use Template Title Dropdown</span>
+                <p className="text-xs text-gray-600 mt-1">
+                  When enabled, you can select from predefined KPI titles for this department
+                </p>
+                {useTemplateDropdown && (
+                  <div className="mt-2 p-2 rounded" style={{ backgroundColor: isDepartmentTemplateEnabled && templateTitles.length > 0 ? '#EFF6FF' : '#FFF7ED' }}>
+                    {isDepartmentTemplateEnabled && templateTitles.length > 0 ? (
+                      <p className="text-xs text-blue-700">
+                        ✓ {templateTitles.length} template {templateTitles.length === 1 ? 'title' : 'titles'} available. Dropdown will appear below in KPI Title field.
+                      </p>
+                    ) : (
+                      <p className="text-xs text-orange-700">
+                        ⚠ Template titles not enabled for this department
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </label>
+          </div>
+        )}
+
         {/* KPI Table */}
         <div>
           <div className="flex items-center justify-between mb-4">
@@ -256,7 +307,7 @@ export const KPIFormTable: React.FC<KPIFormTableProps> = ({
             </Button>
           </div>
 
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto max-w-full">
             <table className="w-full border-collapse" style={{ minWidth: '1600px' }}>
               <thead>
                 <tr className="bg-gray-50">

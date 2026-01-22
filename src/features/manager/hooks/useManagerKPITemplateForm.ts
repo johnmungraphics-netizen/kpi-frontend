@@ -22,6 +22,21 @@ interface TextModalState {
   onChange?: (value: string) => void;
 }
 
+interface Department {
+  id: number;
+  name: string;
+  enable_template_titles: number;
+}
+
+interface TemplateTitle {
+  id: number;
+  title: string;
+  description: string;
+  is_active: number;
+  created_at: string;
+  updated_at: string;
+}
+
 interface UseManagerKPITemplateFormReturn {
   isEditMode: boolean;
   loading: boolean;
@@ -38,6 +53,15 @@ interface UseManagerKPITemplateFormReturn {
   setQuarter: (quarter: string) => void;
   year: number;
   setYear: (year: number) => void;
+  // NEW: Department and Template Titles
+  departments: Department[];
+  selectedDepartmentId: number | null;
+  setSelectedDepartmentId: (id: number | null) => void;
+  useTemplateDropdown: boolean;
+  setUseTemplateDropdown: (use: boolean) => void;
+  templateTitles: TemplateTitle[];
+  isDepartmentTemplateEnabled: boolean;
+  // END NEW
   kpiItems: KPIItem[];
   setKpiItems: (items: KPIItem[]) => void;
   textModal: TextModalState;
@@ -47,7 +71,7 @@ interface UseManagerKPITemplateFormReturn {
   handleAddRow: () => void;
   handleRemoveRow: (index: number) => void;
   updateKPIItem: (index: number, field: string, value: string | boolean | number) => void;
-  handleQualitativeToggle: (index: number, isQualitative: boolean) => void;  // Added
+  handleQualitativeToggle: (index: number, isQualitative: boolean) => void;
   openTextModal: (title: string, value: string, field: keyof KPIItem, rowIndex: number) => void;
   closeTextModal: () => void;
   handlePeriodChange: (newPeriod: 'quarterly' | 'yearly') => void;
@@ -66,6 +90,8 @@ export const useManagerKPITemplateForm = (): UseManagerKPITemplateFormReturn => 
   const { confirm, confirmState, handleConfirm, handleCancel } = useConfirm();
   const isEditMode = !!id;
 
+ 
+
   const [loading, setLoading] = useState(isEditMode);
   const [saving, setSaving] = useState(false);
   const [templateName, setTemplateName] = useState('');
@@ -75,6 +101,15 @@ export const useManagerKPITemplateForm = (): UseManagerKPITemplateFormReturn => 
   const [selectedPeriodSetting, setSelectedPeriodSetting] = useState<any>(null);
   const [quarter, setQuarter] = useState('Q1');
   const [year, setYear] = useState(new Date().getFullYear());
+  
+  // NEW: Department and Template Titles
+  const [departments, setDepartments] = useState<Department[]>([]);
+  const [selectedDepartmentId, setSelectedDepartmentId] = useState<number | null>(null);
+  const [useTemplateDropdown, setUseTemplateDropdown] = useState(false);
+  const [templateTitles, setTemplateTitles] = useState<TemplateTitle[]>([]);
+  const [isDepartmentTemplateEnabled, setIsDepartmentTemplateEnabled] = useState(false);
+  // END NEW
+  
   const [kpiItems, setKpiItems] = useState<KPIItem[]>(getInitialKPIItems());
 
   const [textModal, setTextModal] = useState<TextModalState>({
@@ -83,48 +118,123 @@ export const useManagerKPITemplateForm = (): UseManagerKPITemplateFormReturn => 
     value: '',
   });
 
+ 
+
   useEffect(() => {
+    console.log('🔄 [useManagerKPITemplateForm] useEffect triggered:', { id, isEditMode });
     if (isEditMode) {
+      console.log('🔄 [useManagerKPITemplateForm] Calling fetchTemplate...');
       fetchTemplate();
     }
     fetchAvailablePeriods();
+    fetchDepartments();
   }, [id]);
+
+  // Fetch template titles when department changes or useTemplateDropdown toggles
+  useEffect(() => {
+   
+    
+    if (selectedDepartmentId && useTemplateDropdown) {
+      fetchTemplateTitles(selectedDepartmentId);
+    } else {
+      setTemplateTitles([]);
+      setIsDepartmentTemplateEnabled(false);
+    }
+  }, [selectedDepartmentId, useTemplateDropdown]);
 
   const fetchAvailablePeriods = async () => {
     try {
       const response = await api.get('/settings/period-settings');
       setAvailablePeriods(response.data.settings || []);
     } catch (error) {
-      console.error('Error fetching periods:', error);
+      console.error('❌ [useManagerKPITemplateForm] Error fetching periods:', error);
+    }
+  };
+
+  const fetchDepartments = async () => {
+    try {
+      const response = await api.get('/departments');
+      const depts = response.data?.data?.departments || response.data?.departments || [];
+     
+      setDepartments(depts);
+    } catch (error) {
+      console.error('❌ [useManagerKPITemplateForm] Error fetching departments:', error);
+    }
+  };
+
+  const fetchTemplateTitles = async (departmentId: number) => {
+    try {
+      const response = await api.get(`/kpi-template-titles/department/${departmentId}`);
+      const titles = response.data.titles || [];
+      const enabled = response.data.enabled || false;
+      
+   
+      
+      setTemplateTitles(titles);
+      setIsDepartmentTemplateEnabled(enabled);
+      
+      if (!enabled) {
+        console.warn('⚠️ [useManagerKPITemplateForm] Department does not have template titles enabled!');
+        toast.warning('Template titles are not enabled for this department');
+      }
+    } catch (error) {
+      console.error('❌ [useManagerKPITemplateForm] Error fetching template titles:', error);
+      setTemplateTitles([]);
+      setIsDepartmentTemplateEnabled(false);
     }
   };
 
   const fetchTemplate = async () => {
     try {
-      console.log('📥 [useManagerKPITemplateForm] Fetching template:', id);
       const response = await api.get(`/templates/${id}`);
-      console.log('✅ [useManagerKPITemplateForm] Template fetched:', response.data);
+      
       const template = response.data.template;
+      const items = response.data.items; // FIX: Items are at response.data.items, not template.items
+      
       
       setTemplateName(template.template_name);
       setDescription(template.description || '');
       setPeriod(template.period === 'annual' ? 'yearly' : template.period);
       
-      if (template.items && template.items.length > 0) {
-        setKpiItems(template.items.map((item: any) => ({
-          title: item.title || '',
-          description: item.description || '',
-          current_performance_status: item.current_performance_status || '',
-          target_value: item.target_value || '',
-          expected_completion_date: item.expected_completion_date || '',
-          measure_unit: item.measure_unit || '',
-          goal_weight: item.goal_weight || '',
-          is_qualitative: item.is_qualitative || false,  // Load from backend
-          exclude_from_calculation: item.exclude_from_calculation || 0,  // Load from backend
-        })));
+      
+      // NEW: Load department_id and use_template_titles
+      if (template.department_id) {
+        console.log('🏢 [useManagerKPITemplateForm] Template has department_id:', template.department_id);
+        setSelectedDepartmentId(template.department_id);
+      }
+      
+      if (template.use_template_titles === 1) {
+        console.log('✅ [useManagerKPITemplateForm] Template uses dropdown:', template.use_template_titles);
+        setUseTemplateDropdown(true);
+      }
+      
+      // Load template titles from response if available
+      if (response.data.templateTitles) {
+        console.log('📋 [useManagerKPITemplateForm] Loading template titles from response:', response.data.templateTitles.length);
+        setTemplateTitles(response.data.templateTitles);
+        setIsDepartmentTemplateEnabled(response.data.isDepartmentTemplateEnabled || false);
+      }
+      // END NEW
+      
+      if (items && items.length > 0) {
+        const mappedItems = items.map((item: any, index: number) => {
+        
+          return {
+            title: item.title || '',
+            description: item.description || '',
+            current_performance_status: item.current_performance_status || '',
+            target_value: item.target_value || '',
+            expected_completion_date: item.expected_completion_date || '',
+            measure_unit: item.measure_unit || '',
+            goal_weight: item.goal_weight || '',
+            is_qualitative: item.is_qualitative || false,
+            exclude_from_calculation: item.exclude_from_calculation || 0,
+          };
+        });
+        setKpiItems(mappedItems);
+      } else {
       }
     } catch (error) {
-      console.error('Error fetching template:', error);
       toast.error('Failed to load template');
       navigate('/manager/kpi-templates');
     } finally {
@@ -287,6 +397,8 @@ export const useManagerKPITemplateForm = (): UseManagerKPITemplateFormReturn => 
         template_name: templateName,
         description,
         period: period === 'yearly' ? 'annual' : period,
+        department_id: selectedDepartmentId,  // NEW: Send department_id
+        use_template_titles: useTemplateDropdown ? 1 : 0,  // NEW: Send use_template_titles flag
         items: validItems.map(item => ({
           title: item.title,
           description: item.description,
@@ -300,24 +412,17 @@ export const useManagerKPITemplateForm = (): UseManagerKPITemplateFormReturn => 
         })),
       };
 
-      console.log('📤 [Template Submit] Payload:', payload);
-      console.log('📤 [Template Submit] IsEditMode:', isEditMode);
-      console.log('📤 [Template Submit] Template ID:', id);
 
       if (isEditMode) {
-        console.log('📤 [Template Submit] PUT /templates/' + id);
         await api.put(`/templates/${id}`, payload);
         toast.success('Template updated successfully!');
       } else {
-        console.log('📤 [Template Submit] POST /templates');
         await api.post('/templates', payload);
         toast.success('Template created successfully!');
       }
 
       navigate('/manager/kpi-templates');
     } catch (error: any) {
-      console.error('❌ [Template Submit] Error saving template:', error);
-      console.error('❌ [Template Submit] Error response:', error.response);
       toast.error(error.response?.data?.error || 'Failed to save template');
     } finally {
       setSaving(false);
@@ -344,6 +449,15 @@ export const useManagerKPITemplateForm = (): UseManagerKPITemplateFormReturn => 
     setQuarter,
     year,
     setYear,
+    // NEW: Department and Template Titles
+    departments,
+    selectedDepartmentId,
+    setSelectedDepartmentId,
+    useTemplateDropdown,
+    setUseTemplateDropdown,
+    templateTitles,
+    isDepartmentTemplateEnabled,
+    // END NEW
     kpiItems,
     setKpiItems,
     textModal,
@@ -353,7 +467,7 @@ export const useManagerKPITemplateForm = (): UseManagerKPITemplateFormReturn => 
     handleAddRow,
     handleRemoveRow,
     updateKPIItem,
-    handleQualitativeToggle,  // Added
+    handleQualitativeToggle,
     openTextModal,
     closeTextModal,
     handlePeriodChange,

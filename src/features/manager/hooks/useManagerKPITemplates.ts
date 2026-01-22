@@ -24,6 +24,7 @@ interface UseManagerKPITemplatesReturn {
   loading: boolean;
   confirmState: any;
   handleDelete: (id: number, name: string) => Promise<void>;
+  handleCopy: (id: number, name: string) => Promise<void>;
   handleCreateTemplate: () => void;
   handleEditTemplate: (id: number) => void;
   handleBack: () => void;
@@ -73,6 +74,28 @@ export const useManagerKPITemplates = (): UseManagerKPITemplatesReturn => {
     }
   };
 
+  const handleCopy = async (id: number, name: string) => {
+    const confirmed = await confirm({
+      title: 'Copy Template',
+      message: `Create a copy of template "${name}"?`,
+      variant: 'info',
+      confirmText: 'Copy',
+      cancelText: 'Cancel'
+    });
+    
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      const response = await api.post(`/templates/${id}/copy`);
+      toast.success(`Template copied successfully as "${response.data.template.template_name}"!`);
+      fetchTemplates();
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || 'Failed to copy template');
+    }
+  };
+
   const handleCreateTemplate = () => {
     navigate('/manager/kpi-templates/create');
   };
@@ -90,6 +113,7 @@ export const useManagerKPITemplates = (): UseManagerKPITemplatesReturn => {
     loading,
     confirmState,
     handleDelete,
+    handleCopy,
     handleCreateTemplate,
     handleEditTemplate,
     handleBack,

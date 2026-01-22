@@ -18,6 +18,15 @@ const KPITemplateForm: React.FC = () => {
     selectedPeriodSetting,
     quarter,
     year,
+    // NEW: Department and Template Titles
+    departments,
+    selectedDepartmentId,
+    setSelectedDepartmentId,
+    useTemplateDropdown,
+    setUseTemplateDropdown,
+    templateTitles,
+    isDepartmentTemplateEnabled,
+    // END NEW
     kpiItems,
     setKpiItems,
     textModal,
@@ -37,27 +46,9 @@ const KPITemplateForm: React.FC = () => {
     handleCancel,
   } = useManagerKPITemplateForm();
 
-  console.log('🎨 [KPITemplateForm] Component rendered:', {
-    isEditMode,
-    loading,
-    templateName,
-    description,
-    kpiItemsCount: kpiItems.length,
-    timestamp: new Date().toISOString()
-  });
 
   useEffect(() => {
-    console.log('🔄 [KPITemplateForm] KPI Items changed:', {
-      count: kpiItems.length,
-      items: kpiItems.map((item, idx) => ({
-        index: idx,
-        title: item.title,
-        hasDescription: !!item.description,
-        hasTarget: !!item.target_value,
-        hasMeasure: !!item.measure_unit,
-        hasGoalWeight: !!item.goal_weight
-      }))
-    });
+  
   }, [kpiItems]);
 
   useEffect(() => {
@@ -73,7 +64,6 @@ const KPITemplateForm: React.FC = () => {
     return <div className="p-6">Loading...</div>;
   }
 
-  console.log('✅ [KPITemplateForm] Rendering form with data');
 
   return (
     <div className="space-y-6">
@@ -106,12 +96,90 @@ const KPITemplateForm: React.FC = () => {
             <input
               type="text"
               value={templateName}
-              onChange={(e) => setTemplateName(e.target.value)}
+              onChange={(e) => {
+                setTemplateName(e.target.value);
+              }}
               placeholder="e.g., Software Developer Quarterly KPIs"
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
               required
             />
           </div>
+          
+          {/* NEW: Department Selection */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Department (Optional)
+              <span className="text-xs text-gray-500 ml-2">- Assign to specific department</span>
+            </label>
+            <select
+              value={selectedDepartmentId || ''}
+              onChange={(e) => {
+                const deptId = e.target.value ? parseInt(e.target.value) : null;
+                setSelectedDepartmentId(deptId);
+              }}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+            >
+              <option value="">No Department (Generic Template)</option>
+              {departments.map((dept) => (
+                <option key={dept.id} value={dept.id}>
+                  {dept.name} {dept.enable_template_titles === 1 ? '✓ (Has Template Titles)' : ''}
+                </option>
+              ))}
+            </select>
+            {selectedDepartmentId && (
+              <p className="text-xs text-gray-600 mt-1">
+                This template will be associated with the selected department
+              </p>
+            )}
+          </div>
+          
+          {/* NEW: Use Template Dropdown Checkbox */}
+          {selectedDepartmentId && (
+            <div className="border-t border-gray-200 pt-4">
+              <label className="flex items-center space-x-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={useTemplateDropdown}
+                  onChange={(e) => {
+                    setUseTemplateDropdown(e.target.checked);
+                  }}
+                  className="w-5 h-5 text-purple-600 rounded focus:ring-purple-500"
+                />
+                <div>
+                  <span className="text-sm font-medium text-gray-900">Use Template Title Dropdown</span>
+                  <p className="text-xs text-gray-600">
+                    When enabled, users can select from predefined KPI titles for this department
+                  </p>
+                </div>
+              </label>
+              
+              {useTemplateDropdown && (
+                <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  {isDepartmentTemplateEnabled && templateTitles.length > 0 ? (
+                    <div>
+                      <p className="text-sm text-blue-800 font-medium">
+                        ✓ Template titles available: {templateTitles.length} titles
+                      </p>
+                      <p className="text-xs text-blue-600 mt-1">
+                        Users will see a dropdown with these titles when creating KPI items
+                      </p>
+                    </div>
+                  ) : (
+                    <div>
+                      <p className="text-sm text-orange-800 font-medium">
+                        ⚠ Template titles not available for this department
+                      </p>
+                      <p className="text-xs text-orange-600 mt-1">
+                        Make sure the department has "Enable Template Titles" feature activated
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+          {/* END NEW */}
+          
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Description (Optional)
@@ -128,6 +196,10 @@ const KPITemplateForm: React.FC = () => {
       </div>
 
       {/* KPI Form Table - Exactly like KPI Setting */}
+      {(() => {
+       
+        return null;
+      })()}
       <KPIFormTable
         mode="template"
         period={period}
@@ -142,11 +214,17 @@ const KPITemplateForm: React.FC = () => {
         onKpiRowsChange={setKpiItems}
         minRows={1}
         handleKpiChange={updateKPIItem}
-        handleQualitativeToggle={handleQualitativeToggle}  // Added - now works!
+        handleQualitativeToggle={handleQualitativeToggle}
         handleAddRow={handleAddRow}
         handleRemoveRow={handleRemoveRow}
         textModal={textModal}
         setTextModal={setTextModal}
+        // Pass template titles props and dropdown control
+        templateTitles={useTemplateDropdown ? templateTitles : []}
+        isDepartmentTemplateEnabled={useTemplateDropdown && isDepartmentTemplateEnabled}
+        employeeDepartmentId={selectedDepartmentId || undefined}
+        useTemplateDropdown={useTemplateDropdown}
+        onUseTemplateDropdownChange={setUseTemplateDropdown}
       />
 
       {/* Goal Weight Summary - For All Items */}

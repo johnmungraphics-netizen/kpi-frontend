@@ -5,6 +5,7 @@ import { useToast } from '../../../context/ToastContext';
 import api from '../../../services/api';
 import { KPI } from '../../../types';
 import { FiArrowLeft, FiEye, FiUser, FiSearch, FiFilter, FiDownload, FiCheckCircle, FiFileText } from 'react-icons/fi';
+import { ROLE_IDS } from '../../../utils/roleUtils';
 
 interface PeriodSetting {
   id: number;
@@ -475,18 +476,53 @@ const CompletedReviews: React.FC = () => {
                         <div className="flex items-center space-x-2">
                           <button
                             onClick={() => {
-                              // Navigate to review details
-                              const path = user?.role === 'hr' 
-                                ? `/hr/kpi-details/${kpi.id}`
-                                : `/manager/kpi-details/${kpi.id}`;
+                              // ========== ROUTING DEBUG LOGS START ==========
+                              console.log('🔍 [CompletedReviews] View button clicked');
+                              console.log('📊 [CompletedReviews] Current user:', {
+                                role: user?.role,
+                                roleId: user?.role_id,
+                                userId: user?.id,
+                                fullUser: user
+                              });
+                              console.log('📋 [CompletedReviews] KPI data:', {
+                                kpiId: kpi.id,
+                                employeeId: kpi.employee_id,
+                                title: kpi.title,
+                                period: kpi.period
+                              });
+                              
+                              // Navigate to role-specific KPI Details page
+                              let path = '';
+                              if (user?.role_id === ROLE_IDS.HR) {
+                                path = `/hr/kpi-details/${kpi.id}`;
+                              } else if (user?.role_id === ROLE_IDS.MANAGER) {
+                                path = `/manager/kpi-details/${kpi.id}`;
+                              } else if (user?.role_id === ROLE_IDS.EMPLOYEE) {
+                                path = `/employee/kpi-details/${kpi.id}`;
+                              }
+                              
+                              console.log('🎯 [CompletedReviews] Calculated path:', path);
+                              console.log('🔀 [CompletedReviews] Role check:', {
+                                userRoleId: user?.role_id,
+                                isHR: user?.role_id === ROLE_IDS.HR,
+                                isManager: user?.role_id === ROLE_IDS.MANAGER,
+                                isEmployee: user?.role_id === ROLE_IDS.EMPLOYEE,
+                                selectedPath: path
+                              });
+                              
+                              console.log('🚀 [CompletedReviews] Navigating to:', path);
+                              // ========== ROUTING DEBUG LOGS END ==========
+                              
                               navigate(path);
+                              
+                              console.log('✅ [CompletedReviews] Navigate function called');
                             }}
                             className="flex items-center space-x-1 text-purple-600 hover:text-purple-700 font-medium text-sm"
                           >
                             <FiEye className="text-sm" />
                             <span>View</span>
                           </button>
-                          {user?.role === 'hr' && (
+                          {user?.role_id === ROLE_IDS.HR && (
                             <button
                               onClick={() => {
                                 navigate(`/hr/employee-performance/${kpi.employee_id}`);

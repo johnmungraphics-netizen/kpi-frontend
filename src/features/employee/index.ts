@@ -4,8 +4,8 @@
 
 // Export pages explicitly to avoid conflicts
 export { default as EmployeeDashboard } from './pages/Dashboard';
-export { default as KPIAcknowledgement } from './pages/KPIAcknowledgementSign';
-export { default as KPIDetails } from './pages/KPIDetails';
+export { default as KPIAcknowledgement } from '../shared/pages/KPIAcknowledgementSign';
+export { default as KPIDetails } from '../shared/pages/KPIDetails';
 export { default as Reviews } from './pages/Reviews';
 export { default as SelfRating } from './pages/KPIReview';
 export { default as KPIList } from './pages/KPIList';

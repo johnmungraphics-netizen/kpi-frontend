@@ -4,7 +4,7 @@
 
 export { useManagerDashboard } from './useManagerDashboard';
 export { useManagerKPIList } from './useManagerKPIList';
-export { useManagerKPIDetails } from './useManagerKPIDetails';
+export { useManagerKPIDetails } from '../../shared/hooks/useManagerKPIDetails';
 export { useManagerEmployeeKPIs } from './useManagerEmployeeKPIs';
 export { useManagerKPISetting } from './useManagerKPISetting';
 export { useManagerKPIReview } from './useManagerKPIReview';
@@ -30,7 +30,7 @@ export {
   getRatingLabel,
   extractCommentText,
   filterKPIItems
-} from './kpiDetailsUtils';
+} from '../../shared/hooks/kpiDetailsUtils';
 export {
   getInitialRows,
   getMinRows,
@@ -38,7 +38,7 @@ export {
   validateGoalWeights,
   getValidKPIRows,
 } from './kpiSettingUtils';
-export type { ItemRatings, ItemComments, ParsedReviewData } from './kpiDetailsUtils';
+export type { ItemRatings, ItemComments, ParsedReviewData } from '../../shared/hooks/kpiDetailsUtils';
 export type { KPIRow, KPIFormData } from './kpiSettingUtils';
 export type { KPITemplate } from './useManagerKPITemplates';
 export type { KPIItem } from './useManagerKPITemplateForm';
