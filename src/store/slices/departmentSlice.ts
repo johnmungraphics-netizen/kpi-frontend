@@ -30,21 +30,12 @@ export const fetchDepartments = createAsyncThunk(
   'departments/fetchAll',
   async (_, { rejectWithValue }) => {
     try {
-      console.log('[departmentSlice] 📡 Fetching departments...');
+
       // Backend: GET /departments requires superadmin role (403 for HR)
       // Use /departments/list instead which is accessible to all authenticated users
       const response = await api.get('/departments/list');
-      console.log('[departmentSlice] 📥 Raw response:', {
-        status: response.status,
-        dataKeys: Object.keys(response.data || {}),
-        data: response.data
-      });
       // Backend returns: { success: true, data: { departments: [...] } }
       const departments = response.data.data?.departments || response.data.departments || [];
-      console.log('[departmentSlice] ✅ Departments parsed:', {
-        count: departments.length,
-        departments: departments
-      });
       return { departments };
     } catch (error: any) {
       console.error('[departmentSlice] ❌ Failed to fetch departments:', {
@@ -61,10 +52,10 @@ export const fetchDepartmentById = createAsyncThunk(
   'departments/fetchById',
   async (id: number, { rejectWithValue }) => {
     try {
-      console.log('[departmentSlice] 📡 Fetching department by ID:', id);
+
       // Use /departments/list/:departmentId for fetching single department
       const response = await api.get(`/departments/list/${id}`);
-      console.log('[departmentSlice] ✅ Department fetched:', response.data);
+
       return response.data;
     } catch (error: any) {
       console.error('[departmentSlice] ❌ Failed to fetch department:', error);
@@ -130,7 +121,7 @@ const departmentSlice = createSlice({
       })
       .addCase(fetchDepartments.fulfilled, (state, action) => {
         state.loading = false;
-        console.log('[departmentSlice] 📦 Storing departments in state:', action.payload);
+
         // action.payload is { departments: [...] }
         if (action.payload.departments && Array.isArray(action.payload.departments)) {
           state.departments = action.payload.departments;
@@ -141,7 +132,7 @@ const departmentSlice = createSlice({
           console.error('[departmentSlice] ⚠️ Invalid departments format:', action.payload);
           state.departments = [];
         }
-        console.log('[departmentSlice] ✅ State updated with', state.departments.length, 'departments');
+
       })
       .addCase(fetchDepartments.rejected, (state, action) => {
         state.loading = false;

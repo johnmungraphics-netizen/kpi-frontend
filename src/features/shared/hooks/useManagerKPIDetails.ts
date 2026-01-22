@@ -61,7 +61,7 @@ export const useManagerKPIDetails = () => {
       
       if (kpiReview) {
         // Fetch the full review details by ID to get accomplishments
-        console.log('🔄 [useManagerKPIDetails] Fetching full review details by ID:', kpiReview.id);
+
         try {
           const fullReviewResponse = await api.get(`/kpi-review/${kpiReview.id}`);
           const fullReview = fullReviewResponse.data.review;

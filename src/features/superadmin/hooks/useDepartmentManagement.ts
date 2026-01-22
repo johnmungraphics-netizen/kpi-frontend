@@ -46,9 +46,9 @@ export const useDepartmentManagement = () => {
     if (!selectedCompany) return;
 
     try {
-      console.log('[useDepartmentManagement] Fetching departments for company:', selectedCompany);
+
       const data = await departmentService.fetchDepartments(parseInt(selectedCompany));
-      console.log('[useDepartmentManagement] Departments fetched:', data.length);
+
       setDepartments(data);
     } catch (error: any) {
       console.error('[useDepartmentManagement] Error fetching departments:', error);
@@ -59,9 +59,9 @@ export const useDepartmentManagement = () => {
   const handleAddDepartment = async (name: string) => {
     try {
       const companyId = parseInt(selectedCompany);
-      console.log('[useDepartmentManagement] Creating department:', { name, companyId, selectedCompany });
+
       await departmentService.createDepartment(name, companyId);
-      console.log('[useDepartmentManagement] Department created successfully');
+
       toast.success('Department created successfully');
       setShowAddModal(false);
       fetchDepartments();

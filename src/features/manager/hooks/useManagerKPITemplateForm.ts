@@ -121,9 +121,9 @@ export const useManagerKPITemplateForm = (): UseManagerKPITemplateFormReturn => 
  
 
   useEffect(() => {
-    console.log('🔄 [useManagerKPITemplateForm] useEffect triggered:', { id, isEditMode });
+
     if (isEditMode) {
-      console.log('🔄 [useManagerKPITemplateForm] Calling fetchTemplate...');
+
       fetchTemplate();
     }
     fetchAvailablePeriods();
@@ -199,18 +199,18 @@ export const useManagerKPITemplateForm = (): UseManagerKPITemplateFormReturn => 
       
       // NEW: Load department_id and use_template_titles
       if (template.department_id) {
-        console.log('🏢 [useManagerKPITemplateForm] Template has department_id:', template.department_id);
+
         setSelectedDepartmentId(template.department_id);
       }
       
       if (template.use_template_titles === 1) {
-        console.log('✅ [useManagerKPITemplateForm] Template uses dropdown:', template.use_template_titles);
+
         setUseTemplateDropdown(true);
       }
       
       // Load template titles from response if available
       if (response.data.templateTitles) {
-        console.log('📋 [useManagerKPITemplateForm] Loading template titles from response:', response.data.templateTitles.length);
+
         setTemplateTitles(response.data.templateTitles);
         setIsDepartmentTemplateEnabled(response.data.isDepartmentTemplateEnabled || false);
       }

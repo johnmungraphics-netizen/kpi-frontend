@@ -45,12 +45,6 @@ const EmployeeDashboard: React.FC = () => {
   const bothDisabled = !quarterlyEnabled && !yearlyEnabled;
   const mixedSettings = quarterlyEnabled !== yearlyEnabled;
 
-  console.log('📊 [Dashboard] Self-rating settings:', {
-    quarterlyEnabled,
-    yearlyEnabled,
-    bothDisabled,
-    mixedSettings
-  });
 
   return (
     <div className="space-y-6">

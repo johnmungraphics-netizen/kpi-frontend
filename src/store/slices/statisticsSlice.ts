@@ -57,20 +57,13 @@ export const fetchDepartmentStatistics = createAsyncThunk(
       if (filters.period) params.append('period', filters.period);
       if (filters.manager) params.append('manager', filters.manager);
 
-      console.log('[statisticsSlice] 📡 Fetching department statistics with filters:', filters);
+
       const response = await api.get(`/departments/statistics?${params.toString()}`);
-      console.log('[statisticsSlice] 📥 Statistics response:', {
-        status: response.status,
-        dataKeys: Object.keys(response.data || {}),
-        hasData: !!response.data.data,
-        hasStatistics: !!response.data.statistics,
-        fullResponse: JSON.stringify(response.data, null, 2)
-      });
-      
+
       // Log each department's statistics
       if (response.data?.data?.statistics) {
         response.data.data.statistics.forEach((dept: any) => {
-          console.log(`[statisticsSlice] 📊 ${dept.department} categories:`, dept.categories);
+
         });
       }
       
@@ -142,7 +135,7 @@ const statisticsSlice = createSlice({
         state.error = null;
       })
       .addCase(fetchDepartmentStatistics.fulfilled, (state, action) => {
-        console.log('[statisticsSlice] 📦 Processing statistics payload:', action.payload);
+
         state.loading = false;
         
         // Handle multiple response formats
@@ -155,7 +148,7 @@ const statisticsSlice = createSlice({
           statistics = action.payload.data.statistics;
         }
         
-        console.log('[statisticsSlice] ✅ Statistics extracted:', { count: statistics.length, statistics });
+
         state.departmentStatistics = statistics;
       })
       .addCase(fetchDepartmentStatistics.rejected, (state, action) => {

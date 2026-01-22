@@ -419,12 +419,6 @@ export const useManagerKPISetting = (): UseManagerKPISettingReturn => {
         return;
       }
       
-      console.log('✅ [loadTemplate] Template data:', {
-        name: templateData.template_name,
-        period: templateData.period,
-        quarter: templateData.quarter,
-        year: templateData.year
-      });
       
       // Auto-populate form with template data
       if (templateData.period) {
@@ -469,7 +463,7 @@ export const useManagerKPISetting = (): UseManagerKPISettingReturn => {
   };
 
   const fetchEmployeesForTemplate = async () => {
-    console.log('🔵 [fetchEmployeesForTemplate] Fetching employees and departments');
+
     setEmployeesLoading(true);
     try {
       const response = await api.get('/users/managers/employees-for-template');

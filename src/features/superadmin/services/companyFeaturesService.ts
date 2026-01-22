@@ -34,11 +34,11 @@ export interface CompanyFeaturesUpdatePayload {
  */
 export const getAllCompanyFeatures = async (): Promise<CompanyFeatures[]> => {
   try {
-    console.log('[companyFeaturesService] Calling GET /company-features');
+
     const response = await api.get('/company-features');
-    console.log('[companyFeaturesService] Response:', response.data);
+
     const features = response.data.data || response.data || [];
-    console.log('[companyFeaturesService] Returning features:', features);
+
     return features;
   } catch (error: any) {
     console.error('[companyFeaturesService] Error fetching company features:', error.message, error.response?.data);
@@ -61,11 +61,11 @@ export const updateCompanyFeatures = async (
   companyId: number,
   features: CompanyFeaturesUpdatePayload
 ): Promise<CompanyFeatures> => {
-  console.log('[companyFeaturesService] updateCompanyFeatures called for company ID:', companyId);
-  console.log('[companyFeaturesService] Features being sent:', features);
+
+
   try {
     const response = await api.put(`/company-features/${companyId}`, features);
-    console.log('[companyFeaturesService] Update successful, response:', response.data);
+
     return response.data;
   } catch (error: any) {
     console.error('[companyFeaturesService] Update failed:', error.response?.data || error.message);

@@ -46,14 +46,6 @@ const ManagerKPIDetails: React.FC = () => {
   // Show employee columns ONLY if self-rating is enabled AND NOT using Actual vs Target
   const shouldShowEmployeeColumns = !isSelfRatingDisabled && !isActualValueMethod;
   
-  console.log('🔍 [ManagerKPIDetails] Configuration:', {
-    reviewPeriod,
-    calculationMethodName,
-    isActualValueMethod,
-    isSelfRatingDisabled,
-    shouldShowEmployeeColumns,
-    features
-  });
 
   if (loading || !kpi) {
     return <div className="p-6">Loading...</div>;
@@ -244,19 +236,6 @@ const ManagerKPIDetails: React.FC = () => {
                   const mgrRating = parsedReviewData.managerItemRatings[item.id] || 0;
                   const mgrComment = parsedReviewData.managerItemComments[item.id] || '';
 
-                  // Debug log for first item
-                  if (index === 0) {
-                    console.log(`🔍 [KPIDetails] Item ${item.id} ratings:`, {
-                      itemId: item.id,
-                      empRating,
-                      empComment,
-                      mgrRating,
-                      mgrComment,
-                      parsedReviewData,
-                      allEmployeeRatings: parsedReviewData.employeeItemRatings,
-                      allManagerRatings: parsedReviewData.managerItemRatings
-                    });
-                  }
 
                   return (
                     <tr key={item.id} className="hover:bg-gray-50">
@@ -497,42 +476,11 @@ const ManagerKPIDetails: React.FC = () => {
         )}
       </div>
 
-      {/* Employee Performance Reflection Section - Show only if self-rating was enabled AND NOT using Actual vs Target calculation */}
-      {(() => {
-        console.log('🔍🔍🔍 [KPIDetails] EMPLOYEE PERFORMANCE REFLECTION DEBUG 🔍🔍🔍');
-        console.log('===============================================');
-        console.log('📊 Condition Check:');
-        console.log('   shouldShowEmployeeColumns:', shouldShowEmployeeColumns);
-        console.log('   isSelfRatingDisabled:', isSelfRatingDisabled);
-        console.log('   isActualValueMethod:', isActualValueMethod);
-        console.log('   calculationMethodName:', calculationMethodName);
-        console.log('');
-        console.log('📊 Review Data:');
-        console.log('   review exists:', !!review);
-        console.log('   review.id:', review?.id);
-        console.log('   review.kpi_id:', review?.kpi_id);
-        console.log('   review.accomplishments (direct):', review?.accomplishments);
-        console.log('   (review as any).accomplishments:', (review as any)?.accomplishments);
-        console.log('   Is Array?:', Array.isArray((review as any)?.accomplishments));
-        console.log('   Length:', (review as any)?.accomplishments?.length);
-        console.log('');
-        console.log('📊 Full Review Object:', JSON.stringify(review, null, 2));
-        console.log('===============================================');
-        return null;
-      })()}
       
       {shouldShowEmployeeColumns && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Employee Performance Reflection</h2>
-          
-          {/* Major Accomplishments */}
-          {(() => {
-            console.log('🔍 [KPIDetails] Inside shouldShowEmployeeColumns - checking accomplishments');
-            console.log('   (review as any).accomplishments:', (review as any).accomplishments);
-            console.log('   Is Array?:', Array.isArray((review as any).accomplishments));
-            console.log('   Length:', (review as any).accomplishments?.length);
-            return null;
-          })()}
+
           
           {(review as any).accomplishments && Array.isArray((review as any).accomplishments) && (review as any).accomplishments.length > 0 && (
             <div className="mb-6">

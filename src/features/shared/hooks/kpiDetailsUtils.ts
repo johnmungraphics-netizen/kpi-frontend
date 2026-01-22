@@ -30,7 +30,7 @@ export const parseReviewData = (review: KPIReview | null): ParsedReviewData => {
   const managerItemComments: ItemComments = {};
 
   if (!review) {
-    console.log('⚠️ [parseReviewData] No review provided');
+
     return { employeeItemRatings, employeeItemComments, managerItemRatings, managerItemComments };
   }
 
@@ -76,7 +76,7 @@ export const parseReviewData = (review: KPIReview | null): ParsedReviewData => {
       });
     }
   } catch (error) {
-    console.log('⚠️ [parseReviewData] Could not parse employee_comment as JSON:', error);
+
   }
 
   // Parse manager ratings/comments from JSON in comment field
@@ -89,10 +89,10 @@ export const parseReviewData = (review: KPIReview | null): ParsedReviewData => {
           managerItemComments[item.item_id] = item.comment || '';
         }
       });
-      console.log('✅ [parseReviewData] Parsed manager data from JSON');
+
     }
   } catch (error) {
-    console.log('⚠️ [parseReviewData] Could not parse manager_comment as JSON:', error);
+
   }
 
  

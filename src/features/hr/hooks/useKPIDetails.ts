@@ -40,9 +40,9 @@ export const useKPIDetails = () => {
   const [finalRatingPercentage, setFinalRatingPercentage] = useState<number>(0);
 
   useEffect(() => {
-    console.log('🔄 [useKPIDetails] useEffect triggered, kpiId:', kpiId);
+
     if (kpiId) {
-      console.log('✅ [useKPIDetails] kpiId exists, calling fetchKPIData');
+
       fetchKPIData();
     } else {
       console.warn('⚠️ [useKPIDetails] No kpiId provided in URL params');
@@ -51,7 +51,7 @@ export const useKPIDetails = () => {
 
   const fetchKPIData = async () => {
     try {
-      console.log('🚀 [useKPIDetails] fetchKPIData started for kpiId:', kpiId);
+
       setLoading(true);
       
       // Fetch KPI and review data
@@ -63,12 +63,12 @@ export const useKPIDetails = () => {
 
       if (fetchedReview) {
         // Fetch the full review details by ID to get accomplishments
-        console.log('🔄 [useKPIDetails] Fetching full review details by ID:', fetchedReview.id);
+
         try {
           const fullReviewResponse = await api.get(`/kpi-review/${fetchedReview.id}`);
           const fullReview = fullReviewResponse.data.review;
           
-          console.log('✅ [useKPIDetails] Full review fetched:', fullReview);
+
           setReview(fullReview);
           
           // Fetch ratings data for this review
@@ -97,7 +97,7 @@ export const useKPIDetails = () => {
       // Backend returns { review, ratings } from kpi_item_ratings table
       const ratings = response.data.ratings;
       
-      console.log('📊 [useKPIDetails] Ratings data fetched:', ratings);
+
       
       if (!ratings || !Array.isArray(ratings)) {
         console.warn('⚠️ [useKPIDetails] No ratings data found');
@@ -114,7 +114,7 @@ export const useKPIDetails = () => {
       let totalPercentage = 0;
       
       ratings.forEach((rating: any) => {
-        console.log('📊 [useKPIDetails] Processing rating:', rating);
+
         
         // Only extract data from manager ratings
         if (rating.kpi_item_id && rating.rater_role === 'manager') {
@@ -148,14 +148,6 @@ export const useKPIDetails = () => {
       setManagerRatingPercentages(managerPercentages);
       setFinalRatingPercentage(totalPercentage);
       
-      console.log('✅ [useKPIDetails] Ratings data processed:', {
-        actualVals,
-        targetVals,
-        statusMap,
-        percentages,
-        managerPercentages,
-        totalPercentage
-      });
     } catch (err) {
       console.error('❌ [useKPIDetails] Error fetching ratings data:', err);
     }

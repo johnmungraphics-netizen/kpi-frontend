@@ -23,11 +23,11 @@ api.interceptors.request.use(
 
     // Debug logging for rating-options endpoint
     if (config.url?.includes('rating-options')) {
-      console.log('🔍 [api] Request interceptor - rating-options call');
-      console.log('🔍 [api] Request URL:', config.url);
-      console.log('🔍 [api] Full URL:', config.baseURL + config.url);
-      console.log('🔍 [api] Request headers:', config.headers);
-      console.log('🔍 [api] Authorization header:', config.headers?.Authorization);
+
+
+
+
+
     }
     return config;
   },
@@ -41,9 +41,9 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => {
     if (response.config.url?.includes('rating-options')) {
-      console.log('✅ [api] Response interceptor - rating-options response');
-      console.log('✅ [api] Response status:', response.status);
-      console.log('✅ [api] Response data:', response.data);
+
+
+
     }
     return response;
   },

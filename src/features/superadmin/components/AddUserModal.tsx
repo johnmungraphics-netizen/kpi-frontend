@@ -79,10 +79,10 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onSuccess,
 
   const fetchDepartments = async () => {
     try {
-      console.log('[AddUserModal] 📡 Fetching departments for company:', companyId);
+
       const response = await api.get(`/departments/list?companyId=${companyId}`);
       const depts = response.data.data?.departments || response.data.departments || [];
-      console.log('[AddUserModal] ✅ Departments loaded:', { count: depts.length, depts });
+
       setDepartments(depts);
     } catch (err: any) {
       console.error('[AddUserModal] ❌ Failed to fetch departments:', err);
@@ -92,21 +92,21 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onSuccess,
 
   const fetchManagersByDepartment = async (departmentId: string) => {
     try {
-      console.log('[AddUserModal] 📡 Fetching managers for department:', departmentId);
+
       const response = await api.get(`/departments/${departmentId}/managers?companyId=${companyId}`);
       const mgrs = response.data.data?.managers || response.data.managers || [];
-      console.log('[AddUserModal] ✅ Department managers loaded:', { count: mgrs.length, mgrs });
+
       setManagers(mgrs);
       
       // Auto-assign manager if only one exists
       if (mgrs.length === 1) {
-        console.log('[AddUserModal] 🎯 Auto-assigning single manager:', mgrs[0]);
+
         setFormData(prev => ({ ...prev, manager_id: mgrs[0].id.toString() }));
       } else if (mgrs.length === 0) {
-        console.log('[AddUserModal] ⚠️ No managers found for this department');
+
         setFormData(prev => ({ ...prev, manager_id: '' }));
       } else {
-        console.log('[AddUserModal] 📋 Multiple managers found, user must select');
+
         // Don't auto-assign if multiple managers, let user choose
         setFormData(prev => ({ ...prev, manager_id: '' }));
       }
@@ -173,11 +173,6 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onSuccess,
     }
 
     setLoading(true);
-    console.log('[AddUserModal] 📤 Submitting user data:', {
-      ...formData,
-      companyId,
-      companyName
-    });
 
     try {
       const isManagerOrHR = formData.role_id === '2' || formData.role_id === '3';
@@ -197,11 +192,11 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onSuccess,
         ...(isManagerOrHR && formData.password ? { password: formData.password } : {}),
       };
 
-      console.log('[AddUserModal] 📦 Payload:', { ...payload, password: payload.password ? '***' : undefined });
+
 
       const response = await api.post('/users/create', payload);
       
-      console.log('[AddUserModal] ✅ User created successfully:', response.data);
+
       
       toast.success('User created successfully');
       
@@ -488,11 +483,6 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onSuccess,
               {/* Password Section - Only for Managers and HR */}
               {(() => {
                 const isManagerOrHR = formData.role_id === '2' || formData.role_id === '3';
-                console.log('[AddUserModal] Password section check:', { 
-                  role_id: formData.role_id, 
-                  isManagerOrHR,
-                  preSelectedRoleId 
-                });
                 return isManagerOrHR;
               })() && (
                 <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
@@ -545,10 +535,6 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onSuccess,
               {/* Default Password Info - Only for Employees */}
               {(() => {
                 const isEmployee = formData.role_id === '4';
-                console.log('[AddUserModal] Default password section check:', { 
-                  role_id: formData.role_id, 
-                  isEmployee 
-                });
                 return isEmployee;
               })() && (
                 <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">

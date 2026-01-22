@@ -58,22 +58,14 @@ const SelfRating: React.FC = () => {
   const calculationMethodName = kpi?.period ? getCalculationMethodName(kpi.period) : 'Normal Calculation';
   const isSelfRatingEnabled = kpi?.period ? isEmployeeSelfRatingEnabled(kpiPeriod) : false;
 
-  console.log('🎨 [SelfRating] Component render:', { 
-    loading, 
-    hasKpi: !!kpi, 
-    kpiId: kpi?.id,
-    calculationMethodName,
-    kpiPeriod,
-    isSelfRatingEnabled
-  });
 
   if (loading) {
-    console.log('⏳ [SelfRating] Showing loading state');
+
     return <div className="p-6">Loading KPI details...</div>;
   }
   
   if (!kpi) {
-    console.log('❌ [SelfRating] No KPI data - showing error state');
+
     return (
       <div className="p-6">
         <div className="bg-red-50 border border-red-200 rounded-xl p-4">
@@ -83,7 +75,7 @@ const SelfRating: React.FC = () => {
     );
   }
   
-  console.log('✅ [SelfRating] Rendering main content for KPI:', { id: kpi.id, title: kpi.title });
+
 
   return (
     <div className="space-y-6">
@@ -354,10 +346,6 @@ const SelfRating: React.FC = () => {
                                 value={itemRating || 0}
                                 onChange={(e) => {
                                   const selectedValue = parseFloat(e.target.value);
-                                  console.log(
-                                    '🔄 [SelfRating] Qualitative select changed - value:',
-                                    selectedValue
-                                  );
                                   if (!isNaN(selectedValue)) {
                                     handleRatingChange(item.id, selectedValue);
                                   }
@@ -402,10 +390,6 @@ const SelfRating: React.FC = () => {
                                 value={itemRating || 0}
                                 onChange={(e) => {
                                   const selectedValue = parseFloat(e.target.value);
-                                  console.log(
-                                    '🔄 [SelfRating] Select changed - value:',
-                                    selectedValue
-                                  );
                                   if (!isNaN(selectedValue)) {
                                     handleRatingChange(item.id, selectedValue);
                                   }

@@ -44,9 +44,9 @@ export const getManagerRoutes = (
 ) => {
   // Wrapper component to log route matching
   const ManagerKPIReviewWrapper: React.FC = () => {
-    console.log('🎯 [ManagerKPIReviewWrapper] Component rendered!');
-    console.log('🎯 [ManagerKPIReviewWrapper] Current URL:', window.location.href);
-    console.log('🎯 [ManagerKPIReviewWrapper] Pathname:', window.location.pathname);
+
+
+
     return <ManagerKPIReview />;
   };
 

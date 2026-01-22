@@ -72,14 +72,10 @@ export const fetchEmployees = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      console.log('[employeeSlice] 📡 Fetching employees with params:', params);
+
       // Backend uses /users/list with role=employee parameter
       const response = await api.get('/users/list', { 
         params: { ...params, role: 'employee' } 
-      });
-      console.log('[employeeSlice] ✅ Employees fetched:', {
-        count: response.data.users?.length || 0,
-        total: response.data.pagination?.total || 0
       });
       return response.data;
     } catch (error: any) {
@@ -270,7 +266,7 @@ const employeeSlice = createSlice({
       })
       .addCase(fetchEmployees.fulfilled, (state, action) => {
         state.loading = false;
-        console.log('[employeeSlice] 📋 Processing fetched employees:', action.payload);
+
         
         // Backend returns { success: true, data: { users: [...], pagination: {...} } }
         if (action.payload.data?.users) {
@@ -302,10 +298,6 @@ const employeeSlice = createSlice({
           console.warn('[employeeSlice] ⚠️ Unexpected payload format:', action.payload);
           state.employees = [];
         }
-        console.log('[employeeSlice] ✅ Employees stored:', {
-          count: state.employees.length,
-          pagination: state.pagination
-        });
       })
       .addCase(fetchEmployees.rejected, (state, action) => {
         state.loading = false;

@@ -47,18 +47,11 @@ export const EmployeeSelectionModal: React.FC<EmployeeSelectionModalProps> = ({
   const [selectedEmployeeIds, setSelectedEmployeeIds] = useState<Set<number>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
 
-  console.log('🔵 [EmployeeSelectionModal] Rendered with:', {
-    isOpen,
-    employeesCount: employees.length,
-    departmentsCount: departments.length,
-    selectedDepartmentId,
-    selectedEmployeeIdsCount: selectedEmployeeIds.size,
-  });
 
   // Reset selections when modal opens
   useEffect(() => {
     if (isOpen) {
-      console.log('🔵 [EmployeeSelectionModal] Modal opened - resetting selections');
+
       setSelectedEmployeeIds(new Set());
       setSelectedDepartmentId('all');
       setSearchQuery('');
@@ -78,12 +71,6 @@ export const EmployeeSelectionModal: React.FC<EmployeeSelectionModalProps> = ({
     return matchesDepartment && matchesSearch;
   });
 
-  console.log('🔍 [EmployeeSelectionModal] Filtered employees:', {
-    totalEmployees: employees.length,
-    filteredCount: filteredEmployees.length,
-    selectedDepartmentId,
-    searchQuery,
-  });
 
   // Check if all filtered employees are selected
   const allFilteredSelected =
@@ -91,21 +78,20 @@ export const EmployeeSelectionModal: React.FC<EmployeeSelectionModalProps> = ({
     filteredEmployees.every((emp) => selectedEmployeeIds.has(emp.id));
 
   const handleToggleEmployee = (employeeId: number) => {
-    console.log('🔘 [EmployeeSelectionModal] Toggle employee:', employeeId);
+
     setSelectedEmployeeIds((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(employeeId)) {
         newSet.delete(employeeId);
-        console.log('  ❌ Removed employee:', employeeId);
+
       } else {
         newSet.add(employeeId);
-        console.log('  ✅ Added employee:', employeeId);
+
       }
-      console.log('  📊 Total selected:', newSet.size);
+
       
       // In inline mode, update parent immediately
       if (inline) {
-        console.log('  🔄 [Inline mode] Calling onConfirm with:', Array.from(newSet));
         onConfirm(Array.from(newSet));
       }
       
@@ -114,18 +100,17 @@ export const EmployeeSelectionModal: React.FC<EmployeeSelectionModalProps> = ({
   };
 
   const handleSelectAll = () => {
-    console.log('📋 [EmployeeSelectionModal] Select All clicked');
+
     if (allFilteredSelected) {
       // Deselect all filtered employees
-      console.log('  ❌ Deselecting all filtered employees');
+
       setSelectedEmployeeIds((prev) => {
         const newSet = new Set(prev);
         filteredEmployees.forEach((emp) => newSet.delete(emp.id));
-        console.log('  📊 Remaining selected:', newSet.size);
+
         
         // In inline mode, update parent immediately
         if (inline) {
-          console.log('  🔄 [Inline mode] Calling onConfirm with:', Array.from(newSet));
           onConfirm(Array.from(newSet));
         }
         
@@ -133,15 +118,14 @@ export const EmployeeSelectionModal: React.FC<EmployeeSelectionModalProps> = ({
       });
     } else {
       // Select all filtered employees
-      console.log('  ✅ Selecting all filtered employees:', filteredEmployees.length);
+
       setSelectedEmployeeIds((prev) => {
         const newSet = new Set(prev);
         filteredEmployees.forEach((emp) => newSet.add(emp.id));
-        console.log('  📊 Total selected:', newSet.size);
+
         
         // In inline mode, update parent immediately
         if (inline) {
-          console.log('  🔄 [Inline mode] Calling onConfirm with:', Array.from(newSet));
           onConfirm(Array.from(newSet));
         }
         
@@ -151,15 +135,11 @@ export const EmployeeSelectionModal: React.FC<EmployeeSelectionModalProps> = ({
   };
 
   const handleDepartmentChange = (departmentId: number | 'all') => {
-    console.log('🏢 [EmployeeSelectionModal] Department filter changed:', departmentId);
+
     setSelectedDepartmentId(departmentId);
   };
 
   const handleConfirm = () => {
-    console.log('✅ [EmployeeSelectionModal] Confirm clicked with:', {
-      selectedCount: selectedEmployeeIds.size,
-      selectedIds: Array.from(selectedEmployeeIds),
-    });
     if (selectedEmployeeIds.size === 0) {
       console.warn('⚠️ [EmployeeSelectionModal] No employees selected');
       return;

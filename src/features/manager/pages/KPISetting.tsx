@@ -56,21 +56,10 @@ const ManagerKPISetting: React.FC = () => {
   } = useManagerKPISetting();
 
   // Debug logging
-  console.log('🏗️🏗️🏗️ [KPISetting] COMPONENT RENDERED!');
-  console.log('🏗️ [KPISetting] Current URL:', window.location.pathname);
-  console.log('🏗️ [KPISetting] Current search:', window.location.search);
-  console.log('🏗️ [KPISetting] isTemplateMode:', isTemplateMode);
-  console.log('🏗️ [KPISetting] Component state:', {
-    period,
-    quarter,
-    year,
-    selectedPeriodSetting,
-    availablePeriodsCount: availablePeriods?.length || 0,
-    availablePeriods,
-    isTemplateMode,
-    employeesCount: employees?.length || 0,
-    loading,
-  });
+
+
+
+
 
   if (loading) {
     return <div className="p-6">Loading...</div>;

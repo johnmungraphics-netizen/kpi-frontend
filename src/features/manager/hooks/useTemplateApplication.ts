@@ -30,7 +30,7 @@ export const useTemplateApplication = (): UseTemplateApplicationReturn => {
   const [currentTemplateId, setCurrentTemplateId] = useState<number | null>(null);
 
   const fetchEmployeesAndDepartments = async () => {
-    console.log('🔵 [useTemplateApplication] Fetching employees and departments');
+
     setLoading(true);
     try {
       const response = await api.get('/users/managers/employees-for-template');

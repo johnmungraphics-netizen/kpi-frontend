@@ -24,7 +24,7 @@ const ManagerKPITemplates: React.FC = () => {
   const handleUseTemplate = (templateId: number) => {
     const targetPath = `/manager/kpi-setting/template/${templateId}`;
     navigate(targetPath);
-    console.log('🚀 [KPITemplates] Navigate called successfully');
+
   };
 
   if (loading) {

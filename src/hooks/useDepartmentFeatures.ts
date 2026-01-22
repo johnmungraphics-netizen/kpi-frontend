@@ -54,11 +54,6 @@ export const useDepartmentFeatures = (kpiId?: number) => {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      console.log('📊 [useDepartmentFeatures] Fetched features:', {
-        kpiId,
-        endpoint,
-        features: response.data
-      });
 
       setFeatures(response.data);
     } catch (err: any) {
@@ -103,7 +98,7 @@ export const useDepartmentFeatures = (kpiId?: number) => {
         }
       );
 
-      console.log('✅ [useDepartmentFeatures] Updated features:', response.data);
+
       setFeatures(response.data.features);
       return true;
     } catch (err: any) {
@@ -185,13 +180,13 @@ export const useDepartmentFeatures = (kpiId?: number) => {
       // Use the existing /:departmentId endpoint
       const endpoint = `${API_URL}/department-features/${departmentId}`;
 
-      console.log(`🔍 [fetchDepartmentFeaturesById] Fetching features for department ${departmentId}`);
+
       
       const response = await axios.get(endpoint, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      console.log(`✅ [fetchDepartmentFeaturesById] Features for dept ${departmentId}:`, response.data);
+
       return response.data;
     } catch (err: any) {
       console.error(`❌ [fetchDepartmentFeaturesById] Error fetching features for dept ${departmentId}:`, err);

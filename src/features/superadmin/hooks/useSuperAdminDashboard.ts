@@ -29,15 +29,15 @@ export const useSuperAdminDashboard = () => {
 
   const fetchDashboardData = async () => {
     try {
-      console.log('[useSuperAdminDashboard] Starting to fetch dashboard data...');
+
       setLoading(true);
       const [statsData, companiesData] = await Promise.all([
         superAdminDashboardService.fetchDashboardStats(),
         superAdminDashboardService.fetchRecentCompanies(5),
       ]);
       
-      console.log('[useSuperAdminDashboard] Dashboard stats received:', statsData);
-      console.log('[useSuperAdminDashboard] Recent companies received:', companiesData);
+
+
       
       setStats(statsData);
       setRecentCompanies(companiesData);

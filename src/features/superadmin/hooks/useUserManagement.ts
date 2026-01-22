@@ -39,10 +39,10 @@ export const useUserManagement = () => {
   const fetchInitialData = async () => {
     try {
       setLoading(true);
-      console.log('[useUserManagement] Fetching companies...');
+
       // First fetch companies
       const companiesData = await userManagementService.fetchCompanies();
-      console.log('[useUserManagement] Companies fetched:', companiesData);
+
       setCompanies(companiesData);
       
       // Set default company to first company if available
@@ -73,9 +73,9 @@ export const useUserManagement = () => {
       
       if (searchQuery) filters.search = searchQuery;
 
-      console.log('[useUserManagement] Fetching users with filters:', filters);
+
       const data = await userManagementService.fetchAllUsers(filters);
-      console.log('[useUserManagement] Users fetched:', data.length);
+
       setUsers(data);
     } catch (error: any) {
       console.error('Error fetching users:', error);

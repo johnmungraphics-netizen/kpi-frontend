@@ -43,7 +43,6 @@ const PasswordChangeModal: React.FC<PasswordChangeModalProps> = ({ isOpen, onClo
 
       setSuccess('Password changed successfully!');
       localStorage.removeItem('passwordChangeRequired');
-      console.log('[PasswordChangeModal] ✅ Password changed successfully, localStorage cleared');
       
       // Auto-dismiss immediately for required password changes
       const dismissDelay = isRequired ? 500 : 1500;
@@ -172,7 +171,6 @@ const PasswordChangeModal: React.FC<PasswordChangeModalProps> = ({ isOpen, onClo
                 type="button"
                 onClick={() => {
                   localStorage.removeItem('passwordChangeRequired');
-                  console.log('[PasswordChangeModal] ❌ Modal cancelled, localStorage cleared');
                   onClose();
                 }}
                 className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"

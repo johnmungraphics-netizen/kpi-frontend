@@ -58,9 +58,9 @@ const AssignManagerDepartments: React.FC = () => {
   const fetchInitialData = async () => {
     try {
       setLoading(true);
-      console.log('[AssignManagerDepartments] Fetching companies...');
+
       const companiesData = await userManagementService.fetchCompanies();
-      console.log('[AssignManagerDepartments] Companies fetched:', companiesData);
+
       setCompanies(companiesData);
 
       if (companiesData.length > 0) {
@@ -78,20 +78,20 @@ const AssignManagerDepartments: React.FC = () => {
     if (!selectedCompany) return;
 
     try {
-      console.log('[AssignManagerDepartments] Fetching managers for company:', selectedCompany);
+
       // Fetch managers (role_id = 2) for the selected company
       const managersData = await userManagementService.fetchAllUsers({
         role: '2', // managers
         company: selectedCompany
       });
-      console.log('[AssignManagerDepartments] Managers fetched:', managersData.length);
+
       // Cast User array to Manager array - User has all required Manager properties
       setManagers(managersData as Manager[]);
 
       // Fetch departments for the selected company
-      console.log('[AssignManagerDepartments] Fetching departments for company:', selectedCompany);
+
       const departmentsData = await userManagementService.fetchDepartments(parseInt(selectedCompany));
-      console.log('[AssignManagerDepartments] Departments fetched:', departmentsData.length);
+
       setDepartments(departmentsData);
 
       setSelectedManager('');
@@ -109,12 +109,12 @@ const AssignManagerDepartments: React.FC = () => {
     if (!selectedManager) return;
 
     try {
-      console.log('[AssignManagerDepartments] Fetching assignments for manager:', selectedManager);
+
       
       // Use userManagementService which has proper axios setup
       const response = await userManagementService.getManagerDepartments(parseInt(selectedManager));
       
-      console.log('[AssignManagerDepartments] Manager assignments response:', response);
+
       
       const assignments = response.data?.assignments || response.data?.data?.assignments || response.assignments || [];
       setCurrentAssignments(assignments);
@@ -122,7 +122,7 @@ const AssignManagerDepartments: React.FC = () => {
       // Set selected departments based on current assignments
       const departmentIds = new Set<number>(assignments.map((a: ManagerDepartment) => a.department_id));
       setSelectedDepartments(departmentIds);
-      console.log('[AssignManagerDepartments] Selected departments set:', departmentIds);
+
     } catch (error: any) {
       console.error('[AssignManagerDepartments] Error fetching assignments:', error.message);
       console.error('[AssignManagerDepartments] Error details:', error.response?.data || error);
@@ -160,8 +160,6 @@ const AssignManagerDepartments: React.FC = () => {
 
     try {
       setSaving(true);
-      console.log('[AssignManagerDepartments] Saving assignments for manager:', selectedManager);
-      console.log('[AssignManagerDepartments] Selected departments:', Array.from(selectedDepartments));
 
       await userManagementService.assignManagerDepartments(
         parseInt(selectedManager),

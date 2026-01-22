@@ -17,15 +17,11 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowe
   const location = useLocation();
   
   useEffect(() => {
-    console.log('🛡️ [ProtectedRoute] Rendering route:', {
-      pathname: location.pathname,
-      allowedRoles: allowedRoles,
-      timestamp: new Date().toISOString()
     });
   }, [location.pathname, allowedRoles]);
   
   // TODO: Implement protected route logic
-  console.log('✅ [ProtectedRoute] Rendering children for:', location.pathname);
+
   return <>{children}</>;
 };
 

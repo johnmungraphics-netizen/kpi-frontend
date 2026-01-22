@@ -114,13 +114,6 @@ export const KPIFormTable: React.FC<KPIFormTableProps> = ({
   const canRemoveRow = (_index: number) => kpiRows.length > minRows;
 
   // Debug logging
-  console.log('🔍 [KPIFormTable] Render:', {
-    period,
-    selectedPeriodSetting,
-    availablePeriodsCount: availablePeriods?.length || 0,
-    availablePeriods: availablePeriods,
-    selectedId: selectedPeriodSetting?.id,
-  });
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
@@ -156,24 +149,22 @@ export const KPIFormTable: React.FC<KPIFormTableProps> = ({
               <select
                 value={selectedPeriodSetting?.id || ''}
                 onChange={(e) => {
-                  console.log('📝 [Quarterly Dropdown] onChange triggered:', e.target.value);
+
                   const selectedId = parseInt(e.target.value);
                   const selected = availablePeriods.find((p: any) => p.id === selectedId);
-                  console.log('📝 [Quarterly Dropdown] Found period:', selected);
+
                   if (selected) {
                     onQuarterChange(selected.quarter);
                     onYearChange(selected.year);
                   }
                 }}
-                onFocus={() => console.log('🎯 [Quarterly Dropdown] Focused')}
-                onClick={() => console.log('🖱️ [Quarterly Dropdown] Clicked')}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 cursor-pointer"
                 style={{ appearance: 'auto' }}
               >
                 <option value="">Select Quarter</option>
                 {(() => {
                   const filtered = availablePeriods.filter((p: any) => p.period_type === 'quarterly' && p.is_active);
-                  console.log('📊 [Quarterly Dropdown] Filtered periods:', filtered);
+
                   return filtered
                     .sort((a: any, b: any) => {
                       // Sort by year first, then by quarter
@@ -184,7 +175,7 @@ export const KPIFormTable: React.FC<KPIFormTableProps> = ({
                     .map((ps: any) => {
                       const startDate = ps.start_date ? new Date(ps.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
                       const endDate = ps.end_date ? new Date(ps.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
-                      console.log('🔖 [Quarterly Dropdown] Option:', ps.id, ps.quarter, ps.year);
+
                       return (
                         <option key={ps.id} value={ps.id}>
                           {ps.quarter} {ps.year} {startDate && endDate ? `(${startDate} - ${endDate})` : ''}
@@ -197,29 +188,27 @@ export const KPIFormTable: React.FC<KPIFormTableProps> = ({
               <select
                 value={selectedPeriodSetting?.id || ''}
                 onChange={(e) => {
-                  console.log('📝 [Yearly Dropdown] onChange triggered:', e.target.value);
+
                   const selectedId = parseInt(e.target.value);
                   const selected = availablePeriods.find((p: any) => p.id === selectedId);
-                  console.log('📝 [Yearly Dropdown] Found period:', selected);
+
                   if (selected) {
                     onYearChange(selected.year);
                   }
                 }}
-                onFocus={() => console.log('🎯 [Yearly Dropdown] Focused')}
-                onClick={() => console.log('🖱️ [Yearly Dropdown] Clicked')}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 cursor-pointer"
                 style={{ appearance: 'auto' }}
               >
                 <option value="">Select Year</option>
                 {(() => {
                   const filtered = availablePeriods.filter((p: any) => p.period_type === 'yearly' && p.is_active);
-                  console.log('📊 [Yearly Dropdown] Filtered periods:', filtered);
+
                   return filtered
                     .sort((a: any, b: any) => b.year - a.year)
                     .map((ps: any) => {
                       const startDate = ps.start_date ? new Date(ps.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
                       const endDate = ps.end_date ? new Date(ps.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
-                      console.log('🔖 [Yearly Dropdown] Option:', ps.id, ps.year);
+
                       return (
                         <option key={ps.id} value={ps.id}>
                           {ps.year} {startDate && endDate ? `(${startDate} - ${endDate})` : ''}
@@ -246,13 +235,6 @@ export const KPIFormTable: React.FC<KPIFormTableProps> = ({
 
         {/* Use Template Dropdown Checkbox - Only in template mode */}
         {(() => {
-          console.log('🎯 [KPIFormTable] Checkbox visibility check:', {
-            mode,
-            employeeDepartmentId,
-            hasOnUseTemplateDropdownChange: !!onUseTemplateDropdownChange,
-            useTemplateDropdown,
-            willShow: mode === 'template' && employeeDepartmentId && onUseTemplateDropdownChange
-          });
           return null;
         })()}
         {mode === 'template' && employeeDepartmentId && onUseTemplateDropdownChange && (
@@ -262,7 +244,7 @@ export const KPIFormTable: React.FC<KPIFormTableProps> = ({
                 type="checkbox"
                 checked={useTemplateDropdown}
                 onChange={(e) => {
-                  console.log('✅ [KPIFormTable] Use Dropdown toggled:', e.target.checked);
+
                   onUseTemplateDropdownChange(e.target.checked);
                 }}
                 className="w-5 h-5 text-purple-600 rounded focus:ring-purple-500 mt-0.5"

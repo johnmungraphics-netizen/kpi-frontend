@@ -20,10 +20,10 @@ export const useAssignHrToCompany = () => {
 
   const fetchHrUsers = async () => {
     try {
-      console.log('[useAssignHrToCompany] Fetching HR users...');
+
       setLoading(true);
       const data = await hrCompanyService.fetchHrUsers();
-      console.log('[useAssignHrToCompany] HR users fetched:', data.length);
+
       setHrUsers(data);
     } catch (err: any) {
       console.error('[useAssignHrToCompany] Error fetching HR users:', err);

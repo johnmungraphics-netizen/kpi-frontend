@@ -52,7 +52,7 @@ export const employeeService = {
   // Fetch review by ID for confirmation
   fetchReviewById: async (reviewId: number): Promise<KPIReviewConfirmation> => {
     const response = await api.get(`/kpi-review/${reviewId}`);
-    console.log('📥 [employeeService] fetchReviewById response.data:', response.data);
+
     return response.data.review;
   },
 
@@ -63,11 +63,11 @@ export const employeeService = {
 
   // Fetch rating options
   fetchRatingOptions: async (period?: string): Promise<RatingOption[]> => {
-    console.log('🔍 [employeeService] fetchRatingOptions called with period:', period);
+
     try {
       const params = period ? { period } : {};
       const response = await api.get('/rating-options', { params });
-      console.log('✅ [employeeService] Rating options response:', response.data);
+
       return response.data?.rating_options || [];
     } catch (error) {
       console.error('❌ [employeeService] Error fetching rating options:', error);

@@ -54,14 +54,6 @@ export const ROLE_ID_TO_NAME: Record<number, string> = {
  */
 export const hasRole = (user: { role_id?: number } | null | undefined, roleId: number): boolean => {
   const result = user?.role_id === roleId;
-  const stack = new Error().stack;
-  const caller = stack?.split('\n')[2]?.trim() || 'unknown';
-  console.log('[roleUtils] 🔑 hasRole check:', {
-    user_role_id: user?.role_id,
-    checking_against: roleId,
-    match: result,
-    caller
-  });
   return result;
 };
 
@@ -84,11 +76,6 @@ export const isSuperAdmin = (user: { role_id?: number } | null | undefined): boo
  */
 export const isHR = (user: { role_id?: number } | null | undefined): boolean => {
   const result = hasRole(user, ROLE_IDS.HR);
-  console.log('[roleUtils] 🔍 isHR check:', {
-    user_role_id: user?.role_id,
-    expected_role_id: ROLE_IDS.HR,
-    result
-  });
   return result;
 };
 

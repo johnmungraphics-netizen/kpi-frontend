@@ -30,15 +30,15 @@ export const parseReviewData = (review: KPIReview | null): ParsedReviewData => {
   const managerItemComments: ItemComments = {};
 
   if (!review) {
-    console.log('⚠️ [parseReviewData] No review provided');
+
     return { employeeItemRatings, employeeItemComments, managerItemRatings, managerItemComments };
   }
 
-  console.log('📊 [parseReviewData] Parsing review:', review);
+
 
   // PRIORITY 1: Use structured `item_ratings` data (same as Manager implementation)
   if ((review as any).item_ratings) {
-    console.log('✅ [parseReviewData] Using structured item_ratings data');
+
     
     // Parse employee ratings from structured data
     if ((review as any).item_ratings.employee) {
@@ -58,16 +58,12 @@ export const parseReviewData = (review: KPIReview | null): ParsedReviewData => {
       });
     }
 
-    console.log('✅ [parseReviewData] Parsed structured data:', {
-      employeeItemRatings,
-      managerItemRatings
-    });
 
     return { employeeItemRatings, employeeItemComments, managerItemRatings, managerItemComments };
   }
 
   // FALLBACK: Try legacy JSON format in comment fields
-  console.log('⚠️ [parseReviewData] Falling back to legacy JSON format');
+
 
   // Parse employee ratings/comments from JSON in comment field
   try {
@@ -79,10 +75,10 @@ export const parseReviewData = (review: KPIReview | null): ParsedReviewData => {
           employeeItemComments[item.item_id] = item.comment || '';
         }
       });
-      console.log('✅ [parseReviewData] Parsed employee data from JSON');
+
     }
   } catch (error) {
-    console.log('⚠️ [parseReviewData] Could not parse employee_comment as JSON:', error);
+
   }
 
   // Parse manager ratings/comments from JSON in comment field
@@ -95,16 +91,12 @@ export const parseReviewData = (review: KPIReview | null): ParsedReviewData => {
           managerItemComments[item.item_id] = item.comment || '';
         }
       });
-      console.log('✅ [parseReviewData] Parsed manager data from JSON');
+
     }
   } catch (error) {
-    console.log('⚠️ [parseReviewData] Could not parse manager_comment as JSON:', error);
+
   }
 
-  console.log('📊 [parseReviewData] Final result:', {
-    employeeItemRatings,
-    managerItemRatings
-  });
 
   return { employeeItemRatings, employeeItemComments, managerItemRatings, managerItemComments };
 };
@@ -184,7 +176,7 @@ export const filterKPIItems = (kpi: KPI | null, kpiId: number): KPI | null => {
     filteredKPI.items = filteredKPI.items.filter((item: any) => {
       return item.kpi_id === kpiId || !item.kpi_id;
     });
-    console.log('✅ [filterKPIItems] Filtered items:', filteredKPI.items.length);
+
   }
   
   return filteredKPI;

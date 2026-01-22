@@ -12,10 +12,10 @@ export const managerService = {
    */
   fetchReviews: async (): Promise<KPIReview[]> => {
     try {
-      console.log('[managerService] Fetching reviews from /kpi-review');
+
       const response = await api.get('/kpi-review');
       const reviews = response.data.reviews || [];
-      console.log('[managerService] Reviews fetched successfully:', reviews.length);
+
       return reviews;
     } catch (error) {
       console.error('[managerService] Error fetching reviews:', error);
@@ -28,12 +28,12 @@ export const managerService = {
    */
   fetchNotifications: async (limit: number = 5): Promise<Notification[]> => {
     try {
-      console.log('[managerService] Fetching notifications, limit:', limit);
+
       const response = await api.get('/notifications', { 
         params: { limit, read: 'false' } 
       });
       const notifications = response.data.notifications || [];
-      console.log('[managerService] Notifications fetched successfully:', notifications.length);
+
       return notifications;
     } catch (error) {
       console.error('[managerService] Error fetching notifications:', error);
@@ -46,10 +46,10 @@ export const managerService = {
    */
   fetchRecentActivity: async (): Promise<Notification[]> => {
     try {
-      console.log('[managerService] Fetching recent activity from /notifications/activity');
+
       const response = await api.get('/notifications/activity');
       const activities = response.data.activities || [];
-      console.log('[managerService] Recent activity fetched successfully:', activities.length);
+
       return activities;
     } catch (error) {
       console.error('[managerService] Error fetching recent activity:', error);
@@ -63,11 +63,11 @@ export const managerService = {
    */
   fetchEmployees: async (): Promise<Employee[]> => {
     try {
-      console.log('[managerService] Fetching employees for current manager');
+
       
       // For now, get all users and filter - backend should implement department-based filtering
       const usersResponse = await api.get('/users/list');
-      console.log('[managerService] Users response:', usersResponse.data);
+
       
       // Parse response - backend returns: { success: true, data: { users: [...], pagination: {...} } }
       let allUsers = [];
@@ -81,14 +81,14 @@ export const managerService = {
         allUsers = usersResponse.data;
       }
       
-      console.log('[managerService] Parsed users:', allUsers.length);
+
       
       // Filter employees (exclude superadmin=1, managers=2, hr=3)
       const employees = allUsers.filter((user: any) => 
         user.role_id !== 1 && user.role_id !== 2 && user.role_id !== 3
       );
       
-      console.log('[managerService] Employees fetched successfully:', employees.length);
+
       return employees;
     } catch (error) {
       console.error('[managerService] Error fetching employees:', error);
@@ -101,10 +101,10 @@ export const managerService = {
    */
   fetchKPIById: async (kpiId: number): Promise<any> => {
     try {
-      console.log('[managerService] Fetching KPI with ID:', kpiId);
+
       const response = await api.get(`/kpis/${kpiId}`);
       const kpi = response.data.kpi || response.data.data;
-      console.log('[managerService] KPI fetched successfully');
+
       return kpi;
     } catch (error) {
       console.error('[managerService] Error fetching KPI:', error);
@@ -120,12 +120,12 @@ export const managerService = {
     category: string
   ): Promise<Employee[]> => {
     try {
-      console.log('[managerService] Fetching employees by category:', { department, category });
+
       const response = await api.get(
         `/departments/statistics/${department}/${category}`
       );
       const employees = response.data.data?.employees || response.data.employees || [];
-      console.log('[managerService] Employees by category fetched:', employees.length);
+
       return employees;
     } catch (error) {
       console.error('[managerService] Error fetching employees by category:', error);
@@ -138,9 +138,9 @@ export const managerService = {
    */
   fetchManagerDepartments: async (): Promise<ManagerDepartment[]> => {
     try {
-      console.log('[managerService] Fetching manager departments from /departments/manager-departments');
+
       const response = await api.get('/departments/manager-departments');
-      console.log('[managerService] Departments response:', response.data);
+
       
       // Parse response - try multiple possible formats
       let departments = [];
@@ -152,7 +152,7 @@ export const managerService = {
         departments = response.data.data;
       }
       
-      console.log('[managerService] Manager departments fetched successfully:', departments.length);
+
       return departments;
     } catch (error) {
       console.error('[managerService] Error fetching manager departments:', error);
@@ -165,9 +165,9 @@ export const managerService = {
    */
   markNotificationRead: async (id: number): Promise<void> => {
     try {
-      console.log('[managerService] Marking notification as read:', id);
+
       await api.patch(`/notifications/${id}/read`);
-      console.log('[managerService] Notification marked as read');
+
     } catch (error) {
       console.error('[managerService] Error marking notification as read:', error);
       throw error;
@@ -179,7 +179,7 @@ export const managerService = {
    */
   fetchEmployeeById: async (employeeId: string): Promise<any> => {
     try {
-      console.log('[managerService] Fetching employee with ID:', employeeId);
+
       const response = await api.get(`/users/list`);
       
       // Parse response - backend returns: { success: true, data: { users: [...], pagination: {...} } }
@@ -193,7 +193,7 @@ export const managerService = {
       }
       
       const employee = users.find((u: any) => u.id === parseInt(employeeId));
-      console.log('[managerService] Employee fetched successfully');
+
       return employee;
     } catch (error) {
       console.error('[managerService] Error fetching employee:', error);
@@ -206,12 +206,12 @@ export const managerService = {
    */
   fetchEmployeeKPIs: async (employeeId: string): Promise<any[]> => {
     try {
-      console.log('[managerService] Fetching KPIs for employee:', employeeId);
+
       const response = await api.get('/kpis');
       const allKPIs = response.data.data?.kpis || response.data.kpis || [];
       // Filter KPIs for this specific employee
       const filteredKPIs = allKPIs.filter((kpi: any) => kpi.employee_id === parseInt(employeeId));
-      console.log('[managerService] Employee KPIs fetched:', filteredKPIs.length);
+
       return filteredKPIs;
     } catch (error) {
       console.error('[managerService] Error fetching employee KPIs:', error);

@@ -109,7 +109,7 @@ export const useManagerReviewsList = (): UseManagerReviewsListReturn => {
     
     // FALLBACK: Use manager's features (backward compatibility)
     if (!features) {
-      console.log('⚠️ [shouldShowAsManagerInitiated] No features loaded yet, defaulting to false');
+
       return false;
     }
     
@@ -170,7 +170,7 @@ export const useManagerReviewsList = (): UseManagerReviewsListReturn => {
   const handleStartReview = (kpiId: number) => {
     // Simply navigate to the KPI review page with the KPI ID
     // The review record will be created when the manager submits ratings, not now
-    console.log(`🚀 [handleStartReview] Navigating to review KPI ID: ${kpiId}`);
+
     navigate(`/manager/kpi-review/kpi/${kpiId}`);
   };
 

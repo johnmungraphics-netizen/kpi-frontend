@@ -568,7 +568,7 @@ export const useManagerKPIReview = (): UseManagerKPIReviewReturn => {
         toast.error('Please provide ratings for all major accomplishments');
         return;
       }
-      console.log('✅ All accomplishments validated');
+
     }
 
     if (!managerSignature) {
@@ -663,7 +663,7 @@ export const useManagerKPIReview = (): UseManagerKPIReviewReturn => {
           if (warnings.length > 0) {
             console.warn(`⚠️ [Item ${item.item_id}] Missing data: ${warnings.join(', ')}`);
           } else {
-            console.log(`✅ [Item ${item.item_id}] All data present`);
+
           }
         });
 

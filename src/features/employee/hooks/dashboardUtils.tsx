@@ -14,14 +14,6 @@ export const getDashboardKPIStage = (kpi: KPI, reviews: KPIReview[]): DashboardS
   // Backend may send either 'status' or 'review_status' field
   const reviewStatus = (review as any)?.status || review?.review_status;
 
-  console.log(`🎯 [getDashboardKPIStage] KPI ${kpi.id} (${kpi.title}):`, {
-    kpi_status: kpi.status,
-    has_review: !!review,
-    review_id: review?.id,
-    review_status_field: review?.review_status,
-    status_field: (review as any)?.status,
-    resolved_status: reviewStatus
-  });
 
   if (kpi.status === 'pending') {
     return {
@@ -40,18 +32,9 @@ export const getDashboardKPIStage = (kpi: KPI, reviews: KPIReview[]): DashboardS
   }
 
   if (review) {
-    console.log(`🔍 [getDashboardKPIStage] KPI ${kpi.id} has review:`, {
-      review_id: review.id,
-      reviewStatus,
-      reviewStatus_type: typeof reviewStatus,
-      reviewStatus_raw: JSON.stringify(reviewStatus),
-      is_manager_submitted: reviewStatus === 'manager_submitted',
-      is_awaiting_confirmation: reviewStatus === 'awaiting_employee_confirmation',
-      condition_check: (reviewStatus === 'manager_submitted' || reviewStatus === 'awaiting_employee_confirmation')
-    });
 
     if (reviewStatus === 'manager_submitted' || reviewStatus === 'awaiting_employee_confirmation') {
-      console.log(`✅ [getDashboardKPIStage] KPI ${kpi.id} matched 'Awaiting Your Confirmation'`);
+
       return {
         stage: 'Awaiting Your Confirmation',
         color: 'bg-indigo-100 text-indigo-700',
@@ -92,10 +75,6 @@ export const getDashboardKPIStage = (kpi: KPI, reviews: KPIReview[]): DashboardS
     }
   }
 
-  console.log(`⚠️ [getDashboardKPIStage] KPI ${kpi.id} falling through to 'In Progress' - status not matched:`, {
-    reviewStatus: reviewStatus,
-    reviewStatusValue: JSON.stringify(reviewStatus)
-  });
 
   return {
     stage: 'In Progress',
@@ -118,11 +97,6 @@ export interface DashboardStats {
 }
 
 export const calculateDashboardStats = (kpis: KPI[], reviews: KPIReview[]): DashboardStats => {
-  console.log('📊 [calculateDashboardStats] Calculating stats with:', {
-    totalKPIs: kpis.length,
-    totalReviews: reviews.length,
-    kpiStatuses: kpis.map(k => ({ id: k.id, status: k.status, title: k.title }))
-  });
 
   const awaitingAcknowledgement = kpis.filter(k => k.status === 'pending');
   const reviewPending = kpis.filter(k => {
@@ -142,16 +116,6 @@ export const calculateDashboardStats = (kpis: KPI[], reviews: KPIReview[]): Dash
   const awaitingConfirmation = kpis.filter(k => {
     const review = reviews.find(r => r.kpi_id === k.id);
     const reviewStatus = (review as any)?.status || review?.review_status;
-    console.log(`🔎 [awaitingConfirmation Filter] KPI ${k.id}:`, {
-      kpi_title: k.title,
-      has_review: !!review,
-      review_id: review?.id,
-      reviewStatus,
-      reviewStatus_type: typeof reviewStatus,
-      is_manager_submitted: reviewStatus === 'manager_submitted',
-      is_awaiting_confirmation: reviewStatus === 'awaiting_employee_confirmation',
-      passes_filter: review && (reviewStatus === 'manager_submitted' || reviewStatus === 'awaiting_employee_confirmation')
-    });
     return review && (reviewStatus === 'manager_submitted' || reviewStatus === 'awaiting_employee_confirmation');
   });
   const completed = kpis.filter(k => {
@@ -165,16 +129,6 @@ export const calculateDashboardStats = (kpis: KPI[], reviews: KPIReview[]): Dash
     return review && reviewStatus === 'rejected';
   });
 
-  console.log('📈 [calculateDashboardStats] Stats breakdown:', {
-    awaitingAcknowledgement: awaitingAcknowledgement.length,
-    awaitingAcknowledgementKPIs: awaitingAcknowledgement.map(k => ({ id: k.id, status: k.status, title: k.title })),
-    reviewPending: reviewPending.length,
-    selfRatingRequired: selfRatingRequired.length,
-    awaitingManagerReview: awaitingManagerReview.length,
-    awaitingConfirmation: awaitingConfirmation.length,
-    completed: completed.length,
-    rejected: rejected.length
-  });
 
   return {
     totalKpis: kpis.length,

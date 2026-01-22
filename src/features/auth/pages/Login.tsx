@@ -28,7 +28,7 @@ const Login: React.FC = () => {
   useEffect(() => {
     if (user && !isLoading) {
       // Sync Redux user to AuthContext
-      console.log('[Login] Syncing Redux user to AuthContext:', user);
+
       setAuthContextUser(user);
       
       // Determine dashboard path based on role_id

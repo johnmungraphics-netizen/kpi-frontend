@@ -75,26 +75,6 @@ const ManagerKPIReview: React.FC = () => {
   // Get calculation method name based on KPI period
   const calculationMethodName = kpi?.period ? getCalculationMethodName(kpi.period) : 'Normal Calculation';
 
-  console.log('📊 [KPIReview] Component render:', {
-    loading,
-    hasReview: !!review,
-    reviewId: review?.id,
-    hasKpi: !!kpi,
-    kpiId: kpi?.id,
-    kpiPeriod: kpi?.period,
-    determinedPeriod: kpiPeriod
-  });
-  console.log('📊 [KPIReview] Self-rating settings:', {
-    kpiId: kpi?.id,
-    kpiPeriod,
-    isSelfRatingDisabled,
-    isEmployeeSelfRatingEnabled: isEmployeeSelfRatingEnabled(kpiPeriod)
-  });
-  console.log('📊 [KPIReview] Calculation method:', {
-    period: kpi?.period,
-    methodName: calculationMethodName,
-    isActualValueMethod: calculationMethodName.includes('Actual vs Target')
-  });
 
   if (loading) {
     return <div className="p-6">Loading...</div>;
@@ -540,7 +520,7 @@ const ManagerKPIReview: React.FC = () => {
                               value={mgrRating || 0}
                               onChange={(e) => {
                                 const selectedValue = parseFloat(e.target.value);
-                                console.log('🔄 [KPIReview] Select changed - Raw value:', e.target.value, 'Parsed:', selectedValue, 'Item ID:', item.id);
+
                                 handleRatingChange(item.id, selectedValue);
                               }}
                               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"

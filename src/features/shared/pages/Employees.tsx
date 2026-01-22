@@ -115,17 +115,13 @@ const Employees: React.FC = () => {
 
   const fetchManagersLocal = async () => {
     try {
-      console.log('[Employees] 📡 Fetching managers...');
+
       const targetCompanyId = companyId || user?.company_id;
-      console.log('[Employees] 🏢 Company ID:', targetCompanyId);
+
       if (targetCompanyId) {
         // Backend uses /users/managers/list endpoint
         const response = await api.get('/users/managers/list', { 
           params: { companyId: targetCompanyId } 
-        });
-        console.log('[Employees] ✅ Managers fetched:', {
-          count: response.data.managers?.length || response.data.users?.length || 0,
-          data: response.data
         });
         // Backend returns { users: [...] } or { managers: [...] }
         const managersData = response.data.managers || response.data.users || [];

@@ -52,15 +52,15 @@ const KPITemplateForm: React.FC = () => {
   }, [kpiItems]);
 
   useEffect(() => {
-    console.log('🔄 [KPITemplateForm] Template Name changed:', templateName);
+
   }, [templateName]);
 
   useEffect(() => {
-    console.log('🔄 [KPITemplateForm] Description changed:', description);
+
   }, [description]);
 
   if (loading) {
-    console.log('⏳ [KPITemplateForm] Still loading...');
+
     return <div className="p-6">Loading...</div>;
   }
 

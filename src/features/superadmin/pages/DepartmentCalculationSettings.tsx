@@ -105,7 +105,7 @@ const DepartmentCalculationSettings: React.FC = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      console.log('📊 [DepartmentCalculationSettings] Loaded departments:', response.data);
+
       setDepartments(response.data);
 
       // Extract unique companies
@@ -135,7 +135,7 @@ const DepartmentCalculationSettings: React.FC = () => {
       setSaving(true);
       const token = localStorage.getItem('token');
       
-      console.log('💾 [DepartmentCalculationSettings] Saving features for department:', departmentId, features);
+
       
       await axios.put(
         `${API_URL}/department-features/${departmentId}`,
@@ -145,7 +145,7 @@ const DepartmentCalculationSettings: React.FC = () => {
         }
       );
 
-      console.log('✅ [DepartmentCalculationSettings] Features saved successfully');
+
       
       // Reload departments to get updated data
       await loadDepartments();
@@ -208,25 +208,25 @@ const DepartmentCalculationSettings: React.FC = () => {
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     const value = event.target.checked;
-    console.log('[DepartmentCalculationSettings] Toggling field:', field, 'Value:', value);
+
     const newFeatures = { ...editedFeatures, [field]: value };
 
     // Business logic: Actual values features are mutually exclusive with other methods
     if (field === 'use_actual_values_yearly' && value) {
-      console.log('[DepartmentCalculationSettings] Disabling conflicting yearly features');
+
       newFeatures.use_goal_weight_yearly = false;
       newFeatures.use_normal_calculation = false;
     }
 
     if (field === 'use_actual_values_quarterly' && value) {
-      console.log('[DepartmentCalculationSettings] Disabling conflicting quarterly features');
+
       newFeatures.use_goal_weight_quarterly = false;
       newFeatures.use_normal_calculation = false;
     }
 
     // If enabling goal weight, disable normal calculation
     if ((field === 'use_goal_weight_yearly' || field === 'use_goal_weight_quarterly') && value) {
-      console.log('[DepartmentCalculationSettings] Disabling normal calculation for goal weight');
+
       newFeatures.use_normal_calculation = false;
     }
 
@@ -237,11 +237,11 @@ const DepartmentCalculationSettings: React.FC = () => {
       !newFeatures.use_actual_values_yearly &&
       !newFeatures.use_actual_values_quarterly
     ) {
-      console.log('[DepartmentCalculationSettings] Enabling normal calculation as fallback');
+
       newFeatures.use_normal_calculation = true;
     }
 
-    console.log('[DepartmentCalculationSettings] Updated features:', newFeatures);
+
     setEditedFeatures(newFeatures);
     setHasChanges(true);
   };
@@ -251,19 +251,19 @@ const DepartmentCalculationSettings: React.FC = () => {
    */
   const handleSave = async () => {
     if (!selectedDepartment) {
-      console.log('[DepartmentCalculationSettings] No department selected for save');
+
       return;
     }
 
-    console.log('[DepartmentCalculationSettings] Starting save for department:', selectedDepartment.department_name);
-    console.log('[DepartmentCalculationSettings] Department ID:', selectedDepartment.department_id);
-    console.log('[DepartmentCalculationSettings] Updated features:', editedFeatures);
+
+
+
 
     const success = await saveDepartmentFeatures(selectedDepartment.department_id, editedFeatures);
-    console.log('[DepartmentCalculationSettings] Save result:', success);
+
     
     if (success) {
-      console.log('[DepartmentCalculationSettings] Save successful, closing dialog');
+
       handleClose();
     } else {
       console.error('[DepartmentCalculationSettings] Save failed');

@@ -40,11 +40,11 @@ export interface UserFilters {
 export const userManagementService = {
   fetchAllUsers: async (filters?: UserFilters): Promise<User[]> => {
     try {
-      console.log('[userManagementService] Calling GET /users/list', filters || {});
+
       // Backend currently uses authenticated user's company; role filter is not applied server-side yet.
       const response = await api.get('/users/list', { params: filters });
       const users = response.data?.data?.users || response.data?.users || [];
-      console.log('[userManagementService] Users fetched:', users.length);
+
       return users;
     } catch (error: any) {
       console.error('[userManagementService] Error fetching users:', error.message, error.response?.data);
@@ -54,11 +54,11 @@ export const userManagementService = {
 
   fetchCompanies: async (): Promise<Array<{ id: number; name: string }>> => {
     try {
-      console.log('[userManagementService] Calling GET /companies/list');
+
       const response = await api.get('/companies/list');
-      console.log('[userManagementService] Response:', response.data);
+
       const companies = response.data.companies || response.data.data?.companies || [];
-      console.log('[userManagementService] Returning companies:', companies);
+
       return companies;
     } catch (error: any) {
       console.error('[userManagementService] Error fetching companies:', error.message, error.response?.data);
@@ -83,12 +83,12 @@ export const userManagementService = {
   },
 
   fetchDepartments: async (companyId: number): Promise<Department[]> => {
-    console.log('[userManagementService] Fetching departments for company:', companyId);
+
     try {
       const response = await api.get(`/departments?companyId=${companyId}`);
-      console.log('[userManagementService] Departments response:', response.data);
+
       const departments = response.data?.data?.departments || response.data?.departments || [];
-      console.log('[userManagementService] Returning departments:', departments.length);
+
       return departments;
     } catch (error) {
       console.error('[userManagementService] Error fetching departments:', error);
@@ -97,10 +97,10 @@ export const userManagementService = {
   },
 
   getManagerDepartments: async (userId: number) => {
-    console.log('[userManagementService] Fetching manager departments for:', userId);
+
     try {
       const response = await api.get(`/departments/manager-departments/${userId}`);
-      console.log('[userManagementService] Manager departments response:', response.data);
+
       return response.data;
     } catch (error) {
       console.error('[userManagementService] Error fetching manager departments:', error);

@@ -104,25 +104,10 @@ export const useKPIList = () => {
         hrService.fetchReviews(),
       ]);
 
-      console.log('📦 [useKPIList] fetchKPIs response:', {
-        hasSuccess: !!kpisRes.success,
-        hasData: !!kpisRes.data,
-        hasKpis: !!kpisRes.data?.kpis,
-        kpisCount: kpisRes.data?.kpis?.length || 0,
-        hasPagination: !!kpisRes.data?.pagination,
-        structure: Object.keys(kpisRes),
-        dataStructure: kpisRes.data ? Object.keys(kpisRes.data) : null,
-        sampleKPI: kpisRes.data?.kpis?.[0]
-      });
 
       const kpisArray = kpisRes.data?.kpis || kpisRes.kpis || [];
       const paginationData = kpisRes.data?.pagination || kpisRes.pagination;
 
-      console.log('📦 [useKPIList] Extracted data:', {
-        kpisArray: kpisArray.length,
-        hasPagination: !!paginationData,
-        firstKPI: kpisArray[0]
-      });
 
       setKpis(kpisArray);
       setReviews(reviewsRes || []);

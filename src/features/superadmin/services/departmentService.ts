@@ -11,20 +11,20 @@ export interface Department {
 
 export const departmentService = {
   fetchDepartments: async (companyId: number): Promise<Department[]> => {
-    console.log('[departmentService] Fetching departments for company:', companyId);
+
     const response = await api.get('/departments', { params: { companyId } });
-    console.log('[departmentService] Departments response:', response.data);
+
     const departments = response.data?.data?.departments || response.data?.departments || [];
-    console.log('[departmentService] Returning departments:', departments.length);
+
     return departments;
   },
 
   createDepartment: async (name: string, companyId: number): Promise<Department> => {
-    console.log('[departmentService] Creating department:', { name, companyId });
+
     const payload = { name, companyId };
-    console.log('[departmentService] Request payload:', JSON.stringify(payload));
+
     const response = await api.post('/departments', payload);
-    console.log('[departmentService] Create department response:', response.data);
+
     return response.data.department || response.data.data;
   },
 
