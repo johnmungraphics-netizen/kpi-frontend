@@ -89,14 +89,7 @@ export const useEmployeeKPIConfirmation = () => {
     setError('');
 
     try {
-      console.log('📤 [handleSubmit] Calling employeeService.submitConfirmation with:', {
-        reviewId: parseInt(reviewId!),
-        payload: {
-          confirmation_status: action === 'approve' ? 'approved' : 'rejected',
-          rejection_note: action === 'reject' ? rejectionNote : null,
-          signature: action === 'approve' ? signature : null,
-        }
-      });
+     
       
       const response = await employeeService.submitConfirmation(parseInt(reviewId!), {
         confirmation_status: action === 'approve' ? 'approved' : 'rejected',
@@ -104,7 +97,6 @@ export const useEmployeeKPIConfirmation = () => {
         signature: action === 'approve' ? signature : null,
       });
       
-      console.log('✅ [handleSubmit] Submission successful! Response:', response);
 
       toast.success(
         action === 'approve'
@@ -112,15 +104,11 @@ export const useEmployeeKPIConfirmation = () => {
           : 'Review rejected successfully. Your manager and HR have been notified.'
       );
       
-      console.log('🔄 [handleSubmit] Navigating to dashboard...');
       navigate('/employee/dashboard');
     } catch (error: any) {
-      console.error('❌ [handleSubmit] Error confirming review:', error);
-      console.error('❌ [handleSubmit] Error response:', error.response);
       console.error('❌ [handleSubmit] Error data:', error.response?.data);
       setError(error.response?.data?.error || 'Failed to confirm review');
     } finally {
-      console.log('🏁 [handleSubmit] Setting submitting to false...');
       setSubmitting(false);
     }
   };
@@ -140,8 +128,6 @@ export const useEmployeeKPIConfirmation = () => {
   useEffect(() => {
     if (review) {
       console.log('🔍 [useEmployeeKPIConfirmation] review object:', review);
-      console.log('🔍 [useEmployeeKPIConfirmation] parsedRatings:', parsedRatings);
-      console.log('🔍 [useEmployeeKPIConfirmation] ratingSummary:', ratingSummary);
     }
   }, [review, parsedRatings, ratingSummary]);
 

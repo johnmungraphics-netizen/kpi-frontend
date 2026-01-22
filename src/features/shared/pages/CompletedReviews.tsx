@@ -49,8 +49,6 @@ const CompletedReviews: React.FC = () => {
       const quarterly = Array.isArray(quarterlyRes.data?.periods) ? quarterlyRes.data.periods : [];
       const yearly = Array.isArray(yearlyRes.data?.periods) ? yearlyRes.data.periods : [];
 
-      console.log('Quarterly periods:', quarterly);
-      console.log('Yearly periods:', yearly);
 
       setQuarterlyPeriods(quarterly);
       setYearlyPeriods(yearly);
@@ -70,14 +68,11 @@ const CompletedReviews: React.FC = () => {
     try {
       // Use the dedicated endpoint for review-completed KPIs
       const kpisRes = await api.get('/kpis/review-completed').catch(err => {
-        console.error('Error fetching review-completed KPIs:', err);
         return { data: { data: { kpis: [] } } };
       });
 
       // Backend returns { success: true, data: { kpis: [...] } }
       const fetchedKpis = kpisRes.data?.data?.kpis || kpisRes.data?.kpis || [];
-      console.log('Fetched KPIs from backend:', fetchedKpis);
-      console.log('Full response structure:', kpisRes.data);
       setKpis(fetchedKpis);
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -101,23 +96,11 @@ const CompletedReviews: React.FC = () => {
         if (kpiType === 'quarterly') {
           // For quarterly, match both quarter and year
           matchesPeriod = selectedPeriod.quarter === kpi.quarter && selectedPeriod.year === kpi.year;
-          console.log('Quarterly match check:', {
-            kpiId: kpi.id,
-            selectedQuarter: selectedPeriod.quarter,
-            kpiQuarter: kpi.quarter,
-            selectedYear: selectedPeriod.year,
-            kpiYear: kpi.year,
-            matches: matchesPeriod
-          });
+         
         } else {
           // For yearly, match only year
           matchesPeriod = selectedPeriod.year === kpi.year;
-          console.log('Yearly match check:', {
-            kpiId: kpi.id,
-            selectedYear: selectedPeriod.year,
-            kpiYear: kpi.year,
-            matches: matchesPeriod
-          });
+        
         }
       }
     }
@@ -127,14 +110,7 @@ const CompletedReviews: React.FC = () => {
       kpi.employee_department?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       kpi.employee_payroll_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       kpi.title?.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    console.log('KPI Filter:', {
-      kpiId: kpi.id,
-      matchesType,
-      matchesPeriod,
-      matchesSearch,
-      finalResult: matchesType && matchesPeriod && matchesSearch
-    });
+   
     
     return matchesType && matchesPeriod && matchesSearch;
   });
@@ -476,20 +452,7 @@ const CompletedReviews: React.FC = () => {
                         <div className="flex items-center space-x-2">
                           <button
                             onClick={() => {
-                              // ========== ROUTING DEBUG LOGS START ==========
-                              console.log('🔍 [CompletedReviews] View button clicked');
-                              console.log('📊 [CompletedReviews] Current user:', {
-                                role: user?.role,
-                                roleId: user?.role_id,
-                                userId: user?.id,
-                                fullUser: user
-                              });
-                              console.log('📋 [CompletedReviews] KPI data:', {
-                                kpiId: kpi.id,
-                                employeeId: kpi.employee_id,
-                                title: kpi.title,
-                                period: kpi.period
-                              });
+                           
                               
                               // Navigate to role-specific KPI Details page
                               let path = '';
@@ -501,17 +464,8 @@ const CompletedReviews: React.FC = () => {
                                 path = `/employee/kpi-details/${kpi.id}`;
                               }
                               
-                              console.log('🎯 [CompletedReviews] Calculated path:', path);
-                              console.log('🔀 [CompletedReviews] Role check:', {
-                                userRoleId: user?.role_id,
-                                isHR: user?.role_id === ROLE_IDS.HR,
-                                isManager: user?.role_id === ROLE_IDS.MANAGER,
-                                isEmployee: user?.role_id === ROLE_IDS.EMPLOYEE,
-                                selectedPath: path
-                              });
+                             
                               
-                              console.log('🚀 [CompletedReviews] Navigating to:', path);
-                              // ========== ROUTING DEBUG LOGS END ==========
                               
                               navigate(path);
                               

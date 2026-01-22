@@ -32,12 +32,6 @@ const HRDashboard: React.FC = () => {
     navigate,
   } = useHRDashboard();
 
-  console.log('[Dashboard] 🎨 Rendering with:', {
-    notificationCount: notifications.length,
-    recentActivityCount: recentActivity.length,
-    kpisCount: kpis.length,
-    loading
-  });
 
   const handleSaveDefaultPeriod = async () => {
     const success = await saveDefaultPeriod(filters.period);
@@ -67,7 +61,6 @@ const HRDashboard: React.FC = () => {
               icon={FiBell}
               rounded
               onClick={() => {
-                console.log('[Dashboard] 🔔 Notification bell clicked, navigating to /hr/notifications');
                 navigate('/hr/notifications');
               }}
               aria-label="Notifications"
@@ -476,7 +469,6 @@ const HRDashboard: React.FC = () => {
                 variant="link"
                 size="sm"
                 onClick={() => {
-                  console.log('[Dashboard] 🔄 Mark all read button clicked, navigating to /hr/notifications');
                   navigate('/hr/notifications');
                 }}
               >
@@ -490,17 +482,14 @@ const HRDashboard: React.FC = () => {
                 </div>
               ) : (
                 <>
-                  {console.log('[Dashboard] 📋 Rendering', notifications.length, 'notification(s)')}
                   {notifications.map((notification) => (
                     <NotificationItem
                       key={notification.id}
                       notification={notification}
                       onMarkAsRead={(id) => {
-                        console.log(`[Dashboard] ✓ Mark as read clicked for notification ${id}`);
                         handleMarkNotificationRead(id);
                       }}
                       onClick={() => {
-                        console.log(`[Dashboard] 👆 Notification ${notification.id} clicked`);
                         handleNotificationClick(notification);
                       }}
                     />

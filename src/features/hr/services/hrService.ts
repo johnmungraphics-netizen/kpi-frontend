@@ -19,15 +19,10 @@ export const hrService = {
    * Fetch unread notifications
    */
   fetchNotifications: async (limit: number = 5): Promise<Notification[]> => {
-    console.log('[hrService] 📡 API call: GET /notifications', { limit, read: 'false' });
     const response = await api.get('/notifications', { 
       params: { limit, read: 'false' } 
     });
-    console.log('[hrService] 📥 Response:', {
-      status: response.status,
-      notificationsCount: response.data.notifications?.length || 0,
-      data: response.data
-    });
+   
     return response.data.notifications || [];
   },
 
@@ -35,12 +30,8 @@ export const hrService = {
    * Fetch recent activity
    */
   fetchRecentActivity: async (): Promise<Notification[]> => {
-    console.log('[hrService] 📡 API call: GET /notifications/activity');
     const response = await api.get('/notifications/activity');
-    console.log('[hrService] 📥 Response:', {
-      status: response.status,
-      activitiesCount: response.data.activities?.length || 0
-    });
+   
     return response.data.activities || [];
   },
 
@@ -51,21 +42,13 @@ export const hrService = {
     department: string, 
     category: string
   ): Promise<Employee[]> => {
-    console.log('[hrService] 📡 Fetching employees by category:', { department, category });
     const response = await api.get(
       `/departments/statistics/${department}/${category}`
     );
-    console.log('[hrService] 📥 Employees by category response:', {
-      status: response.status,
-      dataKeys: Object.keys(response.data || {}),
-      hasData: !!response.data.data,
-      hasEmployees: !!response.data.employees,
-      data: response.data
-    });
+   
     
     // Backend returns { success: true, data: { employees: [...] } }
     const employees = response.data.data?.employees || response.data.employees || [];
-    console.log('[hrService] ✅ Employees by category parsed:', { count: employees.length, employees });
     return employees;
   },
 
@@ -73,19 +56,11 @@ export const hrService = {
    * Fetch list of managers
    */
   fetchManagers: async (): Promise<Manager[]> => {
-    console.log('[hrService] 📡 Fetching managers...');
     const response = await api.get('/departments/managers');
-    console.log('[hrService] 📥 Managers response:', {
-      status: response.status,
-      dataKeys: Object.keys(response.data || {}),
-      hasData: !!response.data.data,
-      hasManagers: !!response.data.managers,
-      data: response.data
-    });
+    
     
     // Backend returns { success: true, data: { managers: [...] } }
     const managers = response.data.data?.managers || response.data.managers || [];
-    console.log('[hrService] ✅ Managers parsed:', { count: managers.length, managers });
     return managers;
   },
 
@@ -93,9 +68,7 @@ export const hrService = {
    * Mark notification as read
    */
   markNotificationRead: async (id: number): Promise<void> => {
-    console.log(`[hrService] 📡 API call: PATCH /notifications/${id}/read`);
     const response = await api.patch(`/notifications/${id}/read`);
-    console.log(`[hrService] ✅ Notification ${id} marked as read:`, response.data);
   },
 
   /**
@@ -309,21 +282,13 @@ export const hrService = {
    * Fetch KPI by ID with its review
    */
   fetchKPIById: async (kpiId: string) => {
-    console.log('[hrService] 📡 Fetching KPI by ID:', kpiId);
     
     const [kpiRes, reviewsRes] = await Promise.all([
       api.get(`/kpis/${kpiId}`),
       api.get('/kpi-review'),
     ]);
 
-    console.log('[hrService] 📥 KPI response structure:', {
-      hasData: !!kpiRes.data,
-      hasSuccess: !!kpiRes.data?.success,
-      hasDataData: !!kpiRes.data?.data,
-      hasKpi: !!kpiRes.data?.kpi,
-      responseKeys: Object.keys(kpiRes.data || {}),
-      dataKeys: kpiRes.data?.data ? Object.keys(kpiRes.data.data) : null
-    });
+    
 
     // Handle both response structures: { data: {...} } or { success: true, data: {...} }
     const kpi = kpiRes.data?.data || kpiRes.data?.kpi || kpiRes.data;
@@ -332,16 +297,7 @@ export const hrService = {
       ? reviews.find((r: any) => r.kpi_id === parseInt(kpiId))
       : null;
 
-    console.log('[hrService] ✅ KPI extracted:', {
-      hasKpi: !!kpi,
-      kpiId: kpi?.id,
-      kpiTitle: kpi?.title,
-      kpiStatus: kpi?.status,
-      hasItems: !!kpi?.items,
-      itemsCount: kpi?.items?.length,
-      hasReview: !!review,
-      reviewId: review?.id
-    });
+  
 
     return { kpi, review };
   },

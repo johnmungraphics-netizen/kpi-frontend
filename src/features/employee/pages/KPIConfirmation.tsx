@@ -63,68 +63,7 @@ const KPIConfirmation: React.FC = () => {
   // 2. AND calculation method is NOT Actual vs Target (!isActualValueMethod = true)
   const shouldShowEmployeeColumns = !isSelfRatingDisabled && !isActualValueMethod;
 
-  console.log('🔍🔍🔍 [KPIConfirmation] DETAILED CONDITION CHECK 🔍🔍🔍');
-  console.log('===============================================');
-  console.log('📊 RAW DATA:');
-  console.log('   kpiId (from kpi):', kpi?.id);
-  console.log('   kpi_id (from review):', (review as any)?.kpi_id);
-  console.log('   rawPeriod (from kpi):', kpi?.period);
-  console.log('   rawPeriod (from review):', (review as any)?.period);
-  console.log('   reviewPeriod (USED):', reviewPeriod);
-  console.log('   reviewPeriodType:', typeof reviewPeriod);
-  console.log('');
-  console.log('📊 CALCULATION METHOD:');
-  console.log('   calculationMethodName:', calculationMethodName);
-  console.log('   isActualValueMethod:', isActualValueMethod);
-  console.log('   includes "Actual vs Target":', calculationMethodName.includes('Actual vs Target'));
-  console.log('');
-  console.log('📊 SELF-RATING CHECK:');
-  console.log('   isSelfRatingDisabled:', isSelfRatingDisabled);
-  console.log('   isEnabled (!isSelfRatingDisabled):', !isSelfRatingDisabled);
-  console.log('   rawCheckResult:', isEmployeeSelfRatingEnabled(reviewPeriod || 'quarterly'));
-  console.log('');
-  console.log('📊 FINAL CONDITIONS:');
-  console.log('   isSelfRatingDisabled:', isSelfRatingDisabled);
-  console.log('   !isSelfRatingDisabled:', !isSelfRatingDisabled);
-  console.log('   isActualValueMethod:', isActualValueMethod);
-  console.log('   !isActualValueMethod:', !isActualValueMethod);
-  console.log('   shouldShowEmployeeColumns:', shouldShowEmployeeColumns);
-  console.log('   LOGIC: !isSelfRatingDisabled (', !isSelfRatingDisabled, ') && !isActualValueMethod (', !isActualValueMethod, ') =', shouldShowEmployeeColumns);
-  console.log('');
-  console.log('📊 FEATURES:', features);
-  console.log('===============================================');
   
-  // Log backend values for percentage display (Normal Calculation only)
-  console.log('');
-  console.log('💾 [KPIConfirmation] BACKEND DATA FOR PERCENTAGE DISPLAY:');
-  console.log('===============================================');
-  console.log('📊 Calculation Method:', calculationMethodName);
-  console.log('📊 Should Show Percentages:', calculationMethodName === 'Normal Calculation');
-  console.log('');
-  console.log('📊 Employee Data (RAW from backend):');
-  console.log('   employee_rating:', review?.employee_rating, typeof review?.employee_rating);
-  console.log('   employee_final_rating:', review?.employee_final_rating, typeof review?.employee_final_rating);
-  console.log('   employee_rating_percentage:', review?.employee_rating_percentage, typeof review?.employee_rating_percentage);
-  console.log('   employee_final_rating_percentage:', review?.employee_final_rating_percentage, typeof review?.employee_final_rating_percentage);
-  console.log('');
-  console.log('📊 Employee Data PARSED to numbers:');
-  console.log('   employee_rating:', review?.employee_rating ? parseFloat(review.employee_rating.toString()) : null);
-  console.log('   employee_final_rating:', review?.employee_final_rating ? parseFloat(review.employee_final_rating.toString()) : null);
-  console.log('   employee_rating_percentage:', review?.employee_rating_percentage ? parseFloat(review.employee_rating_percentage.toString()) : null);
-  console.log('   employee_final_rating_percentage:', review?.employee_final_rating_percentage ? parseFloat(review.employee_final_rating_percentage.toString()) : null);
-  console.log('');
-  console.log('📊 Manager Data (RAW from backend):');
-  console.log('   manager_rating:', review?.manager_rating, typeof review?.manager_rating);
-  console.log('   manager_final_rating:', review?.manager_final_rating, typeof review?.manager_final_rating);
-  console.log('   manager_final_rating_percentage:', review?.manager_final_rating_percentage, typeof review?.manager_final_rating_percentage);
-  console.log('');
-  console.log('📊 Manager Data PARSED to numbers:');
-  console.log('   manager_rating:', review?.manager_rating ? parseFloat(review.manager_rating.toString()) : null);
-  console.log('   manager_final_rating:', review?.manager_final_rating ? parseFloat(review.manager_final_rating.toString()) : null);
-  console.log('   ⭐ manager_final_rating_percentage:', review?.manager_final_rating_percentage ? parseFloat(review.manager_final_rating_percentage.toString()) : null);
-  console.log('   ⭐ manager_final_rating_percentage DISPLAY VALUE:', review?.manager_final_rating_percentage ? parseFloat(review.manager_final_rating_percentage.toString()).toFixed(2) + '%' : 'N/A');
-  console.log('===============================================');
-  console.log('');
 
   // Fetch ratings data with actual values and percentages
   useEffect(() => {
@@ -132,14 +71,11 @@ const KPIConfirmation: React.FC = () => {
       if (!reviewId || !review) return;
       
       try {
-        console.log('📊 [KPIConfirmation] Fetching ratings for reviewId:', reviewId);
         const response = await api.get(`/kpi-review/${reviewId}/ratings`);
         
         // Backend returns { review, ratings } from kpi_item_ratings table
         const ratings = response.data.ratings;
         
-        console.log('📊 [KPIConfirmation] Full response from API:', JSON.stringify(response.data, null, 2));
-        console.log('📊 [KPIConfirmation] Ratings from kpi_item_ratings table:', ratings);
         
         if (!ratings || !Array.isArray(ratings)) {
           console.warn('⚠️ [KPIConfirmation] No ratings array found in response');
@@ -156,43 +92,28 @@ const KPIConfirmation: React.FC = () => {
         let totalPercentage = 0;
         
         ratings.forEach((rating: any) => {
-          console.log('📊 [KPIConfirmation] Processing rating from kpi_item_ratings:', {
-            item_id: rating.kpi_item_id,
-            rater_role: rating.rater_role,
-            actual_value: rating.actual_value,
-            target_value: rating.target_value,
-            goal_weight: rating.goal_weight,
-            current_performance_status: rating.current_performance_status,
-            percentage_value_obtained: rating.percentage_value_obtained,
-            manager_rating_percentage: rating.manager_rating_percentage
-          });
+        
           
           // Only extract data from manager ratings
           if (rating.kpi_item_id && rating.rater_role === 'manager') {
             if (rating.actual_value) {
               actualVals[rating.kpi_item_id] = rating.actual_value;
-              console.log(`✅ [KPIConfirmation] Set actual value for item ${rating.kpi_item_id}:`, rating.actual_value);
             }
             if (rating.target_value) {
               targetVals[rating.kpi_item_id] = rating.target_value;
-              console.log(`✅ [KPIConfirmation] Set target value for item ${rating.kpi_item_id}:`, rating.target_value);
             }
             if (rating.goal_weight) {
               goalWeightsMap[rating.kpi_item_id] = rating.goal_weight;
-              console.log(`✅ [KPIConfirmation] Set goal weight for item ${rating.kpi_item_id}:`, rating.goal_weight);
             }
             if (rating.current_performance_status) {
               statusMap[rating.kpi_item_id] = rating.current_performance_status;
-              console.log(`✅ [KPIConfirmation] Set status for item ${rating.kpi_item_id}:`, rating.current_performance_status);
             }
             if (rating.percentage_value_obtained !== null && rating.percentage_value_obtained !== undefined) {
               percentages[rating.kpi_item_id] = parseFloat(rating.percentage_value_obtained);
-              console.log(`✅ [KPIConfirmation] Set percentage obtained for item ${rating.kpi_item_id}:`, rating.percentage_value_obtained);
             }
             if (rating.manager_rating_percentage !== null && rating.manager_rating_percentage !== undefined) {
               managerPercentages[rating.kpi_item_id] = parseFloat(rating.manager_rating_percentage);
               totalPercentage += parseFloat(rating.manager_rating_percentage);
-              console.log(`✅ [KPIConfirmation] Set manager rating % for item ${rating.kpi_item_id}:`, rating.manager_rating_percentage);
             }
           }
         });
@@ -205,16 +126,7 @@ const KPIConfirmation: React.FC = () => {
         setManagerRatingPercentages(managerPercentages);
         setFinalRatingPercentage(totalPercentage);
         
-        console.log('📊 [KPIConfirmation] Final extracted data:', {
-          actualVals,
-          targetVals,
-          goalWeightsMap,
-          statusMap,
-          percentages,
-          managerPercentages,
-          totalPercentage,
-          ratingsCount: ratings.length
-        });
+        
       } catch (err) {
         console.error('❌ [KPIConfirmation] Error fetching ratings data:', err);
       }
@@ -242,24 +154,9 @@ const KPIConfirmation: React.FC = () => {
   // Backend may send either 'status' or 'review_status' field
   const reviewStatus = (review as any)?.status || review?.review_status;
   
-  // DEBUGGING: Log the actual status values
-  console.log('🔍 [KPIConfirmation] Review status validation:', {
-    review_id: review.id,
-    status_field: (review as any)?.status,
-    review_status_field: review?.review_status,
-    resolved_reviewStatus: reviewStatus,
-    status_type: typeof reviewStatus,
-    status_value_json: JSON.stringify(reviewStatus),
-    full_review_object: review
-  });
   
   if (reviewStatus !== 'manager_submitted' && reviewStatus !== 'awaiting_employee_confirmation') {
-    console.error('❌ [KPIConfirmation] Status validation FAILED:', {
-      reviewStatus,
-      expected: ['manager_submitted', 'awaiting_employee_confirmation'],
-      comparison_manager_submitted: reviewStatus === 'manager_submitted',
-      comparison_awaiting: reviewStatus === 'awaiting_employee_confirmation'
-    });
+   
     
     return (
       <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
@@ -272,7 +169,6 @@ const KPIConfirmation: React.FC = () => {
     );
   }
   
-  console.log('✅ [KPIConfirmation] Status validation PASSED - showing KPI form');
 
   return (
     <div className="space-y-6">
@@ -309,24 +205,20 @@ const KPIConfirmation: React.FC = () => {
           <p>
             <span className="font-medium text-gray-900">Manager:</span> {review.manager_name}
           </p>
-          {kpi && (
-            <>
-              <p>
-                <span className="font-medium text-gray-900">KPI Type:</span>{' '}
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
-                  {kpi.period || 'Quarterly'}
-                </span>
-              </p>
-              <p>
-                <span className="font-medium text-gray-900">Period:</span> {kpi.quarter}{' '}
-                {kpi.year}
-              </p>
-              <p>
-                <span className="font-medium text-gray-900">Total Items:</span>{' '}
-                {kpi.items?.length || 1}
-              </p>
-            </>
-          )}
+          <p>
+            <span className="font-medium text-gray-900">KPI Type:</span>{' '}
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+              {(review as any)?.period || 'Quarterly'}
+            </span>
+          </p>
+          <p>
+            <span className="font-medium text-gray-900">Period:</span> {(review as any)?.quarter || 'N/A'}{' '}
+            {(review as any)?.year || 'N/A'}
+          </p>
+          <p>
+            <span className="font-medium text-gray-900">Total Items:</span>{' '}
+            {review.items?.length || 1}
+          </p>
         </div>
 
         {/* Calculation Method Display */}
@@ -451,8 +343,11 @@ const KPIConfirmation: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {kpi && kpi.items && kpi.items.length > 0 ? (
-                kpi.items.map((item, index) => {
+              {(() => {
+                
+                return review?.items && review.items.length > 0;
+              })() ? (
+                review.items!.map((item, index) => {
                   const empRating = parsedRatings?.employeeItemRatings[item.id] || 0;
                   const empComment = parsedRatings?.employeeItemComments[item.id] || '';
                   const mgrRating = parsedRatings?.managerItemRatings[item.id] || 0;
@@ -682,182 +577,6 @@ const KPIConfirmation: React.FC = () => {
           </table>
         </div>
 
-        {/* Rating Summary */}
-        {isActualValueMethod ? (
-          /* For Actual vs Target: Show Final Rating % */
-          <div className="mt-6 p-6 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border-2 border-green-300">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Final Rating Summary</h3>
-            <div className="bg-white rounded-lg p-6 border border-green-300 text-center">
-              <p className="text-sm text-gray-600 mb-2">Final Rating Percentage</p>
-              <div className="flex items-center justify-center space-x-3">
-                <span className="text-5xl font-bold text-green-600">
-                  {finalRatingPercentage.toFixed(2)}%
-                </span>
-              </div>
-              <p className="text-sm text-gray-500 mt-2">
-                Sum of all Manager Rating Percentages
-              </p>
-            </div>
-          </div>
-        ) : ratingSummary ? (
-          /* For Normal/Goal Weight: Show traditional rating cards */
-          <div className="mt-6 p-6 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border-2 border-purple-200">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Total Rating Summary</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {!isSelfRatingDisabled && (
-                <div className="bg-white rounded-lg p-4 border border-purple-200">
-                  <p className="text-sm text-gray-600 mb-2">Total Employee Rating</p>
-                  <div className="flex items-baseline space-x-3">
-                    <span className="text-3xl font-bold text-purple-600">
-                      {ratingSummary.avgEmployeeRating.toFixed(2)}
-                    </span>
-                    <span className="text-lg text-gray-500">
-                      ({getRatingPercentage(ratingSummary.avgEmployeeRating)}%)
-                    </span>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {getRatingDescription(ratingSummary.avgEmployeeRating)}
-                  </p>
-                </div>
-              )}
-              <div className="bg-white rounded-lg p-4 border border-yellow-200">
-                <p className="text-sm text-gray-600 mb-2">Total Manager Rating</p>
-                <div className="flex items-baseline space-x-3">
-                  <span className="text-3xl font-bold text-yellow-600">
-                    {ratingSummary.avgManagerRating.toFixed(2)}
-                  </span>
-                  <span className="text-lg text-gray-500">
-                    ({getRatingPercentage(ratingSummary.avgManagerRating)}%)
-                  </span>
-                </div>
-                <p className="text-xs text-gray-500 mt-1">
-                  {getRatingDescription(ratingSummary.avgManagerRating)}
-                </p>
-              </div>
-            </div>
-            
-            {/* NEW: Detailed Rating Breakdown for Normal Calculation - From Backend Database */}
-            {calculationMethodName === 'Normal Calculation' && (
-              <div className="mt-6 border-t border-purple-200 pt-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">📊 Detailed Rating Breakdown (From Backend)</h3>
-                
-                {/* Employee Ratings from Backend */}
-                {!isSelfRatingDisabled && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    {/* Employee Average Rating */}
-                    <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-lg p-4 border-2 border-indigo-300">
-                      <p className="text-sm font-semibold text-indigo-900 mb-2">Employee Average Rating</p>
-                      <div className="flex items-baseline space-x-2">
-                        <span className="text-4xl font-bold text-indigo-600">
-                          {review?.employee_rating 
-                            ? parseFloat(review.employee_rating.toString()).toFixed(2)
-                            : 'N/A'}
-                        </span>
-                      </div>
-                      <p className="text-xs text-indigo-600 mt-2">
-                        Calculated from employee self-ratings
-                      </p>
-                    </div>
-                    
-                    {/* Employee Final Rating */}
-                    <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg p-4 border-2 border-purple-300">
-                      <p className="text-sm font-semibold text-purple-900 mb-2">Employee Final Rating</p>
-                      <div className="flex items-baseline space-x-2">
-                        <span className="text-4xl font-bold text-purple-600">
-                          {review?.employee_final_rating
-                            ? parseFloat(review.employee_final_rating.toString()).toFixed(2)
-                            : 'N/A'}
-                        </span>
-                      </div>
-                      <p className="text-xs text-purple-600 mt-2">
-                        Rounded to nearest rating option
-                      </p>
-                    </div>
-                    
-                    {/* Employee Rating Percentage */}
-                    <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-lg p-4 border-2 border-blue-300">
-                      <p className="text-sm font-semibold text-blue-900 mb-2">Employee Rating %</p>
-                      <div className="flex items-baseline space-x-2">
-                        <span className="text-4xl font-bold text-blue-600">
-                          {review?.employee_rating_percentage
-                            ? parseFloat(review.employee_rating_percentage.toString()).toFixed(2)
-                            : 'N/A'}%
-                        </span>
-                      </div>
-                      <p className="text-xs text-blue-600 mt-2">
-                        (employee_rating / max_rating) × 100
-                      </p>
-                    </div>
-                    
-                    {/* Employee Final Rating Percentage */}
-                    <div className="bg-gradient-to-br from-cyan-50 to-teal-50 rounded-lg p-4 border-2 border-cyan-300">
-                      <p className="text-sm font-semibold text-cyan-900 mb-2">Employee Final Rating %</p>
-                      <div className="flex items-baseline space-x-2">
-                        <span className="text-4xl font-bold text-cyan-600">
-                          {review?.employee_final_rating_percentage
-                            ? parseFloat(review.employee_final_rating_percentage.toString()).toFixed(2)
-                            : 'N/A'}%
-                        </span>
-                      </div>
-                      <p className="text-xs text-cyan-600 mt-2">
-                        (employee_final_rating / max_rating) × 100
-                      </p>
-                    </div>
-                  </div>
-                )}
-                
-                {/* Manager Ratings from Backend */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Manager Average Rating */}
-                  <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-lg p-4 border-2 border-amber-300">
-                    <p className="text-sm font-semibold text-amber-900 mb-2">Manager Average Rating</p>
-                    <div className="flex items-baseline space-x-2">
-                      <span className="text-4xl font-bold text-amber-600">
-                        {review?.manager_rating
-                          ? parseFloat(review.manager_rating.toString()).toFixed(2)
-                          : 'N/A'}
-                      </span>
-                    </div>
-                    <p className="text-xs text-amber-600 mt-2">
-                      Calculated from manager ratings
-                    </p>
-                  </div>
-                  
-                  {/* Manager Final Rating */}
-                  <div className="bg-gradient-to-br from-yellow-50 to-amber-50 rounded-lg p-4 border-2 border-yellow-300">
-                    <p className="text-sm font-semibold text-yellow-900 mb-2">Manager Final Rating</p>
-                    <div className="flex items-baseline space-x-2">
-                      <span className="text-4xl font-bold text-yellow-600">
-                        {review?.manager_final_rating
-                          ? parseFloat(review.manager_final_rating.toString()).toFixed(2)
-                          : 'N/A'}
-                      </span>
-                    </div>
-                    <p className="text-xs text-yellow-600 mt-2">
-                      Rounded to nearest rating option
-                    </p>
-                  </div>
-                  
-                  {/* Manager Final Rating Percentage */}
-                  <div className="bg-gradient-to-br from-orange-50 to-red-50 rounded-lg p-4 border-2 border-orange-300 md:col-span-2">
-                    <p className="text-sm font-semibold text-orange-900 mb-2">Manager Final Rating %</p>
-                    <div className="flex items-baseline justify-center space-x-2">
-                      <span className="text-5xl font-bold text-orange-600">
-                        {review?.manager_final_rating_percentage
-                          ? parseFloat(review.manager_final_rating_percentage.toString()).toFixed(2)
-                          : 'N/A'}%
-                      </span>
-                    </div>
-                    <p className="text-xs text-orange-600 mt-2 text-center">
-                      (manager_final_rating / max_rating) × 100
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        ) : null}
-
         {/* Overall Manager Comments */}
         {review.overall_manager_comment && (
           <div className="mt-6 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
@@ -960,6 +679,178 @@ const KPIConfirmation: React.FC = () => {
           )}
         </div>
       )}
+
+      {/* Rating Summary - Positioned at the end for better UX */}
+      {isActualValueMethod ? (
+        /* For Actual vs Target: Show Final Rating % */
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div className="p-6 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border-2 border-green-300">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Final Rating Summary</h3>
+            <div className="bg-white rounded-lg p-6 border border-green-300 text-center">
+              <p className="text-sm text-gray-600 mb-2">Final Rating Percentage</p>
+              <div className="flex items-center justify-center space-x-3">
+                <span className="text-5xl font-bold text-green-600">
+                  {finalRatingPercentage.toFixed(2)}%
+                </span>
+              </div>
+              <p className="text-sm text-gray-500 mt-2">
+                Sum of all Manager Rating Percentages
+              </p>
+            </div>
+          </div>
+        </div>
+      ) : ratingSummary ? (
+        /* For Normal/Goal Weight: Show traditional rating cards */
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div className="p-6 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border-2 border-purple-200">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Total Rating Summary</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Manager Rating - Left Side */}
+              <div className="bg-white rounded-lg p-4 border border-yellow-200">
+                <p className="text-sm text-gray-600 mb-2">Total Manager Rating</p>
+                <div className="flex items-baseline space-x-3">
+                  <span className="text-3xl font-bold text-yellow-600">
+                    {ratingSummary.avgManagerRating.toFixed(2)}
+                  </span>
+                  <span className="text-lg text-gray-500">
+                    ({getRatingPercentage(ratingSummary.avgManagerRating)}%)
+                  </span>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  {getRatingDescription(ratingSummary.avgManagerRating)}
+                </p>
+              </div>
+              
+              {/* Employee Rating - Right Side */}
+              {!isSelfRatingDisabled && (
+                <div className="bg-white rounded-lg p-4 border border-purple-200">
+                  <p className="text-sm text-gray-600 mb-2">Total Employee Rating</p>
+                  <div className="flex items-baseline space-x-3">
+                    <span className="text-3xl font-bold text-purple-600">
+                      {ratingSummary.avgEmployeeRating.toFixed(2)}
+                    </span>
+                    <span className="text-lg text-gray-500">
+                      ({getRatingPercentage(ratingSummary.avgEmployeeRating)}%)
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {getRatingDescription(ratingSummary.avgEmployeeRating)}
+                  </p>
+                </div>
+              )}
+            </div>
+            
+            {/* Detailed Rating Breakdown for Normal Calculation - From Backend Database */}
+            {calculationMethodName === 'Normal Calculation' && (
+              <div className="mt-6 border-t border-purple-200 pt-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">📊 Detailed Rating Breakdown (From Backend)</h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Left Column - Manager Ratings */}
+                  <div className="space-y-4">
+                    {/* Manager Average Rating */}
+                    <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-lg p-4 border-2 border-amber-300">
+                      <p className="text-sm font-semibold text-amber-900 mb-2">Manager Average Rating</p>
+                      <div className="flex items-baseline space-x-2">
+                        <span className="text-4xl font-bold text-amber-600">
+                          {review?.manager_rating
+                            ? parseFloat(review.manager_rating.toString()).toFixed(2)
+                            : 'N/A'}
+                        </span>
+                      </div>
+                      <p className="text-xs text-amber-600 mt-2">
+                        Calculated from manager ratings
+                      </p>
+                    </div>
+                    
+                    {/* Manager Final Rating */}
+                    <div className="bg-gradient-to-br from-yellow-50 to-amber-50 rounded-lg p-4 border-2 border-yellow-300">
+                      <p className="text-sm font-semibold text-yellow-900 mb-2">Manager Final Rating</p>
+                      <div className="flex items-baseline space-x-2">
+                        <span className="text-4xl font-bold text-yellow-600">
+                          {review?.manager_final_rating
+                            ? parseFloat(review.manager_final_rating.toString()).toFixed(2)
+                            : 'N/A'}
+                        </span>
+                      </div>
+                      <p className="text-xs text-yellow-600 mt-2">
+                        Rounded to nearest rating option
+                      </p>
+                    </div>
+                    
+                    {/* Manager Final Rating Percentage */}
+                    <div className="bg-gradient-to-br from-orange-50 to-red-50 rounded-lg p-4 border-2 border-orange-300">
+                      <p className="text-sm font-semibold text-orange-900 mb-2">Manager Final Rating %</p>
+                      <div className="flex items-baseline space-x-2">
+                        <span className="text-5xl font-bold text-orange-600">
+                          {review?.manager_final_rating_percentage
+                            ? parseFloat(review.manager_final_rating_percentage.toString()).toFixed(2)
+                            : 'N/A'}%
+                        </span>
+                      </div>
+                      <p className="text-xs text-orange-600 mt-2">
+                        (manager_final_rating / max_rating) × 100
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {/* Right Column - Employee Ratings */}
+                  {!isSelfRatingDisabled && (
+                    <div className="space-y-4">
+                      {/* Employee Average Rating */}
+                      <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-lg p-4 border-2 border-indigo-300">
+                        <p className="text-sm font-semibold text-indigo-900 mb-2">Employee Average Rating</p>
+                        <div className="flex items-baseline space-x-2">
+                          <span className="text-4xl font-bold text-indigo-600">
+                            {review?.employee_rating 
+                              ? parseFloat(review.employee_rating.toString()).toFixed(2)
+                              : 'N/A'}
+                          </span>
+                        </div>
+                        <p className="text-xs text-indigo-600 mt-2">
+                          Calculated from employee self-ratings
+                        </p>
+                      </div>
+                      
+                      {/* Employee Final Rating */}
+                      <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg p-4 border-2 border-purple-300">
+                        <p className="text-sm font-semibold text-purple-900 mb-2">Employee Final Rating</p>
+                        <div className="flex items-baseline space-x-2">
+                          <span className="text-4xl font-bold text-purple-600">
+                            {review?.employee_final_rating
+                              ? parseFloat(review.employee_final_rating.toString()).toFixed(2)
+                              : 'N/A'}
+                          </span>
+                        </div>
+                        <p className="text-xs text-purple-600 mt-2">
+                          Rounded to nearest rating option
+                        </p>
+                      </div>
+                      
+                      {/* Employee Rating Percentage */}
+                      <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-lg p-4 border-2 border-blue-300">
+                        <p className="text-sm font-semibold text-blue-900 mb-2">Employee Rating %</p>
+                        <div className="flex items-baseline space-x-2">
+                          <span className="text-4xl font-bold text-blue-600">
+                            {review?.employee_rating_percentage
+                              ? parseFloat(review.employee_rating_percentage.toString()).toFixed(2)
+                              : 'N/A'}%
+                          </span>
+                        </div>
+                        <p className="text-xs text-blue-600 mt-2">
+                          (employee_rating / max_rating) × 100
+                        </p>
+                      </div>
+                      
+                      {/* Employee Final Rating % - HIDDEN as per user request */}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      ) : null}
 
       {/* Decision Card */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">

@@ -20,9 +20,6 @@ export const useEmployeeSelfRating = () => {
   const { user } = useAuth();
   const toast = useToast();
 
-  console.log('📝 [useEmployeeSelfRating] Hook initialized');
-  console.log('📝 [useEmployeeSelfRating] kpiId from params:', kpiId);
-  console.log('📝 [useEmployeeSelfRating] User:', { id: user?.id, name: user?.name });
 
   const [kpi, setKpi] = useState<KPI | null>(null);
   const [loading, setLoading] = useState(true);
@@ -84,24 +81,11 @@ export const useEmployeeSelfRating = () => {
       const response = await api.get(url);
       
       console.log('✅ [useEmployeeSelfRating] Raw API response:', response.data);
-      console.log('✅ [useEmployeeSelfRating] Response structure:', {
-        success: response.data.success,
-        hasKpi: !!response.data.kpi,
-        hasData: !!response.data.data,
-        dataKeys: Object.keys(response.data)
-      });
+      
       
       // FIXED: Handle nested response structure (response.data.data or response.data.kpi)
       const data = response.data.data || response.data.kpi || response.data;
-      
-      console.log('✅ [useEmployeeSelfRating] Extracted KPI data:', {
-        id: data?.id,
-        title: data?.title,
-        status: data?.status,
-        period: data?.period,
-        hasItems: !!data?.items,
-        itemsCount: data?.items?.length
-      });
+    
       
       if (!data) {
         console.error('❌ [useEmployeeSelfRating] No KPI data found in response');
@@ -118,14 +102,7 @@ export const useEmployeeSelfRating = () => {
           const reviewResponse = await api.get(`/kpi-review/kpi/${kpiId}`);
           const review = reviewResponse.data.review || reviewResponse.data;
           
-          console.log('✅ [useEmployeeSelfRating] Review data fetched:', {
-            hasReview: !!review,
-            review_id: review?.id,
-            employee_rating: review?.employee_rating,
-            employee_signature: review?.employee_signature,
-            hasAccomplishments: !!review?.accomplishments,
-            accomplishments_count: review?.accomplishments?.length
-          });
+        
 
           if (review && review.id) {
             // Load ratings and comments from kpi_item_ratings using the ratings endpoint
@@ -144,8 +121,6 @@ export const useEmployeeSelfRating = () => {
               }
             });
 
-            console.log('📊 [useEmployeeSelfRating] Loaded ratings from review:', initialRatings);
-            console.log('📊 [useEmployeeSelfRating] Loaded comments from review:', initialComments);
             setRatings(initialRatings);
             setComments(initialComments);
 
@@ -173,13 +148,7 @@ export const useEmployeeSelfRating = () => {
       
       console.log('✅ [useEmployeeSelfRating] All KPI data loaded successfully');
     } catch (error: any) {
-      console.error('❌ [useEmployeeSelfRating] Error fetching KPI details:', {
-        message: error.message,
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        data: error.response?.data,
-        url: error.config?.url
-      });
+    
       toast.error(error.response?.data?.error || 'Failed to load KPI details');
       console.log('🔄 [useEmployeeSelfRating] Navigating back to dashboard');
       navigate('/employee/dashboard');
@@ -206,15 +175,11 @@ export const useEmployeeSelfRating = () => {
         opt.rating_type === 'qualitative'
       );
       
-      console.log(`📋 [SelfRating] Setting ${periodType} rating options:`, numericOptions);
-      console.log('📋 [SelfRating] Setting qualitative rating options:', qualitativeOptions);
       setRatingOptions(numericOptions);
       setQualitativeRatingOptions(qualitativeOptions);
     } catch (error) {
-      console.error('❌ [useEmployeeSelfRating] Failed to fetch rating options:', error);
       // Fallback to default options based on period
       const periodType = period || 'quarterly';
-      console.log('🔄 [useEmployeeSelfRating] Using fallback rating options for:', periodType);
       setRatingOptions([
         { rating_value: 1.0, label: 'Below Expectation', rating_type: periodType as 'quarterly' | 'yearly' },
         { rating_value: 1.25, label: 'Meets Expectation', rating_type: periodType as 'quarterly' | 'yearly' },
@@ -225,10 +190,8 @@ export const useEmployeeSelfRating = () => {
   };
 
   const handleRatingChange = (itemId: number, ratingValue: number) => {
-    console.log('🔄 [useEmployeeSelfRating] handleRatingChange called:', { itemId, ratingValue });
     setRatings((prev) => {
       const updated = { ...prev, [itemId]: ratingValue };
-      console.log('✅ [useEmployeeSelfRating] Updated ratings state:', updated);
       return updated;
     });
   };
@@ -330,58 +293,10 @@ export const useEmployeeSelfRating = () => {
         is_qualitative: item.is_qualitative || false,
       }));
 
-      console.log('🚀 [useEmployeeSelfRating] Submitting self-rating:', {
-        kpiId,
-        user: {
-          id: user?.id,
-          email: user?.email,
-          name: user?.name,
-          role: user?.role
-        },
-        kpi: {
-          id: kpi?.id,
-          employee_id: kpi?.employee_id,
-          period: kpi?.period,
-          quarter: kpi?.quarter,
-          year: kpi?.year
-        },
-        payload: {
-          overall_rating: roundedRating,
-          average_rating: averageRating,
-          employee_rating_percentage: employeeRatingPercentage,
-          item_ratings_count: itemRatings.length,
-          accomplishments_count: accomplishments.length
-        }
-      });
+      
 
-      console.log('🏆 [useEmployeeSelfRating] Accomplishments being submitted:', {
-        count: accomplishments.length,
-        accomplishments: accomplishments.map(acc => ({
-          id: acc.id,
-          title: acc.title,
-          description: acc.description?.substring(0, 50),
-          employee_rating: acc.employee_rating,
-          employee_comment: acc.employee_comment?.substring(0, 30),
-          item_order: acc.item_order,
-          review_id: acc.review_id
-        }))
-      });
+   
 
-      console.log('📤 [useEmployeeSelfRating] FULL REQUEST PAYLOAD:', {
-        overall_rating: roundedRating,
-        average_rating: averageRating,
-        employee_rating_percentage: employeeRatingPercentage,
-        item_ratings: itemRatings.length,
-        employee_signature: employeeSignature?.substring(0, 50),
-        review_period: kpi?.period || 'quarterly',
-        review_quarter: kpi?.quarter,
-        review_year: kpi?.year,
-        major_accomplishments: majorAccomplishments?.substring(0, 50),
-        disappointments: disappointments?.substring(0, 50),
-        improvement_needed: improvementNeeded?.substring(0, 50),
-        accomplishments: accomplishments,
-        future_plan: futurePlan?.substring(0, 50)
-      });
 
       const submitResponse = await api.post(`/kpi-review/${kpiId}/self-rating`, {
         overall_rating: roundedRating,
@@ -399,12 +314,7 @@ export const useEmployeeSelfRating = () => {
         future_plan: futurePlan,
       });
       
-      console.log('✅ [useEmployeeSelfRating] Self-rating submitted successfully');
-      console.log('📥 [useEmployeeSelfRating] Backend response:', {
-        status: submitResponse.status,
-        data: submitResponse.data,
-        review_id: submitResponse.data?.review?.id || submitResponse.data?.id
-      });
+     
       
       // Clear draft
       localStorage.removeItem(`self-rating-draft-${kpiId}`);
@@ -484,23 +394,12 @@ export const useEmployeeSelfRating = () => {
     );
     
     // Get the maximum rating value from rating options based on KPI period
-    console.log('🔍 [employeeRatingPercentage] Rating Options:', {
-      kpiPeriod: kpi.period,
-      ratingOptionsCount: ratingOptions.length,
-      ratingOptions: ratingOptions.map(opt => ({ value: opt.rating_value, label: opt.label })),
-      calculationMethod: calculationMethodName
-    });
     
     const maxRating = ratingOptions.length > 0 
-      ? Math.max(...ratingOptions.map(option => option.rating_value)) 
+      ? Math.max(...ratingOptions.map(option => Number(option.rating_value))) 
       : 0;
     
-    console.log('📊 [employeeRatingPercentage] Max Rating Calculated:', {
-      maxRating,
-      hasRatingOptions: ratingOptions.length > 0,
-      includedItemsCount: includedItems.length,
-      accomplishmentsCount: accomplishmentsWithRatings.length
-    });
+   
     
     if (maxRating === 0) {
       console.error('❌ [employeeRatingPercentage] ERROR: maxRating is 0! Cannot calculate percentage.');
@@ -564,18 +463,7 @@ export const useEmployeeSelfRating = () => {
       const totalScore = totalItemScore + totalAccomplishmentScore;
       const percentage = totalPossibleScore > 0 ? (totalScore / totalPossibleScore) * 100 : 0;
       
-      console.log('📊 [Normal Calculation] Final Calculation:', {
-        kpiPeriod: kpi.period,
-        calculationMethod: calculationMethodName,
-        totalQuestions,
-        maxRating,
-        totalPossibleScore,
-        totalItemScore,
-        totalAccomplishmentScore,
-        totalScore,
-        formula: `(${totalScore} / ${totalPossibleScore}) * 100`,
-        percentage: percentage.toFixed(2) + '%'
-      });
+     
       
       return percentage;
     }

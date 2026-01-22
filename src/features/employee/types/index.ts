@@ -106,6 +106,25 @@ export interface KPIReviewConfirmation {
   kpi_description: string;
   manager_name: string;
   
+  // KPI items array
+  items?: Array<{
+    id: number;
+    kpi_id: number;
+    title: string;
+    description?: string;
+    target_value?: string;
+    actual_value?: string;
+    measure_unit?: string;
+    measure_criteria?: string;
+    current_performance_status?: string;
+    expected_completion_date?: string;
+    goal_weight?: string;
+    item_order: number;
+    percentage_value_obtained?: number;
+    manager_rating_percentage?: number;
+    exclude_from_calculation?: number;
+  }>;
+  
   // NEW: Structured ratings from kpi_item_ratings table
   item_ratings?: {
     employee: {

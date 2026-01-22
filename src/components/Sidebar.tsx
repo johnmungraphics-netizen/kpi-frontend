@@ -160,6 +160,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     { path: '/hr/kpi-setting-completed', label: 'KPI Setting Completed', icon: FiCheckCircle },
     { path: '/hr/acknowledged-kpis', label: 'Acknowledged KPIs', icon: FiCheckCircle },
     { path: '/hr/completed-reviews', label: 'Completed Reviews', icon: FiCheckCircle },
+    { path: '/hr/review-report', label: 'Review Report', icon: FiFileText },
     { path: '/hr/email-templates', label: 'Email Templates', icon: FiMail },
     { path: '/hr/settings', label: 'Settings', icon: FiSettings },
   ];

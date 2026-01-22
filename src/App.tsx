@@ -47,6 +47,7 @@ import {
   EmailTemplates,
   RejectedKPIManagement,
   EmployeePerformance,
+  ReviewReport,
 } from './features/hr';
 
 // Shared Pages
@@ -705,6 +706,16 @@ function AppRoutes() {
           <ProtectedRoute allowedRoles={[ROLE_IDS.HR]}>
             <Layout>
               <CompletedReviews />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/hr/review-report"
+        element={
+          <ProtectedRoute allowedRoles={[ROLE_IDS.HR]}>
+            <Layout>
+              <ReviewReport />
             </Layout>
           </ProtectedRoute>
         }

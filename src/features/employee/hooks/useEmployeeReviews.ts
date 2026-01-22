@@ -39,25 +39,18 @@ export const useEmployeeReviews = () => {
       setLoading(true);
       setError(null);
 
-      console.log('🔄 [useEmployeeReviews] Fetching KPIs and reviews...');
       const [kpisRes, reviewsRes] = await Promise.all([
         api.get('/kpis'),
         api.get('/kpi-review'),
       ]);
 
-      console.log('🔍 [useEmployeeReviews] Raw API responses:', {
-        kpisResponse: kpisRes.data,
-        reviewsResponse: reviewsRes.data
-      });
+    
 
       // Fix: Backend returns data in response.data.data.kpis or response.data.kpis
       const allKpis = kpisRes.data.data?.kpis || kpisRes.data.kpis || [];
       const reviewsList = reviewsRes.data.reviews || [];
 
-      console.log('✅ [useEmployeeReviews] Data fetched:', {
-        allKpisCount: allKpis.length,
-        reviewsCount: reviewsList.length
-      });
+   
 
       // Filter KPIs that need employee action based on the same logic as dashboard
       const needReviewKPIs = allKpis.filter((kpi: KPI) => {
@@ -87,11 +80,7 @@ export const useEmployeeReviews = () => {
         return false;
       });
 
-      console.log('🎯 [useEmployeeReviews] Filtered KPIs:', {
-        total: allKpis.length,
-        needReview: needReviewKPIs.length,
-        kpis: needReviewKPIs.map((k: KPI) => ({ id: k.id, title: k.title, status: k.status }))
-      });
+    
 
       setKpis(needReviewKPIs);
       setReviews(reviewsList);
