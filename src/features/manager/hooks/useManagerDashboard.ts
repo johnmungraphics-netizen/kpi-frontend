@@ -5,6 +5,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useToast } from '../../../context/ToastContext';
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../../store/hooks';
 import { fetchKPIs, selectAllKPIs, selectKPILoading } from '../../../store/slices/kpiSlice';
@@ -46,6 +47,7 @@ export const useManagerDashboard = () => {
 
   const isLoading = loading || kpisLoading || statsLoading;
 
+  const toast = useToast();
   // Initial data fetch
   useEffect(() => {
     fetchInitialData();
@@ -107,7 +109,7 @@ export const useManagerDashboard = () => {
       setEmployees(employeesData);
       setManagerDepartments(departmentsData);
     } catch (error) {
-      console.error('[useManagerDashboard] Error fetching dashboard data:', error);
+      toast.error('Server error. Please try reloading or try later.');
     } finally {
       setLoading(false);
     }
@@ -137,7 +139,7 @@ export const useManagerDashboard = () => {
       setDefaultPeriod(filters.period);
       return true;
     } catch (error) {
-      console.error('Error saving default period:', error);
+      toast.error('Could not save your default period.');
       return false;
     } finally {
       setSavingDefault(false);
@@ -194,7 +196,7 @@ export const useManagerDashboard = () => {
       await managerService.markNotificationRead(id);
       setNotifications(prev => prev.filter(n => n.id !== id));
     } catch (error) {
-      console.error('Error marking notification as read:', error);
+      toast.error('Could not mark notification as read.');
     }
   };
 

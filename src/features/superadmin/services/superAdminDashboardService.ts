@@ -67,7 +67,9 @@ export const superAdminDashboardService = {
 
       return stats;
     } catch (error: any) {
-      console.error('[superAdminDashboardService] Error fetching stats:', error);
+      if (typeof window !== 'undefined' && window.toast) {
+        window.toast.error('Failed to fetch dashboard stats. Please try again.');
+      }
       throw error;
     }
   },
@@ -90,7 +92,9 @@ export const superAdminDashboardService = {
 
       return sorted;
     } catch (error: any) {
-      console.error('[superAdminDashboardService] Error fetching recent companies:', error);
+      if (typeof window !== 'undefined' && window.toast) {
+        window.toast.error('Failed to fetch recent companies. Please try again.');
+      }
       throw error;
     }
   },

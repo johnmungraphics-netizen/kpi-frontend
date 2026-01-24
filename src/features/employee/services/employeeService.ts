@@ -52,7 +52,6 @@ export const employeeService = {
   // Fetch review by ID for confirmation
   fetchReviewById: async (reviewId: number): Promise<KPIReviewConfirmation> => {
     const response = await api.get(`/kpi-review/${reviewId}`);
-
     return response.data.review;
   },
 
@@ -70,7 +69,9 @@ export const employeeService = {
 
       return response.data?.rating_options || [];
     } catch (error) {
-      console.error('❌ [employeeService] Error fetching rating options:', error);
+      if (typeof window !== 'undefined' && window.toast) {
+        window.toast.error('Failed to fetch rating options. Please try again.');
+      }
       return [];
     }
   },

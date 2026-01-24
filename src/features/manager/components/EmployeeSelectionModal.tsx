@@ -141,7 +141,6 @@ export const EmployeeSelectionModal: React.FC<EmployeeSelectionModalProps> = ({
 
   const handleConfirm = () => {
     if (selectedEmployeeIds.size === 0) {
-      console.warn('⚠️ [EmployeeSelectionModal] No employees selected');
       return;
     }
     onConfirm(Array.from(selectedEmployeeIds));

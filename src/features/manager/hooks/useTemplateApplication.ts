@@ -39,7 +39,6 @@ export const useTemplateApplication = (): UseTemplateApplicationReturn => {
       setDepartments(response.data.departments || []);
     
     } catch (error: any) {
-      console.error('❌ [useTemplateApplication] Error fetching data:', error);
       toast.error(error.response?.data?.error || 'Failed to load employees');
       setEmployees([]);
       setDepartments([]);
@@ -63,7 +62,7 @@ export const useTemplateApplication = (): UseTemplateApplicationReturn => {
 
   const handleApplyTemplate = async (selectedEmployeeIds: number[]) => {
     if (!currentTemplateId) {
-      console.error('❌ [useTemplateApplication] No template selected');
+      toast.error('No template selected. Please select a template to continue.');
       return;
     }
 

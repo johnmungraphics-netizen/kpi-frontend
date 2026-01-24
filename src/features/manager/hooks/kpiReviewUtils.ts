@@ -65,10 +65,8 @@ export const parseEmployeeData = (employeeComment: string, itemRatings?: any): {
         }
       });
     } else {
-      console.warn('⚠️ [KPIReview Utils] Employee data.items is not an array:', employeeData);
     }
   } catch (error) {
-    console.error('❌ [KPIReview Utils] Error parsing employee data:', error);
     // If parsing fails and we have KPI items, return empty maps
   }
 
@@ -108,7 +106,6 @@ export const parseManagerData = (managerComment: string, itemRatings?: any): {
     }
   } catch (error) {
     // If not JSON, return empty maps
-    console.error('Error parsing manager data:', error);
   }
 
   return { ratings, comments };

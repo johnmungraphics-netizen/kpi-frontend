@@ -45,7 +45,6 @@ export const useKPIDetails = () => {
 
       fetchKPIData();
     } else {
-      console.warn('⚠️ [useKPIDetails] No kpiId provided in URL params');
     }
   }, [kpiId]);
 
@@ -74,15 +73,13 @@ export const useKPIDetails = () => {
           // Fetch ratings data for this review
           await fetchRatingsData(fullReview.id);
         } catch (reviewError) {
-          console.error('❌ [useKPIDetails] Error fetching full review details:', reviewError);
+          toast.error('Server error. Please try reloading or try later.');
           // Fallback to the review from the list
           setReview(fetchedReview);
         }
       } else {
-        console.warn('⚠️ [useKPIDetails] No review found for kpi_id:', parseInt(kpiId!));
       }
     } catch (error) {
-      console.error('❌ [useKPIDetails] Error fetching KPI:', error);
       toast.error('Failed to load KPI details');
     } finally {
       setLoading(false);
@@ -100,7 +97,6 @@ export const useKPIDetails = () => {
 
       
       if (!ratings || !Array.isArray(ratings)) {
-        console.warn('⚠️ [useKPIDetails] No ratings data found');
         return;
       }
       
@@ -149,7 +145,7 @@ export const useKPIDetails = () => {
       setFinalRatingPercentage(totalPercentage);
       
     } catch (err) {
-      console.error('❌ [useKPIDetails] Error fetching ratings data:', err);
+      toast.error('Server error. Please try reloading or try later.');
     }
   };
 
@@ -244,7 +240,6 @@ export const useKPIDetails = () => {
         setResolveNote('');
         fetchKPIData(); // Refresh data
       } catch (error) {
-        console.error('Error resolving rejection:', error);
         toast.error('Failed to mark as resolved');
       }
     }

@@ -105,7 +105,9 @@ const Header: React.FC<HeaderProps> = ({
                               setShowCompanyMenu(false);
                               window.location.reload(); // Reload to refresh data
                             } catch (error) {
-                              console.error('Failed to switch company:', error);
+                              if (typeof window !== 'undefined' && window.toast) {
+                                window.toast.error('Failed to switch company.');
+                              }
                             }
                           }}
                           className={`w-full flex items-center justify-between px-3 py-2 text-sm rounded-lg transition-colors ${

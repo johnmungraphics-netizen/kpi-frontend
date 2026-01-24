@@ -26,7 +26,9 @@ export const useAssignHrToCompany = () => {
 
       setHrUsers(data);
     } catch (err: any) {
-      console.error('[useAssignHrToCompany] Error fetching HR users:', err);
+      if (typeof window !== 'undefined' && window.toast) {
+        window.toast.error('Failed to load HR users. Please try again.');
+      }
       setError(err.response?.data?.error || 'Failed to load HR users');
     } finally {
       setLoading(false);

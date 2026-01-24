@@ -41,7 +41,10 @@ export const getAllCompanyFeatures = async (): Promise<CompanyFeatures[]> => {
 
     return features;
   } catch (error: any) {
-    console.error('[companyFeaturesService] Error fetching company features:', error.message, error.response?.data);
+    // Show user-friendly error toast if toast context is available
+    if (typeof window !== 'undefined' && window.toast) {
+      window.toast.error('Failed to fetch company features. Please try again.');
+    }
     throw error;
   }
 };
@@ -68,7 +71,9 @@ export const updateCompanyFeatures = async (
 
     return response.data;
   } catch (error: any) {
-    console.error('[companyFeaturesService] Update failed:', error.response?.data || error.message);
+    if (typeof window !== 'undefined' && window.toast) {
+      window.toast.error('Failed to update company features. Please try again.');
+    }
     throw error;
   }
 };

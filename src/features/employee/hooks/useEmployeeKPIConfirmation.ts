@@ -39,14 +39,16 @@ export const useEmployeeKPIConfirmation = () => {
     try {
       setLoading(true);
       const reviewData = await employeeService.fetchReviewById(parseInt(reviewId!));
-
+      setReview(reviewData); // <-- CRITICAL: set the review state!
       // Fetch the full KPI details with items
       if (reviewData?.kpi_id) {
         const kpiData = await employeeService.fetchKPIById(reviewData.kpi_id);
         setKpi(kpiData);
       }
     } catch (error: any) {
-      console.error('Error fetching review:', error);
+      if (typeof window !== 'undefined' && window.toast) {
+        window.toast.error('Failed to load review');
+      }
       setError('Failed to load review');
     } finally {
       setLoading(false);
@@ -66,9 +68,7 @@ export const useEmployeeKPIConfirmation = () => {
     
     const validation = validateConfirmation(action, rejectionNote, signature);
     
-    if (!validation.valid) {
-      console.error('❌ [handleSubmit] Validation FAILED:', validation.error);
-      setError(validation.error!);
+    if (!validation.valid) {      setError(validation.error!);
       return;
     }
 
@@ -93,7 +93,9 @@ export const useEmployeeKPIConfirmation = () => {
       
       navigate('/employee/dashboard');
     } catch (error: any) {
-      console.error('❌ [handleSubmit] Error data:', error.response?.data);
+      if (typeof window !== 'undefined' && window.toast) {
+        window.toast.error(error.response?.data?.error || 'Failed to confirm review');
+      }
       setError(error.response?.data?.error || 'Failed to confirm review');
     } finally {
       setSubmitting(false);

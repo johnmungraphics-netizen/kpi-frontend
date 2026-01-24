@@ -72,18 +72,21 @@ export const fetchEmployees = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-
       // Backend uses /users/list with role=employee parameter
       const response = await api.get('/users/list', { 
         params: { ...params, role: 'employee' } 
       });
       return response.data;
     } catch (error: any) {
-      console.error('[employeeSlice] ❌ Failed to fetch employees:', {
-        status: error.response?.status,
-        message: error.response?.data?.message || error.message
-      });
-      return rejectWithValue(error.response?.data?.message || 'Failed to fetch employees');
+      // Show user-friendly toast for server or network errors
+      const isServerError = error.response?.status >= 500;
+      const message = isServerError
+        ? 'Server issue, please try again later.'
+        : (error.response?.data?.message || 'Failed to fetch employees');
+      if (typeof window !== 'undefined' && window.toast) {
+        window.toast.error(message);
+      }
+      return rejectWithValue(message);
     }
   }
 );
@@ -302,14 +305,14 @@ const employeeSlice = createSlice({
         } else if (Array.isArray(action.payload)) {
           state.employees = action.payload;
         } else {
-          console.warn('[employeeSlice] ⚠️ Unexpected payload format:', action.payload);
+          // Unexpected payload format, but not an error for user
           state.employees = [];
         }
       })
       .addCase(fetchEmployees.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
-        console.error('[employeeSlice] ❌ fetchEmployees rejected:', action.payload);
+        // fetchEmployees rejected (log removed)
       });
 
     // Fetch employee by ID

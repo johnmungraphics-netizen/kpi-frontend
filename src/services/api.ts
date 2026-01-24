@@ -32,7 +32,7 @@ api.interceptors.request.use(
     return config;
   },
   (error) => {
-    console.error('❌ [api] Request interceptor error:', error);
+    // Request interceptor error (log removed)
     return Promise.reject(error);
   }
 );
@@ -49,10 +49,8 @@ api.interceptors.response.use(
   },
   (error) => {
     if (error.config?.url?.includes('rating-options')) {
-      console.error('❌ [api] Response interceptor - rating-options error');
-      console.error('❌ [api] Error response:', error.response);
-      console.error('❌ [api] Error status:', error.response?.status);
-      console.error('❌ [api] Error data:', error.response?.data);
+     
+      // API error data (log removed)
     }
     if (error.response?.status === 401) {
       // Unauthorized - clear auth and redirect to login

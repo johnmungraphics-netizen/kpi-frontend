@@ -48,7 +48,7 @@ export const useManagerKPITemplates = (): UseManagerKPITemplatesReturn => {
       const response = await api.get('/templates');
       setTemplates(response.data.templates || []);
     } catch (error) {
-      console.error('❌ [useManagerKPITemplates] Error fetching templates:', error);
+      toast.error('Server error. Please try reloading or try later.');
     } finally {
       setLoading(false);
     }

@@ -5,6 +5,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useToast } from '../context/ToastContext';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 
@@ -31,6 +32,7 @@ export const useDepartmentFeatures = (kpiId?: number) => {
   const [features, setFeatures] = useState<DepartmentFeatures | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const toast = useToast();
 
   /**
    * Fetch department features for current user's department
@@ -57,7 +59,7 @@ export const useDepartmentFeatures = (kpiId?: number) => {
 
       setFeatures(response.data);
     } catch (err: any) {
-      console.error('❌ [useDepartmentFeatures] Error fetching features:', err);
+      toast.error('Could not fetch department features. Please try again.');
       setError(err.response?.data?.error || 'Failed to fetch department features');
       
       // Set default features on error
@@ -102,7 +104,6 @@ export const useDepartmentFeatures = (kpiId?: number) => {
       setFeatures(response.data.features);
       return true;
     } catch (err: any) {
-      console.error('❌ [useDepartmentFeatures] Error updating features:', err);
       setError(err.response?.data?.error || 'Failed to update department features');
       return false;
     } finally {
@@ -189,7 +190,7 @@ export const useDepartmentFeatures = (kpiId?: number) => {
 
       return response.data;
     } catch (err: any) {
-      console.error(`❌ [fetchDepartmentFeaturesById] Error fetching features for dept ${departmentId}:`, err);
+      toast.error('Could not fetch department features for this department.');
       return null;
     }
   };

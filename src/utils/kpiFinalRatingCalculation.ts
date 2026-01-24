@@ -308,7 +308,6 @@ export const calculateFinalKPIRating = (
       ratingOptions,
     };
   } catch (error) {
-    console.error('Error calculating final KPI rating:', error);
     return {
       method: 'error',
       averageRating: 0,

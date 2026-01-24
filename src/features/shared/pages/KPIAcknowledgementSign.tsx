@@ -29,7 +29,7 @@ const KPIAcknowledgement: React.FC = () => {
     if (kpiId) {
       fetchKPI();
     } else {
-      console.error('❌ [KPIAcknowledgement] No kpiId found in URL params!');
+      toast.error('No KPI ID found in the URL.');
     }
   }, [kpiId]);
 

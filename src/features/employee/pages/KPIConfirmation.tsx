@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useToast } from '../../../context/ToastContext';
 import { FiCheckCircle, FiX, FiAlertCircle } from 'react-icons/fi';
 import { Button } from '../../../components/common';
 import SignatureField from '../../../components/SignatureField';
@@ -34,6 +35,7 @@ const KPIConfirmation: React.FC = () => {
     closeTextModal,
     navigate,
   } = useEmployeeKPIConfirmation();
+  const toast = useToast();
 
   // Department features for conditional display
   // Pass review.kpi_id to fetch features for the KPI's employee department
@@ -74,20 +76,14 @@ const KPIConfirmation: React.FC = () => {
 
   // Fetch ratings data with actual values and percentages
   useEffect(() => {
+    // --- DEBUG LOG: useEffect for fetchRatingsData ---
     const fetchRatingsData = async () => {
-      if (!reviewId || !review) return;
-      
+      if (!reviewId || !review) {
+        return;
+      }
       try {
         const response = await api.get(`/kpi-review/${reviewId}/ratings`);
-        
-        // Backend returns { review, ratings } from kpi_item_ratings table
         const ratings = response.data.ratings;
-        
-        
-        if (!ratings || !Array.isArray(ratings)) {
-          console.warn('⚠️ [KPIConfirmation] No ratings array found in response');
-          return;
-        }
         
         // Extract actual values and percentages from kpi_item_ratings table
         const actualVals: Record<number, string> = {};
@@ -97,10 +93,7 @@ const KPIConfirmation: React.FC = () => {
         const percentages: Record<number, number> = {};
         const managerPercentages: Record<number, number> = {};
         let totalPercentage = 0;
-        
         ratings.forEach((rating: any) => {
-        
-          
           // Only extract data from manager ratings
           if (rating.kpi_item_id && rating.rater_role === 'manager') {
             if (rating.actual_value) {
@@ -124,7 +117,6 @@ const KPIConfirmation: React.FC = () => {
             }
           }
         });
-        
         setActualValues(actualVals);
         setTargetValues(targetVals);
         setGoalWeights(goalWeightsMap);
@@ -132,16 +124,18 @@ const KPIConfirmation: React.FC = () => {
         setPercentageValuesObtained(percentages);
         setManagerRatingPercentages(managerPercentages);
         setFinalRatingPercentage(totalPercentage);
-        
-        
       } catch (err) {
-        console.error('❌ [KPIConfirmation] Error fetching ratings data:', err);
+        if (toast) {
+          toast.error('Server issue. Please try again later.');
+        } else {
+          alert('Server issue. Please try again later.');
+        }
       }
     };
-    
     fetchRatingsData();
   }, [reviewId, review]);
 
+  
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -163,8 +157,6 @@ const KPIConfirmation: React.FC = () => {
   
   
   if (reviewStatus !== 'manager_submitted' && reviewStatus !== 'awaiting_employee_confirmation') {
-   
-    
     return (
       <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
         <p className="text-orange-600">This review is not awaiting confirmation</p>

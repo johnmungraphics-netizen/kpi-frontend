@@ -47,7 +47,9 @@ export const userManagementService = {
 
       return users;
     } catch (error: any) {
-      console.error('[userManagementService] Error fetching users:', error.message, error.response?.data);
+      if (typeof window !== 'undefined' && window.toast) {
+        window.toast.error('Failed to fetch users. Please try again.');
+      }
       throw error;
     }
   },
@@ -61,7 +63,9 @@ export const userManagementService = {
 
       return companies;
     } catch (error: any) {
-      console.error('[userManagementService] Error fetching companies:', error.message, error.response?.data);
+      if (typeof window !== 'undefined' && window.toast) {
+        window.toast.error('Failed to fetch companies. Please try again.');
+      }
       throw error;
     }
   },
@@ -91,7 +95,9 @@ export const userManagementService = {
 
       return departments;
     } catch (error) {
-      console.error('[userManagementService] Error fetching departments:', error);
+      if (typeof window !== 'undefined' && window.toast) {
+        window.toast.error('Failed to fetch departments. Please try again.');
+      }
       throw error;
     }
   },
@@ -103,7 +109,9 @@ export const userManagementService = {
 
       return response.data;
     } catch (error) {
-      console.error('[userManagementService] Error fetching manager departments:', error);
+      if (typeof window !== 'undefined' && window.toast) {
+        window.toast.error('Failed to fetch manager departments. Please try again.');
+      }
       throw error;
     }
   },

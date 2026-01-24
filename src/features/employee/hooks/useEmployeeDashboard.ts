@@ -53,7 +53,6 @@ export const useEmployeeDashboard = () => {
       setKpis(kpisData);
       setReviews(reviewsData);
     } catch (error) {
-      console.error('❌ [useEmployeeDashboard] Error fetching data:', error);
     } finally {
       setLoading(false);
     }
@@ -94,7 +93,6 @@ export const useEmployeeDashboard = () => {
         }
       }
     } catch (error) {
-      console.error('[useEmployeeDashboard] ❌ Error fetching user data:', error);
       // On error, don't show modal
       setPasswordChangeRequired(false);
       setShowPasswordModal(false);

@@ -51,7 +51,6 @@ export const useUserManagement = () => {
         // fetchUsers will be triggered by the useEffect when companyFilter changes
       }
     } catch (error: any) {
-      console.error('[useUserManagement] Error fetching initial data:', error);
       toast.error(error.response?.data?.error || 'Failed to load data');
     } finally {
       setLoading(false);
@@ -78,7 +77,6 @@ export const useUserManagement = () => {
 
       setUsers(data);
     } catch (error: any) {
-      console.error('Error fetching users:', error);
       toast.error(error.response?.data?.error || 'Failed to fetch users');
       setUsers([]);
     }
@@ -91,7 +89,7 @@ export const useUserManagement = () => {
       const data = await userManagementService.fetchDepartments(parseInt(companyFilter));
       setDepartments(data);
     } catch (error: any) {
-      console.error('Error fetching departments:', error);
+      toast.error('Failed to fetch departments. Please try again.');
       setDepartments([]);
     }
   };

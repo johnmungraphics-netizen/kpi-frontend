@@ -78,7 +78,9 @@ export const useHRDashboard = () => {
       const data = await hrService.fetchReviews();
       setReviews(data);
     } catch (error) {
-      console.error('Error fetching reviews:', error);
+      if (typeof window !== 'undefined' && window.toast) {
+        window.toast.error('Could not fetch reviews.');
+      }
     }
   };
 
@@ -87,7 +89,9 @@ export const useHRDashboard = () => {
       const data = await hrService.fetchNotifications(5);
       setNotifications(data);
     } catch (error) {
-      console.error('[Dashboard] ❌ Error fetching notifications:', error);
+      if (typeof window !== 'undefined' && window.toast) {
+        window.toast.error('Could not fetch notifications.');
+      }
     }
   };
 
@@ -97,7 +101,9 @@ export const useHRDashboard = () => {
       const data = await hrService.fetchRecentActivity();
       setRecentActivity(data);
     } catch (error) {
-      console.error('[Dashboard] ❌ Error fetching activity:', error);
+      if (typeof window !== 'undefined' && window.toast) {
+        window.toast.error('Could not fetch activity.');
+      }
     }
   };
 
@@ -106,7 +112,9 @@ export const useHRDashboard = () => {
       const data = await hrService.fetchEmployeesByCategory(department, category);
       setEmployees(data);
     } catch (error) {
-      console.error('Error fetching employees:', error);
+      if (typeof window !== 'undefined' && window.toast) {
+        window.toast.error('Could not fetch employees.');
+      }
       setEmployees([]);
     }
   };
@@ -116,7 +124,9 @@ export const useHRDashboard = () => {
       const data = await hrService.fetchManagers();
       setManagers(data);
     } catch (error) {
-      console.error('Error fetching managers:', error);
+      if (typeof window !== 'undefined' && window.toast) {
+        window.toast.error('Could not fetch managers.');
+      }
     }
   };
 
@@ -136,7 +146,9 @@ export const useHRDashboard = () => {
         setDefaultPeriod(period);
         resolve(true);
       } catch (error) {
-        console.error('Error saving default period:', error);
+        if (typeof window !== 'undefined' && window.toast) {
+          window.toast.error('Could not save default period.');
+        }
         resolve(false);
       } finally {
         setSavingDefault(false);
@@ -170,7 +182,9 @@ export const useHRDashboard = () => {
         return updated;
       });
     } catch (error) {
-      console.error(`[Dashboard] ❌ Error marking notification ${id} as read:`, error);
+      if (typeof window !== 'undefined' && window.toast) {
+        window.toast.error('Could not mark notification as read.');
+      }
     }
   };
 

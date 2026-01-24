@@ -30,10 +30,8 @@ export const useCompanyManagement = () => {
 
       setCompanies(data);
       if (data.length === 0) {
-        console.warn('[CompanyManagement] No companies returned from API');
       }
     } catch (error: any) {
-      console.error('[CompanyManagement] Error fetching companies:', error);
       const message = error.response?.data?.error || 'Failed to fetch companies';
       setErrorMessage(message);
       toast.error(message);

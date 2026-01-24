@@ -72,7 +72,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, u
       await onSave(user.id, formData);
       onClose();
     } catch (error) {
-      console.error('Error saving user:', error);
+      toast.error('Failed to save user. Please try again.');
     } finally {
       setSaving(false);
     }

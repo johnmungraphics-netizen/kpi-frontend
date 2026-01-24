@@ -108,7 +108,7 @@ export const useManagerMeetingScheduler = (): UseManagerMeetingSchedulerReturn =
         }
       }
     } catch (error) {
-      console.error('Error fetching data:', error);
+      toast.error('Server error. Please try reloading or try later.');
     } finally {
       setLoading(false);
     }
@@ -152,8 +152,7 @@ export const useManagerMeetingScheduler = (): UseManagerMeetingSchedulerReturn =
       toast.success('Meeting scheduled successfully! Email notifications have been sent.');
       navigate('/manager/dashboard');
     } catch (error: any) {
-      console.error('Error scheduling meeting:', error);
-      toast.error(error.response?.data?.error || 'Failed to schedule meeting');
+      toast.error('Failed to schedule meeting. Please try again.');
     } finally {
       setSaving(false);
     }

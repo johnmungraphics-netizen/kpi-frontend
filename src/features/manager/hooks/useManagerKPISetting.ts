@@ -134,8 +134,6 @@ export const useManagerKPISetting = (): UseManagerKPISettingReturn => {
       fetchEmployee();
       fetchAvailablePeriods();
     } else {
-      console.warn('⚠️ [useManagerKPISetting] NO MODE DETECTED - no templateId or employeeId!');
-      console.warn('⚠️ [useManagerKPISetting] This might cause redirect to homepage');
     }
   }, [employeeId, templateId, isTemplateMode]);
 
@@ -219,7 +217,9 @@ export const useManagerKPISetting = (): UseManagerKPISettingReturn => {
         setSelectedPeriodSetting(firstPeriod);
       }
     } catch (error) {
-      console.error('❌ [fetchAvailablePeriods] Error:', error);
+      if (typeof window !== 'undefined' && window.toast) {
+        window.toast.error('Could not fetch available periods.');
+      }
     }
   };
 
@@ -239,7 +239,9 @@ export const useManagerKPISetting = (): UseManagerKPISettingReturn => {
         }
       }
     } catch (error) {
-      console.error('Error fetching employee:', error);
+      if (typeof window !== 'undefined' && window.toast) {
+        window.toast.error('Could not fetch employee.');
+      }
     } finally {
       setLoading(false);
     }
@@ -255,7 +257,9 @@ export const useManagerKPISetting = (): UseManagerKPISettingReturn => {
         await fetchTemplateTitles();
       }
     } catch (error) {
-      console.error('Error checking department template settings:', error);
+      if (typeof window !== 'undefined' && window.toast) {
+        window.toast.error('Could not check department template settings.');
+      }
     }
   };
 
@@ -266,7 +270,9 @@ export const useManagerKPISetting = (): UseManagerKPISettingReturn => {
         setTemplateTitles(response.data.data || []);
       }
     } catch (error) {
-      console.error('Error fetching template titles:', error);
+      if (typeof window !== 'undefined' && window.toast) {
+        window.toast.error('Could not fetch template titles.');
+      }
     }
   };
 
@@ -414,7 +420,6 @@ export const useManagerKPISetting = (): UseManagerKPISettingReturn => {
       const templateItems = response.data.items;
       
       if (!templateData) {
-        console.error('❌ [loadTemplate] No template data in response!');
         toast.error('Failed to load template - no data');
         return;
       }
@@ -426,7 +431,6 @@ export const useManagerKPISetting = (): UseManagerKPISettingReturn => {
         const frontendPeriod = templateData.period === 'annual' ? 'yearly' : templateData.period;
         setPeriod(frontendPeriod as 'quarterly' | 'yearly');
       } else {
-        console.warn('⚠️ [loadTemplate] No period in template data!');
       }
       
       if (templateData.quarter) {
@@ -452,10 +456,8 @@ export const useManagerKPISetting = (): UseManagerKPISettingReturn => {
         }));
         setKpiRows(templateRows);
       } else {
-        console.warn('⚠️ [loadTemplate] No items in template!');
       }
     } catch (error) {
-      console.error('❌ [loadTemplate] Error:', error);
       toast.error('Failed to load template');
     } finally {
       setLoading(false);

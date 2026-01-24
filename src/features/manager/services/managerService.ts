@@ -6,6 +6,8 @@ import api from '../../../services/api';
 import { Employee, ManagerDepartment } from '../types';
 import { KPIReview, Notification } from '../../../types';
 
+const toast = typeof window !== 'undefined' && window.toast ? window.toast : null;
+
 export const managerService = {
   /**
    * Fetch KPI reviews
@@ -18,7 +20,7 @@ export const managerService = {
 
       return reviews;
     } catch (error) {
-      console.error('[managerService] Error fetching reviews:', error);
+      if (toast) toast.error('Server error. Please try reloading or try later.');
       throw error;
     }
   },
@@ -36,7 +38,7 @@ export const managerService = {
 
       return notifications;
     } catch (error) {
-      console.error('[managerService] Error fetching notifications:', error);
+      if (toast) toast.error('Server error. Please try reloading or try later.');
       throw error;
     }
   },
@@ -52,7 +54,7 @@ export const managerService = {
 
       return activities;
     } catch (error) {
-      console.error('[managerService] Error fetching recent activity:', error);
+      if (toast) toast.error('Server error. Please try reloading or try later.');
       throw error;
     }
   },
@@ -91,7 +93,7 @@ export const managerService = {
 
       return employees;
     } catch (error) {
-      console.error('[managerService] Error fetching employees:', error);
+      if (toast) toast.error('Server error. Please try reloading or try later.');
       return []; // Return empty array instead of throwing
     }
   },
@@ -107,7 +109,7 @@ export const managerService = {
 
       return kpi;
     } catch (error) {
-      console.error('[managerService] Error fetching KPI:', error);
+      if (toast) toast.error('Server error. Please try reloading or try later.');
       throw error;
     }
   },
@@ -128,7 +130,7 @@ export const managerService = {
 
       return employees;
     } catch (error) {
-      console.error('[managerService] Error fetching employees by category:', error);
+      if (toast) toast.error('Server error. Please try reloading or try later.');
       throw error;
     }
   },
@@ -155,7 +157,7 @@ export const managerService = {
 
       return departments;
     } catch (error) {
-      console.error('[managerService] Error fetching manager departments:', error);
+      if (toast) toast.error('Server error. Please try reloading or try later.');
       return []; // Return empty array instead of throwing
     }
   },
@@ -169,7 +171,7 @@ export const managerService = {
       await api.patch(`/notifications/${id}/read`);
 
     } catch (error) {
-      console.error('[managerService] Error marking notification as read:', error);
+      if (toast) toast.error('Server error. Please try reloading or try later.');
       throw error;
     }
   },
@@ -196,7 +198,7 @@ export const managerService = {
 
       return employee;
     } catch (error) {
-      console.error('[managerService] Error fetching employee:', error);
+      if (toast) toast.error('Server error. Please try reloading or try later.');
       throw error;
     }
   },
@@ -214,7 +216,7 @@ export const managerService = {
 
       return filteredKPIs;
     } catch (error) {
-      console.error('[managerService] Error fetching employee KPIs:', error);
+      if (toast) toast.error('Server error. Please try reloading or try later.');
       throw error;
     }
   },

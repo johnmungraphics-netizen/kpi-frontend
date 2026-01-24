@@ -51,7 +51,6 @@ export const useDepartmentManagement = () => {
 
       setDepartments(data);
     } catch (error: any) {
-      console.error('[useDepartmentManagement] Error fetching departments:', error);
       toast.error(error.response?.data?.error || 'Failed to fetch departments');
     }
   };
@@ -66,7 +65,6 @@ export const useDepartmentManagement = () => {
       setShowAddModal(false);
       fetchDepartments();
     } catch (error: any) {
-      console.error('[useDepartmentManagement] Error creating department:', error);
       toast.error(error.response?.data?.error || 'Failed to create department');
       throw error;
     }
