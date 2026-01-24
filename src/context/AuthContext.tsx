@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useToast } from '../context/ToastContext';
 import { User, Company } from '../types/index';
 import api from '../services/api';
 
@@ -25,6 +26,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [hasMultipleCompanies, setHasMultipleCompanies] = useState(false);
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const toast = useToast();
 
   useEffect(() => {
     // Check for stored auth data
@@ -47,7 +49,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setCompanies(parsedCompanies);
         setHasMultipleCompanies(parsedCompanies.length > 1);
       } catch (error) {
-        console.error('[AuthContext] ❌ Failed to parse companies from localStorage:', error);
+        toast.error('Failed to load companies from local storage. Please log in again.');
       }
     } else {
 
