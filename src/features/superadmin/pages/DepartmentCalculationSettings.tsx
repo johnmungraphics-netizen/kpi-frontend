@@ -45,9 +45,7 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import WarningIcon from '@mui/icons-material/Warning';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import BusinessIcon from '@mui/icons-material/Business';
-import axios from 'axios';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+import api from '../../../services/api';
 
 interface DepartmentFeatures {
   id?: number;
@@ -101,12 +99,8 @@ const DepartmentCalculationSettings: React.FC = () => {
   const loadDepartments = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
       
-      const response = await axios.get(`${API_URL}/department-features/all`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
+      const response = await api.get('/department-features/all');
 
       setDepartments(response.data);
 
@@ -135,20 +129,12 @@ const DepartmentCalculationSettings: React.FC = () => {
   ): Promise<boolean> => {
     try {
       setSaving(true);
-      const token = localStorage.getItem('token');
       
-
-      
-      await axios.put(
-        `${API_URL}/department-features/${departmentId}`,
-        features,
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
+      await api.put(
+        `/department-features/${departmentId}`,
+        features
       );
 
-
-      
       // Reload departments to get updated data
       await loadDepartments();
       return true;

@@ -6,10 +6,8 @@
 
 import { useState, useEffect } from 'react';
 import { useToast } from '../context/ToastContext';
-import axios from 'axios';
+import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 export interface DepartmentFeatures {
   id?: number;
@@ -42,20 +40,15 @@ export const useDepartmentFeatures = (kpiId?: number, initialData?: DepartmentFe
     try {
       setLoading(true);
       setError(null);
-
-      const token = localStorage.getItem('token');
       
-      let endpoint = `${API_URL}/department-features/my-department`;
+      let endpoint = '/department-features/my-department';
       
       // If kpiId is provided, fetch features for that KPI's employee department
       if (kpiId) {
-        endpoint = `${API_URL}/department-features/kpi/${kpiId}`;
+        endpoint = `/department-features/kpi/${kpiId}`;
       }
 
-      const response = await axios.get(endpoint, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
+      const response = await api.get(endpoint);
 
       setFeatures(response.data);
     } catch (err: any) {
@@ -91,15 +84,10 @@ export const useDepartmentFeatures = (kpiId?: number, initialData?: DepartmentFe
       setLoading(true);
       setError(null);
 
-      const token = localStorage.getItem('token');
-      const response = await axios.put(
-        `${API_URL}/department-features/${departmentId}`,
-        updatedFeatures,
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
+      const response = await api.put(
+        `/department-features/${departmentId}`,
+        updatedFeatures
       );
-
 
       setFeatures(response.data.features);
       return true;
@@ -177,16 +165,7 @@ export const useDepartmentFeatures = (kpiId?: number, initialData?: DepartmentFe
    */
   const fetchDepartmentFeaturesById = async (departmentId: number): Promise<DepartmentFeatures | null> => {
     try {
-      const token = localStorage.getItem('token');
-      // Use the existing /:departmentId endpoint
-      const endpoint = `${API_URL}/department-features/${departmentId}`;
-
-
-      
-      const response = await axios.get(endpoint, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
+      const response = await api.get(`/department-features/${departmentId}`);
 
       return response.data;
     } catch (err: any) {

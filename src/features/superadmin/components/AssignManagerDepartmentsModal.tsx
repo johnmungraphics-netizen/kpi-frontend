@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FiSave } from 'react-icons/fi';
 import { Modal } from '../../../components/common';
+import { useToast } from '../../../context/ToastContext';
 
 interface AssignManagerDepartmentsModalProps {
   isOpen: boolean;
@@ -32,6 +33,7 @@ export const AssignManagerDepartmentsModal: React.FC<AssignManagerDepartmentsMod
   const [saving, setSaving] = useState(false);
   const [selectedDepartments, setSelectedDepartments] = useState<number[]>([]);
 
+  const toast = useToast();
   useEffect(() => {
     if (manager) {
       // Fetch current departments for this manager
