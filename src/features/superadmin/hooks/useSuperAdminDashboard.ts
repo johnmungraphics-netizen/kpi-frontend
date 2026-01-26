@@ -29,18 +29,10 @@ export const useSuperAdminDashboard = () => {
 
   const fetchDashboardData = async () => {
     try {
-
       setLoading(true);
-      const [statsData, companiesData] = await Promise.all([
-        superAdminDashboardService.fetchDashboardStats(),
-        superAdminDashboardService.fetchRecentCompanies(5),
-      ]);
-      
-
-
-      
-      setStats(statsData);
-      setRecentCompanies(companiesData);
+      const { stats, companies } = await superAdminDashboardService.fetchDashboardData();
+      setStats(stats);
+      setRecentCompanies(companies);
     } catch (err: any) {
       toast.error('Failed to load dashboard data. Please try again.');
       setError(err.response?.data?.error || 'Failed to load dashboard data');

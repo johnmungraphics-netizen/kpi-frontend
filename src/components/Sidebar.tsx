@@ -105,10 +105,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, initialKpis, initial
     }
   };
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
+  const handleLogout = async () => {
     onClose();
+    try {
+      await logout();
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+    navigate('/login');
   };
 
   interface NavItem {
