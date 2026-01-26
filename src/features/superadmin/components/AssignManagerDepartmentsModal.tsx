@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { FiSave } from 'react-icons/fi';
+import { useToast } from '../../../context/ToastContext';
 import { Modal } from '../../../components/common';
+import api from '../../../services/api';
 
 interface AssignManagerDepartmentsModalProps {
   isOpen: boolean;
@@ -29,6 +31,7 @@ export const AssignManagerDepartmentsModal: React.FC<AssignManagerDepartmentsMod
   departments,
   onSave,
 }) => {
+  const toast = useToast();
   const [saving, setSaving] = useState(false);
   const [selectedDepartments, setSelectedDepartments] = useState<number[]>([]);
 
@@ -43,15 +46,10 @@ export const AssignManagerDepartmentsModal: React.FC<AssignManagerDepartmentsMod
     if (!manager) return;
     
     try {
-      const response = await fetch(`/api/users/${manager.id}/departments`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
-      const data = await response.json();
-      setSelectedDepartments(data.department_ids || []);
+      const response = await api.get(`/users/${manager.id}/departments`);
+      setSelectedDepartments(response.data.department_ids || []);
     } catch (error) {
-      toast.error('Failed to fetch manager departments. Please try again.');
+      toast.error('Unable to load manager departments. Please try again.');
       setSelectedDepartments([]);
     }
   };

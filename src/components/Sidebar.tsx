@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import api from '../services/api';
 import { isManager, isEmployee, isHR, isSuperAdmin } from '../utils/roleUtils';
 import {
@@ -105,12 +106,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, initialKpis, initial
     }
   };
 
+  const toast = useToast();
+  
   const handleLogout = async () => {
     onClose();
     try {
       await logout();
     } catch (error) {
-      console.error('Logout error:', error);
+      toast.error('Unable to logout. Please try again or refresh the page.');
     }
     navigate('/login');
   };

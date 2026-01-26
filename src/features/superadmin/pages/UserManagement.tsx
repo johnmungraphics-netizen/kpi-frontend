@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { FiArrowLeft, FiUser, FiSearch, FiFilter, FiCheckCircle, FiXCircle, FiTrash2, FiEdit, FiUsers, FiPlus } from 'react-icons/fi';
+import { FiArrowLeft, FiUser, FiSearch, FiFilter, FiCheckCircle, FiXCircle, FiTrash2, FiEdit, FiUsers, FiPlus, FiUpload } from 'react-icons/fi';
 import { useUserManagement } from '../hooks';
-import { EditUserModal, AssignManagerDepartmentsModal, AddUserModal } from '../components';
+import { EditUserModal, AssignManagerDepartmentsModal, AddUserModal, BulkUploadEmployeesModal } from '../components';
 import { useSearchParams } from 'react-router-dom';
 
 const UserManagement: React.FC = () => {
   const [searchParams] = useSearchParams();
   const [showAddUserModal, setShowAddUserModal] = useState(false);
+  const [showBulkUploadModal, setShowBulkUploadModal] = useState(false);
   
   const {
     users,
@@ -136,17 +137,31 @@ const UserManagement: React.FC = () => {
           <h2 className="text-lg font-semibold text-gray-900">
             All Users ({users.length})
           </h2>
-          <button
-            onClick={() => setShowAddUserModal(true)}
-            disabled={!companyFilter || !roleFilter}
-            className="flex items-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
-            title={!companyFilter || !roleFilter ? 'Please select company and role first' : ''}
-          >
-            <FiPlus className="text-lg" />
-            <span>
-              Add {roleFilter === '4' ? 'Employee' : roleFilter === '2' ? 'Manager' : roleFilter === '3' ? 'HR' : 'User'}
-            </span>
-          </button>
+          <div className="flex items-center space-x-3">
+            {/* Show bulk upload button only for employees */}
+            {roleFilter === '4' && companyFilter && (
+              <button
+                onClick={() => setShowBulkUploadModal(true)}
+                disabled={!companyFilter}
+                className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                title={!companyFilter ? 'Please select a company first' : 'Bulk upload employees from Excel'}
+              >
+                <FiUpload className="text-lg" />
+                <span>Bulk Upload</span>
+              </button>
+            )}
+            <button
+              onClick={() => setShowAddUserModal(true)}
+              disabled={!companyFilter || !roleFilter}
+              className="flex items-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+              title={!companyFilter || !roleFilter ? 'Please select company and role first' : ''}
+            >
+              <FiPlus className="text-lg" />
+              <span>
+                Add {roleFilter === '4' ? 'Employee' : roleFilter === '2' ? 'Manager' : roleFilter === '3' ? 'HR' : 'User'}
+              </span>
+            </button>
+          </div>
         </div>
 
         <div className="overflow-x-auto">
@@ -272,6 +287,18 @@ const UserManagement: React.FC = () => {
         manager={assigningManager}
         departments={departments}
         onSave={handleSaveManagerDepartments}
+      />
+
+      {/* Bulk Upload Modal */}
+      <BulkUploadEmployeesModal
+        isOpen={showBulkUploadModal}
+        onClose={() => setShowBulkUploadModal(false)}
+        onSuccess={() => {
+          fetchUsers();
+          setShowBulkUploadModal(false);
+        }}
+        companyId={parseInt(companyFilter)}
+        companyName={companies.find(c => c.id === parseInt(companyFilter))?.name || ''}
       />
 
       {/* Add User Modal */}

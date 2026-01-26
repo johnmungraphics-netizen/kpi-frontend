@@ -19,16 +19,13 @@ export interface CompanyFormData {
 export const companyService = {
   fetchCompanies: async (): Promise<Company[]> => {
     try {
-
       const response = await api.get('/companies/list');
 
       const companies = response.data.companies || response.data.data?.companies || [];
 
       return companies;
     } catch (error: any) {
-      if (typeof window !== 'undefined' && window.toast) {
-        window.toast.error('Failed to fetch companies. Please try again.');
-      }
+      // Error will be handled by the calling component
       throw error;
     }
   },

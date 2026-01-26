@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { useAuth } from './AuthContext';
 import { isEmployee } from '../utils/roleUtils';
+import api from '../services/api';
 
 interface EmployeeDataContextType {
   sharedKpis: any[];
@@ -28,38 +29,25 @@ export const EmployeeDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
         setIsLoading(true);
         
         try {
-          const token = localStorage.getItem('token');
-          const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-          
-          
           const [kpisRes, reviewsRes, deptFeaturesRes] = await Promise.all([
-            fetch(`${apiUrl}/kpis`, {
-              headers: { Authorization: `Bearer ${token}` }
-            }),
-            fetch(`${apiUrl}/kpi-review`, {
-              headers: { Authorization: `Bearer ${token}` }
-            }),
-            fetch(`${apiUrl}/department-features/my-department`, {
-              headers: { Authorization: `Bearer ${token}` }
-            })
+            api.get('/kpis'),
+            api.get('/kpi-review'),
+            api.get('/department-features/my-department')
           ]);
-
-          const kpisData = await kpisRes.json();
-          const reviewsData = await reviewsRes.json();
-          const deptFeaturesData = await deptFeaturesRes.json();
 
          
 
-          const kpis = kpisData.data?.kpis || kpisData.kpis || [];
-          const reviews = reviewsData.reviews || [];
+          const kpis = kpisRes.data.data?.kpis || kpisRes.data.kpis || [];
+          const reviews = reviewsRes.data.reviews || [];
 
           
 
           setSharedKpis(kpis);
           setSharedReviews(reviews);
-          setSharedDepartmentFeatures(deptFeaturesData);
+          setSharedDepartmentFeatures(deptFeaturesRes.data);
           setDataFetched(true);
         } catch (error) {
+          // Silently fail - data will be fetched again on next load
           fetchingRef.current = false;
         } finally {
           setIsLoading(false);

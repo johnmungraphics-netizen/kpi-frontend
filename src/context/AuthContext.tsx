@@ -27,34 +27,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const toast = useToast();
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    const storedCompanies = localStorage.getItem('companies');
-    const storedSelectedCompany = localStorage.getItem('selectedCompany');
-
-    // Load companies
-    if (storedCompanies) {
+    // Fetch current session from server using cookies
+    const fetchSession = async () => {
       try {
-        const parsedCompanies = JSON.parse(storedCompanies);
-        setCompanies(parsedCompanies);
-        setHasMultipleCompanies(parsedCompanies.length > 1);
-      } catch (error) {
-        toast.error('Failed to load companies from local storage. Please log in again.');
-      }
-    }
-
-    // Load user
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-        if (storedSelectedCompany) {
-          setSelectedCompany(JSON.parse(storedSelectedCompany));
+        const response = await api.get('/auth/session');
+        const { user: sessionUser, companies: sessionCompanies, selectedCompany: sessionSelectedCompany } = response.data;
+        
+        if (sessionUser) {
+          setUser(sessionUser);
+          setCompanies(sessionCompanies || []);
+          setHasMultipleCompanies(sessionCompanies?.length > 1);
+          setSelectedCompany(sessionSelectedCompany || null);
         }
       } catch (error) {
-        console.error('Failed to parse user:', error);
+        // No active session - user needs to login
+      } finally {
+        setIsLoading(false);
       }
-    }
+    };
 
-    setIsLoading(false);
+    fetchSession();
   }, []);
 
   const login = async (payrollNumber: string, password: string) => {
@@ -75,12 +67,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (userCompanies && userCompanies.length > 0) {
         const primary = userCompanies.find((c: Company) => c.is_primary) || userCompanies[0];
         setSelectedCompany(primary);
-        localStorage.setItem('selectedCompany', JSON.stringify(primary));
       }
-      
-      localStorage.setItem('user', JSON.stringify(newUser));
-      localStorage.setItem('companies', JSON.stringify(userCompanies || []));
-      localStorage.setItem('passwordChangeRequired', passwordChangeRequired ? 'true' : 'false');
       
       return { hasMultipleCompanies: multiple || false, passwordChangeRequired: passwordChangeRequired || false };
     } catch (error: any) {
@@ -106,12 +93,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (userCompanies && userCompanies.length > 0) {
         const primary = userCompanies.find((c: Company) => c.is_primary) || userCompanies[0];
         setSelectedCompany(primary);
-        localStorage.setItem('selectedCompany', JSON.stringify(primary));
       }
-      
-      localStorage.setItem('user', JSON.stringify(newUser));
-      localStorage.setItem('companies', JSON.stringify(userCompanies || []));
-      localStorage.setItem('passwordChangeRequired', passwordChangeRequired ? 'true' : 'false');
       
       return { hasMultipleCompanies: multiple || false, passwordChangeRequired: passwordChangeRequired || false };
     } catch (error: any) {
@@ -126,7 +108,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const company = companies.find(c => c.id === companyId);
       if (company) {
         setSelectedCompany(company);
-        localStorage.setItem('selectedCompany', JSON.stringify(company));
       }
     } catch (error: any) {
       throw new Error(error.response?.data?.error || 'Failed to select company');
@@ -149,13 +130,10 @@ const logout = async () => {
       });
       
       if (!response.ok) {
-        console.warn('Fetch logout response:', response.status);
+        // Silently handle logout response - user will be logged out anyway
       }
     } catch (fetchError) {
-      console.error('Both axios and fetch logout failed:', {
-        axiosError: error.message,
-        fetchError: (fetchError as Error).message,
-      });
+      // Silently handle logout errors - user will be logged out anyway
     }
   } finally {
     clearLocalState();
@@ -167,24 +145,17 @@ const clearLocalState = () => {
   setCompanies([]);
   setHasMultipleCompanies(false);
   setSelectedCompany(null);
-  localStorage.removeItem('user');
-  localStorage.removeItem('companies');
-  localStorage.removeItem('selectedCompany');
-  localStorage.removeItem('passwordChangeRequired');
   clearAuthCookies();
   
   try {
     window.dispatchEvent(new Event('auth:logout'));
   } catch (e) {
-    console.error('Failed to dispatch logout event:', e);
+    // Silently handle event dispatch error
   }
 };
 
   const updateUser = (updatedUser: User | null) => {
     setUser(updatedUser);
-    if (updatedUser) {
-      localStorage.setItem('user', JSON.stringify(updatedUser));
-    }
   };
 
   return (
