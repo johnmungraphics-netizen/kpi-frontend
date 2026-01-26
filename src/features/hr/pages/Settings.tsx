@@ -102,7 +102,6 @@ const Settings: React.FC = () => {
       
       setRatingOptions(ratingOptionsRes.data.rating_options || []);
     } catch (error) {
-      console.error('❌ [Settings] Error fetching settings:', error);
       toast.error('Failed to load settings');
     } finally {
       setLoading(false);
@@ -113,7 +112,6 @@ const Settings: React.FC = () => {
 
     // Validate required fields
     if (!setting.start_date || !setting.end_date) {
-      console.error('❌ [FRONTEND] Missing date fields:', { start_date: setting.start_date, end_date: setting.end_date });
       toast.warning('Please enter both start date and end date');
       return;
     }
@@ -153,9 +151,7 @@ const Settings: React.FC = () => {
       setPeriodSettings(updated);
       toast.success('Period setting saved successfully!');
     } catch (error: any) {
-      console.error('❌ [FRONTEND] Error saving period setting:', error);
-      console.error('❌ [FRONTEND] Error response:', error.response?.data);
-      console.error('❌ [FRONTEND] Error status:', error.response?.status);
+     
       toast.error(error.response?.data?.error || error.response?.data?.details || 'Error saving period setting');
     } finally {
       setSaving(false);
@@ -176,7 +172,6 @@ const Settings: React.FC = () => {
       // Fix: Filter by id to ensure only the specific item is removed
       setPeriodSettings(prev => prev.filter(s => s.id !== id));
     } catch (error) {
-      console.error('Error deleting period setting:', error);
       toast.error('Error deleting period setting');
     }
   };
@@ -206,7 +201,6 @@ const Settings: React.FC = () => {
       }
       setReminderSettings(updated);
     } catch (error) {
-      console.error('Error saving reminder setting:', error);
       toast.error('Error saving reminder setting');
     } finally {
       setSaving(false);
@@ -226,7 +220,6 @@ const Settings: React.FC = () => {
       await api.delete(`/settings/reminder-settings/${id}`);
       setReminderSettings(reminderSettings.filter(s => s.id !== id));
     } catch (error) {
-      console.error('Error deleting reminder setting:', error);
       toast.error('Error deleting reminder setting');
     }
   };
@@ -249,7 +242,6 @@ const Settings: React.FC = () => {
       await api.post('/settings/daily-reminders', dailyReminderSetting);
       toast.success('Daily reminder settings saved successfully!');
     } catch (error) {
-      console.error('Error saving daily reminder settings:', error);
       toast.error('Error saving daily reminder settings');
     } finally {
       setSaving(false);
@@ -293,9 +285,7 @@ const Settings: React.FC = () => {
       setRatingOptions(updated);
       toast.success('Rating option saved successfully!');
     } catch (error: any) {
-      console.error('❌ [Settings] Error saving rating option:', error);
-      console.error('❌ [Settings] Error response:', error.response);
-      console.error('❌ [Settings] Error data:', error.response?.data);
+     
       const errorMessage = error.response?.data?.error || error.response?.data?.details || error.message || 'Error saving rating option';
       toast.error(errorMessage);
     } finally {
@@ -317,7 +307,6 @@ const Settings: React.FC = () => {
       setRatingOptions(prev => prev.filter(opt => opt.id !== id));
       toast.success('Rating option deleted successfully!');
     } catch (error) {
-      console.error('Error deleting rating option:', error);
       toast.error('Error deleting rating option');
     }
   };
@@ -814,7 +803,6 @@ const Settings: React.FC = () => {
                       });
                       toast.success('Email notification settings saved successfully!');
                     } catch (error: any) {
-                      console.error('Error saving email notification settings:', error);
                       toast.error(error.response?.data?.error || 'Error saving settings');
                     } finally {
                       setSaving(false);

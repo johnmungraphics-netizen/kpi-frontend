@@ -67,7 +67,6 @@ const AssignManagerDepartments: React.FC = () => {
         setSelectedCompany(companiesData[0].id.toString());
       }
     } catch (error: any) {
-      console.error('[AssignManagerDepartments] Error fetching companies:', error);
       toast.error(error.response?.data?.error || 'Failed to load companies');
     } finally {
       setLoading(false);
@@ -98,7 +97,6 @@ const AssignManagerDepartments: React.FC = () => {
       setSelectedDepartments(new Set());
       setCurrentAssignments([]);
     } catch (error: any) {
-      console.error('[AssignManagerDepartments] Error fetching data:', error);
       toast.error('Failed to load managers and departments');
       setManagers([]);
       setDepartments([]);
@@ -124,8 +122,7 @@ const AssignManagerDepartments: React.FC = () => {
       setSelectedDepartments(departmentIds);
 
     } catch (error: any) {
-      console.error('[AssignManagerDepartments] Error fetching assignments:', error.message);
-      console.error('[AssignManagerDepartments] Error details:', error.response?.data || error);
+      toast.error('Failed to fetch manager assignments.');
       
       // If no assignments found (404), just clear the selection
       if (error.response?.status === 404) {
@@ -172,7 +169,6 @@ const AssignManagerDepartments: React.FC = () => {
       await new Promise(resolve => setTimeout(resolve, 500));
       await fetchManagerAssignments();
     } catch (error: any) {
-      console.error('[AssignManagerDepartments] Error saving assignments:', error);
       toast.error(error.response?.data?.error || 'Failed to assign departments');
     } finally {
       setSaving(false);

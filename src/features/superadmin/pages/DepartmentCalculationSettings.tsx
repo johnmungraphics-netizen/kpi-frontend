@@ -5,6 +5,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { useToast } from '../../../context/ToastContext';
 import {
   Box,
   Card,
@@ -82,6 +83,7 @@ interface Company {
 }
 
 const DepartmentCalculationSettings: React.FC = () => {
+  const toast = useToast();
   const [departments, setDepartments] = useState<DepartmentFeatures[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [selectedCompanyFilter, setSelectedCompanyFilter] = useState<number | 'all'>('all');
@@ -118,7 +120,7 @@ const DepartmentCalculationSettings: React.FC = () => {
       
       setCompanies(uniqueCompanies);
     } catch (error) {
-      console.error('❌ [DepartmentCalculationSettings] Error loading departments:', error);
+      toast.error('Failed to load departments. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -151,7 +153,7 @@ const DepartmentCalculationSettings: React.FC = () => {
       await loadDepartments();
       return true;
     } catch (error) {
-      console.error('❌ [DepartmentCalculationSettings] Error saving features:', error);
+      toast.error('Failed to save department features. Please try again.');
       return false;
     } finally {
       setSaving(false);
@@ -266,7 +268,7 @@ const DepartmentCalculationSettings: React.FC = () => {
 
       handleClose();
     } else {
-      console.error('[DepartmentCalculationSettings] Save failed');
+      toast.error('Failed to save department features.');
     }
   };
 

@@ -30,7 +30,7 @@ export const AddDepartmentModal: React.FC<AddDepartmentModalProps> = ({
       setName('');
       onClose();
     } catch (error) {
-      console.error('Error saving department:', error);
+      toast.error('Failed to save department. Please try again.');
     } finally {
       setSaving(false);
     }

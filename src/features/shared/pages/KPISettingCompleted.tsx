@@ -42,7 +42,9 @@ const KPISettingCompleted: React.FC = () => {
         setSelectedPeriodId(periods[0].id);
       }
     } catch (error) {
-      console.error('Error fetching available periods:', error);
+      if (typeof window !== 'undefined' && window.toast) {
+        window.toast.error('Could not fetch available periods.');
+      }
     }
   };
 
@@ -58,12 +60,9 @@ const KPISettingCompleted: React.FC = () => {
           status: 'acknowledged', // Filter for acknowledged status
         }
       }).catch(err => {
-        console.error('❌ [KPISettingCompleted] Error fetching acknowledged KPIs:', err);
-        console.error('❌ [KPISettingCompleted] Error details:', {
-          message: err.message,
-          response: err.response?.data,
-          status: err.response?.status
-        });
+        if (typeof window !== 'undefined' && window.toast) {
+          window.toast.error('Could not fetch acknowledged KPIs.');
+        }
         return { data: { kpis: [] } };
       });
 
@@ -72,10 +71,10 @@ const KPISettingCompleted: React.FC = () => {
       // Filter for acknowledged status on frontend as well (double-check)
       const allKpis = kpisRes.data.data?.kpis || kpisRes.data.kpis || [];
       
-      if (allKpis.length > 0) {
-      } else {
-        console.warn('⚠️ [KPISettingCompleted] No KPIs returned from API');
-      }
+      // if (allKpis.length > 0) {
+      // } else {
+      //   // No KPIs returned from API
+      // }
 
       const acknowledgedKPIs = allKpis.filter((kpi: KPI) => kpi.status === 'acknowledged');
 
@@ -83,7 +82,9 @@ const KPISettingCompleted: React.FC = () => {
       setKpis(acknowledgedKPIs);
 
     } catch (error) {
-      console.error('❌ [KPISettingCompleted] Error fetching acknowledged KPIs:', error);
+      if (typeof window !== 'undefined' && window.toast) {
+        window.toast.error('Could not fetch acknowledged KPIs.');
+      }
     } finally {
       setLoading(false);
 
@@ -106,20 +107,9 @@ const KPISettingCompleted: React.FC = () => {
 
   // Add logging for filtered results
 
-  if (kpis.length > 0 && settingCompletedKPIs.length === 0) {
-    console.warn('⚠️ [KPISettingCompleted] KPIs exist but none match filters!');
-    console.warn('📋 [KPISettingCompleted] Sample KPI for comparison:', {
-      period: kpis[0]?.period,
-      quarter: kpis[0]?.quarter,
-      year: kpis[0]?.year,
-      employee_name: kpis[0]?.employee_name
-    });
-    console.warn('🔍 [KPISettingCompleted] Current filters:', {
-      kpiType,
-      selectedPeriodId,
-      selectedPeriod: availablePeriods.find(p => p.id === selectedPeriodId)
-    });
-  }
+  // if (kpis.length > 0 && settingCompletedKPIs.length === 0) {
+  //   // Sample KPI for comparison and current filters (developer log removed)
+  // }
 
   // UPDATED: Check if KPI was ever rejected
   const getStatus = (): { status: string; color: string } => {
@@ -153,7 +143,6 @@ const KPISettingCompleted: React.FC = () => {
       link.remove();
       window.URL.revokeObjectURL(url);
     } catch (error: any) {
-      console.error('Error downloading PDF:', error);
       toast.error(error.response?.data?.error || 'Failed to download PDF');
     } finally {
       setDownloading(null);

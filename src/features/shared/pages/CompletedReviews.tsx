@@ -60,7 +60,7 @@ const CompletedReviews: React.FC = () => {
         setSelectedPeriodId(yearly[0].id);
       }
     } catch (error) {
-      console.error('Error fetching available periods:', error);
+      toast.error('Could not fetch available periods.');
     }
   };
 
@@ -75,7 +75,7 @@ const CompletedReviews: React.FC = () => {
       const fetchedKpis = kpisRes.data?.data?.kpis || kpisRes.data?.kpis || [];
       setKpis(fetchedKpis);
     } catch (error) {
-      console.error('Error fetching data:', error);
+      toast.error('Could not fetch completed reviews.');
     } finally {
       setLoading(false);
     }
@@ -147,7 +147,6 @@ const CompletedReviews: React.FC = () => {
       link.remove();
       window.URL.revokeObjectURL(url);
     } catch (error: any) {
-      console.error('Error downloading PDF:', error);
       toast.error(error.response?.data?.error || 'Failed to download PDF');
     } finally {
       setDownloading(null);
@@ -469,7 +468,7 @@ const CompletedReviews: React.FC = () => {
                               
                               navigate(path);
                               
-                              console.log('✅ [CompletedReviews] Navigate function called');
+                              // navigation log removed
                             }}
                             className="flex items-center space-x-1 text-purple-600 hover:text-purple-700 font-medium text-sm"
                           >

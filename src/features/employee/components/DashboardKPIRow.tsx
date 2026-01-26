@@ -114,7 +114,9 @@ export const DashboardKPIRow: React.FC<DashboardKPIRowProps> = ({
                   <Button
                     variant="primary"
                     size="sm"
-                    onClick={() => onConfirm(review.id)}
+                    onClick={() => {
+                      onConfirm(review.id);
+                    }}
                   >
                     Confirm
                   </Button>

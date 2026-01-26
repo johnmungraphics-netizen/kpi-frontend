@@ -5,6 +5,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useToast } from '../../../context/ToastContext';
 import { useNavigate } from 'react-router-dom';
 import api from '../../../services/api';
 import { User } from '../../../types';
@@ -48,6 +49,7 @@ export const useManagerEmployeeSelection = (): UseManagerEmployeeSelectionReturn
     fetchReviews();
   }, []);
 
+  const toast = useToast();
   // Reset to page 1 when search query changes
   useEffect(() => {
     setCurrentPage(1);
@@ -92,7 +94,7 @@ export const useManagerEmployeeSelection = (): UseManagerEmployeeSelectionReturn
       const reviews = response.data.reviews || response.data.data || [];
       setReviews(reviews);
     } catch (error) {
-      console.error('[useManagerEmployeeSelection] Error fetching reviews:', error);
+      toast.error('Server error. Please try reloading or try later.');
     }
   };
 

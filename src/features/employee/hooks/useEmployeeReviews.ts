@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useToast } from '../../../context/ToastContext';
 import { useNavigate } from 'react-router-dom';
 import { KPI, KPIReview } from '../../../types';
 import api from '../../../services/api';
@@ -17,6 +18,7 @@ export const useEmployeeReviews = () => {
   const [error, setError] = useState<string | null>(null);
   const { features } = useCompanyFeatures();
 
+  const toast = useToast();
   useEffect(() => {
     fetchReviewPendingKPIs();
   }, []);
@@ -82,7 +84,7 @@ export const useEmployeeReviews = () => {
       setKpis(needReviewKPIs);
       setReviews(reviewsList);
     } catch (err) {
-      console.error('❌ [useEmployeeReviews] Error fetching review pending KPIs:', err);
+      toast.error('Could not load your review pending KPIs. Please try again.');
       setError('Failed to load review pending KPIs');
     } finally {
       setLoading(false);

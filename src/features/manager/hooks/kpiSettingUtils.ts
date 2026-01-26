@@ -199,7 +199,6 @@ export const loadDraftFromStorage = (employeeId: string): Partial<KPIFormData> |
 
     return draftData;
   } catch (error) {
-    console.error('Error loading draft:', error);
     return null;
   }
 };

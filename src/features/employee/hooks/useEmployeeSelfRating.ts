@@ -52,7 +52,7 @@ export const useEmployeeSelfRating = () => {
     if (kpiId) {
       fetchKPIDetails();
     } else {
-      console.error('❌ [useEmployeeSelfRating] No kpiId in useEffect');
+      // No kpiId in useEffect (log removed)
     }
   }, [kpiId]);
 
@@ -65,7 +65,6 @@ export const useEmployeeSelfRating = () => {
 
   const fetchKPIDetails = async () => {
     if (!kpiId) {
-      console.error('❌ [useEmployeeSelfRating] No kpiId provided');
       return;
     }
 
@@ -83,7 +82,6 @@ export const useEmployeeSelfRating = () => {
     
       
       if (!data) {
-        console.error('❌ [useEmployeeSelfRating] No KPI data found in response');
         throw new Error('No KPI data found in response');
       }
       
@@ -130,7 +128,9 @@ export const useEmployeeSelfRating = () => {
             }
           }
         } catch (reviewError: any) {
-          console.warn('⚠️ [useEmployeeSelfRating] Could not fetch review data (may not exist yet):', reviewError.message);
+          if (typeof window !== 'undefined' && window.toast) {
+            window.toast.error('Could not load review data. Please try again later.');
+          }
           // It's okay if review doesn't exist yet - user might be doing first-time rating
         }
       } 

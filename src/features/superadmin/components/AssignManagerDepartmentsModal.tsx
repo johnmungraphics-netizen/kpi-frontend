@@ -51,7 +51,7 @@ export const AssignManagerDepartmentsModal: React.FC<AssignManagerDepartmentsMod
       const data = await response.json();
       setSelectedDepartments(data.department_ids || []);
     } catch (error) {
-      console.error('Error fetching manager departments:', error);
+      toast.error('Failed to fetch manager departments. Please try again.');
       setSelectedDepartments([]);
     }
   };
@@ -75,7 +75,7 @@ export const AssignManagerDepartmentsModal: React.FC<AssignManagerDepartmentsMod
       await onSave(manager.id, selectedDepartments);
       onClose();
     } catch (error) {
-      console.error('Error assigning departments:', error);
+      toast.error('Failed to assign departments. Please try again.');
     } finally {
       setSaving(false);
     }

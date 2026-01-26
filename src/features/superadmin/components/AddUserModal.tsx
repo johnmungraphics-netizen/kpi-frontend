@@ -87,7 +87,7 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onSuccess,
 
       setDepartments(depts);
     } catch (err: any) {
-      console.error('[AddUserModal] ❌ Failed to fetch departments:', err);
+      toast.error('Failed to load departments. Please try again.');
       setError('Failed to load departments');
     }
   };
@@ -113,7 +113,7 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onSuccess,
         setFormData(prev => ({ ...prev, manager_id: '' }));
       }
     } catch (err: any) {
-      console.error('[AddUserModal] ❌ Failed to fetch department managers:', err);
+      toast.error('Failed to load department managers. Please try again.');
       setManagers([]);
     }
   };
@@ -220,7 +220,6 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onSuccess,
 
       onSuccess();
     } catch (err: any) {
-      console.error('[AddUserModal] ❌ Failed to create user:', err);
       const errorMsg = err.response?.data?.message || err.message || 'Failed to create user';
       setError(errorMsg);
       toast.error(errorMsg);

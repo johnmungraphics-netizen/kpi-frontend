@@ -38,11 +38,6 @@ export const fetchDepartments = createAsyncThunk(
       const departments = response.data.data?.departments || response.data.departments || [];
       return { departments };
     } catch (error: any) {
-      console.error('[departmentSlice] ❌ Failed to fetch departments:', {
-        status: error.response?.status,
-        message: error.response?.data?.message || error.message,
-        url: error.config?.url
-      });
       return rejectWithValue(error.response?.data?.message || 'Failed to fetch departments');
     }
   }
@@ -58,7 +53,6 @@ export const fetchDepartmentById = createAsyncThunk(
 
       return response.data;
     } catch (error: any) {
-      console.error('[departmentSlice] ❌ Failed to fetch department:', error);
       return rejectWithValue(error.response?.data?.message || 'Failed to fetch department');
     }
   }
@@ -129,7 +123,6 @@ const departmentSlice = createSlice({
           // Fallback for direct array format
           state.departments = action.payload;
         } else {
-          console.error('[departmentSlice] ⚠️ Invalid departments format:', action.payload);
           state.departments = [];
         }
 
@@ -137,7 +130,6 @@ const departmentSlice = createSlice({
       .addCase(fetchDepartments.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
-        console.error('[departmentSlice] ❌ fetchDepartments rejected:', action.payload);
       });
 
     // Fetch by ID

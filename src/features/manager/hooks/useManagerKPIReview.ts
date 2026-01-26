@@ -283,7 +283,9 @@ export const useManagerKPIReview = (): UseManagerKPIReviewReturn => {
           const kpiRes = await api.get(`/kpis/${reviewData.kpi_id}`);
           setKpi(kpiRes.data.kpi);
         } catch (error) {
-          console.error('Error fetching KPI:', error);
+          if (typeof window !== 'undefined' && window.toast) {
+            window.toast.error('Could not fetch KPI.');
+          }
         }
         setLoading(false);
         return;
@@ -434,7 +436,9 @@ export const useManagerKPIReview = (): UseManagerKPIReviewReturn => {
           setActualValues(mgrActualValues);
         }
       } catch (error) {
-        console.error('Error fetching KPI:', error);
+        if (typeof window !== 'undefined' && window.toast) {
+          window.toast.error('Could not fetch KPI.');
+        }
       }
       
       setOverallComment(reviewData.overall_comment || '');
@@ -449,7 +453,9 @@ export const useManagerKPIReview = (): UseManagerKPIReviewReturn => {
         setReviewDate(new Date(reviewData.manager_signed_at));
       }
     } catch (error) {
-      console.error('❌ [fetchReview] Error fetching review:', error);
+      if (typeof window !== 'undefined' && window.toast) {
+        window.toast.error('Could not fetch review.');
+      }
     } finally {
       setLoading(false);
     }
@@ -581,7 +587,6 @@ export const useManagerKPIReview = (): UseManagerKPIReviewReturn => {
           toast.error('Please provide ratings for all major accomplishments');
           return;
         }
-        console.log('✅ All accomplishments validated');
       }
 
     }
@@ -676,7 +681,6 @@ export const useManagerKPIReview = (): UseManagerKPIReviewReturn => {
           if (!item.comment || item.comment === '') warnings.push('MANAGER COMMENT');
           
           if (warnings.length > 0) {
-            console.warn(`⚠️ [Item ${item.item_id}] Missing data: ${warnings.join(', ')}`);
           } else {
 
           }
@@ -703,7 +707,6 @@ export const useManagerKPIReview = (): UseManagerKPIReviewReturn => {
            
           }
         } else {
-          console.warn('⚠️ [handleSubmit] Backend returned success=false:', response.data);
         }
 
       // Clear draft after successful submission

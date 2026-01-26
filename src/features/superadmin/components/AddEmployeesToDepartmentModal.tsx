@@ -38,7 +38,7 @@ export const AddEmployeesToDepartmentModal: React.FC<AddEmployeesToDepartmentMod
       });
       setEmployees(data);
     } catch (error) {
-      console.error('Error fetching employees:', error);
+      toast.error('Failed to fetch employees. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -67,7 +67,7 @@ export const AddEmployeesToDepartmentModal: React.FC<AddEmployeesToDepartmentMod
       setSelectedEmployees([]);
       onClose();
     } catch (error) {
-      console.error('Error saving employees:', error);
+      toast.error('Failed to save employees. Please try again.');
     } finally {
       setSaving(false);
     }

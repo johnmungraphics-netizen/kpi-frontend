@@ -131,7 +131,7 @@ const Employees: React.FC = () => {
         setManagers(managersData.map((m: any) => ({ id: m.id, name: m.name })));
       }
     } catch (err) {
-      console.error('[Employees] ❌ Failed to fetch managers:', err);
+      toast.error('Failed to fetch managers. Please try again.');
     }
   };
 

@@ -6,6 +6,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useToast } from '../../../context/ToastContext';
 import { useNavigate } from 'react-router-dom';
 import api from '../../../services/api';
 import { KPIReview, KPI } from '../../../types';
@@ -32,6 +33,7 @@ export const useManagerReviewsList = (): UseManagerReviewsListReturn => {
   const [reviews, setReviews] = useState<KPIReview[]>([]);
   const [acknowledgedKPIs, setAcknowledgedKPIs] = useState<KPI[]>([]);
   const [loading, setLoading] = useState(true);
+  const toast = useToast();
   const { features } = useCompanyFeatures();
   const { fetchDepartmentFeaturesById } = useDepartmentFeatures();
   
@@ -82,7 +84,7 @@ export const useManagerReviewsList = (): UseManagerReviewsListReturn => {
       setReviews(reviewsData);
       setAcknowledgedKPIs(acknowledgedKPIsData);
     } catch (error) {
-      console.error('❌ [useManagerReviewsList] Error fetching data:', error);
+      toast.error('Could not fetch manager reviews data. Please try again.');
     } finally {
       setLoading(false);
     }

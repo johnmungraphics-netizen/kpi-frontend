@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useToast } from '../../../context/ToastContext';
 import { useNavigate, useParams } from 'react-router-dom';
 import api from '../../../services/api';
 import { FiArrowLeft, FiUser, FiTrendingUp, FiCalendar, FiCheckCircle, FiFilter, FiAlertCircle } from 'react-icons/fi';
@@ -41,6 +42,7 @@ const EmployeePerformance: React.FC = () => {
   const { employeeId } = useParams<{ employeeId: string }>();
   const navigate = useNavigate();
   const [performanceData, setPerformanceData] = useState<PerformanceData[]>([]);
+  const toast = useToast();
   const [employeeInfo, setEmployeeInfo] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [periodFilter, setPeriodFilter] = useState<'all' | 'quarterly' | 'yearly'>('all');
@@ -74,7 +76,7 @@ const EmployeePerformance: React.FC = () => {
       setQuarterlyPeriods(quarterly);
       setYearlyPeriods(yearly);
     } catch (error) {
-      console.error('Error fetching available periods:', error);
+      toast.error('Could not fetch available periods. Please try again.');
     }
   };
 
@@ -124,7 +126,7 @@ const EmployeePerformance: React.FC = () => {
         setEmployeeInfo(empInfo);
       } 
     } catch (error: any) {
-      console.error('❌ [EmployeePerformance] Error fetching performance data:', error);
+      toast.error('Could not fetch performance data. Please try again.');
     } finally {
       setLoading(false);
     }

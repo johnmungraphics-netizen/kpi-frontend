@@ -147,7 +147,9 @@ export const useManagerKPITemplateForm = (): UseManagerKPITemplateFormReturn => 
       const response = await api.get('/settings/period-settings');
       setAvailablePeriods(response.data.settings || []);
     } catch (error) {
-      console.error('❌ [useManagerKPITemplateForm] Error fetching periods:', error);
+      if (typeof window !== 'undefined' && window.toast) {
+        window.toast.error('Could not fetch periods.');
+      }
     }
   };
 
@@ -158,7 +160,9 @@ export const useManagerKPITemplateForm = (): UseManagerKPITemplateFormReturn => 
      
       setDepartments(depts);
     } catch (error) {
-      console.error('❌ [useManagerKPITemplateForm] Error fetching departments:', error);
+      if (typeof window !== 'undefined' && window.toast) {
+        window.toast.error('Could not fetch departments.');
+      }
     }
   };
 
@@ -174,11 +178,15 @@ export const useManagerKPITemplateForm = (): UseManagerKPITemplateFormReturn => 
       setIsDepartmentTemplateEnabled(enabled);
       
       if (!enabled) {
-        console.warn('⚠️ [useManagerKPITemplateForm] Department does not have template titles enabled!');
+        if (typeof window !== 'undefined' && window.toast) {
+          window.toast.error('Template titles are not enabled for this department.');
+        }
         toast.warning('Template titles are not enabled for this department');
       }
     } catch (error) {
-      console.error('❌ [useManagerKPITemplateForm] Error fetching template titles:', error);
+      if (typeof window !== 'undefined' && window.toast) {
+        window.toast.error('Could not fetch template titles.');
+      }
       setTemplateTitles([]);
       setIsDepartmentTemplateEnabled(false);
     }

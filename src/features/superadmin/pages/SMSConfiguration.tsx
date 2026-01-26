@@ -58,7 +58,6 @@ const SMSConfiguration: React.FC = () => {
       // Fetch SMS configs for all companies
       await fetchAllConfigs(companiesList);
     } catch (error) {
-      console.error('Error fetching companies:', error);
       toast.error('Failed to load companies');
     } finally {
       setLoading(false);
@@ -117,7 +116,8 @@ const SMSConfiguration: React.FC = () => {
         });
       }
     } catch (error: any) {
-      console.error('Error fetching SMS config:', error);
+     
+       toast.error('Failed to load sms config');
       // Don't show error for missing config
       setConfig(null);
     }
@@ -149,7 +149,6 @@ const SMSConfiguration: React.FC = () => {
         setFormData({ ...formData, api_key: '', access_key: '' }); // Clear sensitive fields
       }
     } catch (error: any) {
-      console.error('Error saving SMS config:', error);
       toast.error(error.response?.data?.error || 'Failed to save SMS configuration');
     } finally {
       setSaving(false);
@@ -173,7 +172,6 @@ const SMSConfiguration: React.FC = () => {
         await fetchAllConfigs(companies); // Refresh list
       }
     } catch (error: any) {
-      console.error('Error toggling SMS config:', error);
       toast.error('Failed to update status');
     }
   };
@@ -201,7 +199,6 @@ const SMSConfiguration: React.FC = () => {
         toast.success('Test SMS sent successfully! Check your phone.');
       }
     } catch (error: any) {
-      console.error('Error testing SMS:', error);
       toast.error(error.response?.data?.error || 'Failed to send test SMS');
     } finally {
       setTesting(false);
@@ -237,7 +234,6 @@ const SMSConfiguration: React.FC = () => {
         setSelectedCompanyId(null);
       }
     } catch (error: any) {
-      console.error('Error deleting SMS config:', error);
       toast.error('Failed to delete SMS configuration');
     }
   };

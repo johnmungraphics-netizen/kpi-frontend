@@ -68,7 +68,7 @@ export const useManagerKPIDetails = () => {
         
           setReview(fullReview);
         } catch (reviewError) {
-          console.error('❌ [useManagerKPIDetails] Error fetching full review details:', reviewError);
+          toast.error('Failed to fetch full review details. Please try again.');
           // Fallback to the review from the list
           setReview(kpiReview);
         }
@@ -76,7 +76,6 @@ export const useManagerKPIDetails = () => {
         // Fetch ratings data for this review
         await fetchRatingsData(kpiReview.id);
       } else {
-        console.warn('⚠️ [useManagerKPIDetails] No review found for kpi_id:', parseInt(kpiId!));
       }
     } catch (error) {
     } finally {

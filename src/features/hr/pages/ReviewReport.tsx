@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useToast } from '../../../context/ToastContext';
 import { FiFilter, FiDownload, FiFileText } from 'react-icons/fi';
 import api from '../../../services/api';
 import { Button } from '../../../components/common';
@@ -34,6 +35,7 @@ interface ReviewReportData {
 
 const ReviewReport: React.FC = () => {
   const [loading, setLoading] = useState(false);
+  const toast = useToast();
   const [reportData, setReportData] = useState<ReviewReportData[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   
@@ -64,7 +66,7 @@ const ReviewReport: React.FC = () => {
       const response = await api.get('/departments');
       setDepartments(response.data.departments || []);
     } catch (error) {
-      console.error('[ReviewReport] ❌ Error fetching departments:', error);
+      toast.error('Could not fetch departments. Please try again.');
     }
   };
 
@@ -88,7 +90,7 @@ const ReviewReport: React.FC = () => {
         setSelectedPeriodId(yearly[0].id);
       }
     } catch (error) {
-      console.error('[ReviewReport] ❌ Error fetching available periods:', error);
+      toast.error('Could not fetch available periods. Please try again.');
     }
   };
 
@@ -133,7 +135,6 @@ const ReviewReport: React.FC = () => {
 
   const handleExport = () => {
     // TODO: Implement CSV export
-    console.log('[ReviewReport] 📥 Exporting report data...');
   };
 
   return (

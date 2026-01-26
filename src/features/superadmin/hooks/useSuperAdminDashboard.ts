@@ -34,7 +34,7 @@ export const useSuperAdminDashboard = () => {
       setStats(stats);
       setRecentCompanies(companies);
     } catch (err: any) {
-      console.error('[useSuperAdminDashboard] Error fetching dashboard data:', err);
+      toast.error('Failed to load dashboard data. Please try again.');
       setError(err.response?.data?.error || 'Failed to load dashboard data');
     } finally {
       setLoading(false);

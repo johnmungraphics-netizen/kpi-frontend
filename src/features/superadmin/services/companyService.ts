@@ -26,7 +26,9 @@ export const companyService = {
 
       return companies;
     } catch (error: any) {
-      console.error('[companyService] Error fetching companies:', error.message, error.response?.data);
+      if (typeof window !== 'undefined' && window.toast) {
+        window.toast.error('Failed to fetch companies. Please try again.');
+      }
       throw error;
     }
   },

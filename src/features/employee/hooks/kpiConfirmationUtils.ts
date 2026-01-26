@@ -37,7 +37,6 @@ export const parseItemRatingsFromReview = (review: KPIReviewConfirmation): Parse
     }
   } else {
     // No structured ratings present - return empty parsed result (consumer will show Not Rated)
-    console.warn('⚠️ [parseItemRatingsFromReview] No structured item_ratings present on review id', review.id);
   }
 
   return result;
