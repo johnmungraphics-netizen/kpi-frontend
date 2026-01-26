@@ -19,38 +19,32 @@ import {
   FiClipboard,
   FiFlag,
 } from 'react-icons/fi';
-import { RiMenuFold3Fill, RiMenuFold2Line } from 'react-icons/ri';
 
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
   initialKpis?: any[];
   initialReviews?: any[];
+  isCollapsed: boolean;
+  onToggleCollapse: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, initialKpis, initialReviews }) => {
+const Sidebar: React.FC<SidebarProps> = ({ 
+  isOpen, 
+  onClose, 
+  initialKpis, 
+  initialReviews,
+  isCollapsed,
+  onToggleCollapse 
+}) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const [pendingReviewsCount, setPendingReviewsCount] = useState<number>(0);
   const [pendingAcknowledgementsCount, setPendingAcknowledgementsCount] = useState<number>(0);
   const [pendingEmployeeReviewsCount, setPendingEmployeeReviewsCount] = useState<number>(0);
-  const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
-    const saved = localStorage.getItem('sidebarCollapsed');
-    return saved ? JSON.parse(saved) : false;
-  });
+  
   const isActive = (path: string) => location.pathname === path;
-
-  useEffect(() => {
-    localStorage.setItem('sidebarCollapsed', JSON.stringify(isCollapsed));
-    if (isCollapsed) {
-      document.body.classList.add('sidebar-collapsed');
-      document.body.classList.remove('sidebar-expanded');
-    } else {
-      document.body.classList.add('sidebar-expanded');
-      document.body.classList.remove('sidebar-collapsed');
-    }
-  }, [isCollapsed]);
 
   useEffect(() => {
     if (isManager(user)) {
@@ -232,9 +226,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, initialKpis, initial
         style={{ zIndex: 50 }}
       >
         <div className="flex flex-col h-full overflow-hidden">
-          {/* Logo & Toggle */}
-          <div className={`${isCollapsed ? 'p-4' : 'p-6'} bg-gray-50 border-b border-gray-200 flex items-center transition-all duration-300 flex-shrink-0 ${isCollapsed ? 'justify-center' : 'justify-between'}`}>
-            {!isCollapsed && (
+          {/* Logo Section - Always show logo */}
+          <div className={`${isCollapsed ? 'p-4' : 'p-6'} bg-gray-50 border-b border-gray-200 flex items-center justify-center transition-all duration-300 flex-shrink-0`}>
+            {isCollapsed ? (
+              <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden">
+                <img src="/ICTA.jpeg" alt="ICTA Logo" className="w-full h-full object-contain" />
+              </div>
+            ) : (
               <div className="flex items-center space-x-2 min-w-0">
                 <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
                   <img src="/ICTA.jpeg" alt="ICTA Logo" className="w-full h-full object-contain" />
@@ -245,24 +243,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, initialKpis, initial
                 </div>
               </div>
             )}
-            {isCollapsed && (
-              <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden">
-                <img src="/ICTA.jpeg" alt="ICTA Logo" className="w-full h-full object-contain" />
-              </div>
-            )}
-            
-            {/* Toggle Button */}
-            <button
-              onClick={() => setIsCollapsed(!isCollapsed)}
-              className="text-gray-600 hover:bg-gray-200 p-2 rounded-lg transition-colors flex-shrink-0 hidden lg:flex items-center justify-center"
-              title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            >
-              {isCollapsed ? (
-                <RiMenuFold2Line className="text-xl" />
-              ) : (
-                <RiMenuFold3Fill className="text-xl" />
-              )}
-            </button>
           </div>
 
           {/* Navigation */}
