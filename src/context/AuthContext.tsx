@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { User, Company } from '../types/index';
 import api, { clearAuthCookies } from '../services/api';
 
@@ -30,7 +30,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(false);
   }, []);
 
-  const login = async (payrollNumber: string, password: string) => {
+  const login = useCallback(async (payrollNumber: string, password: string) => {
     try {
       const response = await api.post('/auth/login', {
         payrollNumber,
@@ -54,9 +54,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error: any) {
       throw new Error(error.response?.data?.error || 'Login failed');
     }
-  };
+  }, [companies]);
 
-  const loginWithEmail = async (email: string, password: string) => {
+  const loginWithEmail = useCallback(async (email: string, password: string) => {
     try {
       const response = await api.post('/auth/login', {
         email,
@@ -80,9 +80,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error: any) {
       throw new Error(error.response?.data?.error || 'Login failed');
     }
-  };
+  }, [companies]);
 
-  const selectCompany = async (companyId: number) => {
+  const selectCompany = useCallback(async (companyId: number) => {
     try {
       await api.post('/auth/select-company', { companyId });
       
@@ -93,9 +93,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error: any) {
       throw new Error(error.response?.data?.error || 'Failed to select company');
     }
-  };
+  }, [companies]);
 
-const logout = async () => {
+  const logout = useCallback(async () => {
   try {
     // Try with axios first
     await api.post('/auth/logout');
@@ -119,9 +119,9 @@ const logout = async () => {
   } finally {
     clearLocalState();
   }
-};
+  }, []);
 
-const clearLocalState = () => {
+  const clearLocalState = useCallback(() => {
   setUser(null);
   setCompanies([]);
   setHasMultipleCompanies(false);
@@ -133,25 +133,30 @@ const clearLocalState = () => {
   } catch (e) {
     // Silently handle event dispatch error
   }
-};
+  }, []);
 
-  const updateUser = (updatedUser: User | null) => {
+  const updateUser = useCallback((updatedUser: User | null) => {
     setUser(updatedUser);
-  };
+  }, []);
 
-  return (
-    <AuthContext.Provider value={{ 
-      user, 
+  const contextValue = useMemo(
+    () => ({
+      user,
       companies,
       hasMultipleCompanies,
       selectedCompany,
-      login, 
-      loginWithEmail, 
+      login,
+      loginWithEmail,
       selectCompany,
-      logout, 
+      logout,
       isLoading,
-      setUser: updateUser
-    }}>
+      setUser: updateUser,
+    }),
+    [user, companies, hasMultipleCompanies, selectedCompany, login, loginWithEmail, selectCompany, logout, isLoading, updateUser]
+  );
+
+  return (
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );

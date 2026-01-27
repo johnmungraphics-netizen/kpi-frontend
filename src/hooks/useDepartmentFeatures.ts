@@ -42,17 +42,14 @@ export const useDepartmentFeatures = (kpiId?: number, initialData?: DepartmentFe
       setLoading(true);
       setError(null);
       
-      let endpoint = '/department-features/my-department';
-      
+      let endpoint = '';
+      let response;
       // If kpiId is provided, fetch features for that KPI's employee department
       if (kpiId) {
         endpoint = `/department-features/kpi/${kpiId}`;
+        response = await api.get(endpoint);
       }
-
-      const response = await api.get(endpoint);
-
-
-      setFeatures(response.data);
+      setFeatures(response?.data ?? null);
     } catch (err: any) {
       toast.error('Could not fetch department features. Please try again.');
       setError(err.response?.data?.error || 'Failed to fetch department features');
@@ -90,7 +87,6 @@ export const useDepartmentFeatures = (kpiId?: number, initialData?: DepartmentFe
         `/department-features/${departmentId}`,
         updatedFeatures
       );
-
 
       setFeatures(response.data.features);
       return true;
@@ -168,8 +164,7 @@ export const useDepartmentFeatures = (kpiId?: number, initialData?: DepartmentFe
    */
   const fetchDepartmentFeaturesById = async (departmentId: number): Promise<DepartmentFeatures | null> => {
     try {
-      const response = await api.get(`/department-features/${departmentId}`);
-
+      const response = await api.get(`/department-features/${departmentId}/details`);
 
       return response.data;
     } catch (err: any) {

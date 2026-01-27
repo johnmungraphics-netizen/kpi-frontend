@@ -132,8 +132,6 @@ const DepartmentCalculationSettings: React.FC = () => {
       
       await api.put(`/department-features/${departmentId}`, features);
 
-
-      
       // Reload departments to get updated data
       await loadDepartments();
       return true;

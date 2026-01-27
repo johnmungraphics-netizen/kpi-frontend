@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { FiSearch, FiBell, FiMenu, FiLogOut, FiUser, FiHome } from 'react-icons/fi';
+import { RiMenuFold3Fill, RiMenuFold2Line } from 'react-icons/ri';
 import { getRoleDisplayName } from '../utils/roleUtils';
 
 interface HeaderProps {
@@ -15,6 +16,8 @@ interface HeaderProps {
     onClick: () => void;
     icon?: React.ReactNode;
   };
+  isSidebarCollapsed?: boolean;
+  onToggleSidebar?: () => void;
 }
 
 const Header: React.FC<HeaderProps> = ({
@@ -23,6 +26,8 @@ const Header: React.FC<HeaderProps> = ({
   subtitle,
   showSearch = true,
   actionButton,
+  isSidebarCollapsed,
+  onToggleSidebar,
 }) => {
   const { user, logout, companies, hasMultipleCompanies, selectedCompany, selectCompany } = useAuth();
   const navigate = useNavigate();
@@ -48,12 +53,28 @@ const Header: React.FC<HeaderProps> = ({
         <div className="flex items-center justify-between">
           {/* Left side */}
           <div className="flex items-center space-x-4 flex-1">
+            {/* Mobile menu button */}
             <button
               onClick={onMenuClick}
               className="lg:hidden p-2 rounded-lg hover:bg-gray-100"
             >
               <FiMenu className="text-xl text-gray-700" />
             </button>
+
+            {/* Desktop sidebar toggle */}
+            {onToggleSidebar && (
+              <button
+                onClick={onToggleSidebar}
+                className="hidden lg:flex p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                title={isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              >
+                {isSidebarCollapsed ? (
+                  <RiMenuFold2Line className="text-xl text-gray-700" />
+                ) : (
+                  <RiMenuFold3Fill className="text-xl text-gray-700" />
+                )}
+              </button>
+            )}
 
             {title && (
               <div>
@@ -163,17 +184,6 @@ const Header: React.FC<HeaderProps> = ({
                 </div>
               )}
             </div>
-
-            {/* Action Button */}
-            {actionButton && (
-              <button
-                onClick={actionButton.onClick}
-                className="flex items-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-              >
-                {actionButton.icon}
-                <span>{actionButton.label}</span>
-              </button>
-            )}
 
             {/* Action Button */}
             {actionButton && (
