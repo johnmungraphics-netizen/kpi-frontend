@@ -140,9 +140,11 @@ export const managerService = {
    */
   fetchManagerDepartments: async (): Promise<ManagerDepartment[]> => {
     try {
+   
 
       const response = await api.get('/departments/manager-departments');
 
+   
       
       // Parse response - try multiple possible formats
       let departments = [];
@@ -152,11 +154,14 @@ export const managerService = {
         departments = response.data.departments;
       } else if (response.data.data && Array.isArray(response.data.data)) {
         departments = response.data.data;
+      } else if (response.data.data && response.data.data.departments && Array.isArray(response.data.data.departments)) {
+        departments = response.data.data.departments;
       }
       
 
       return departments;
     } catch (error) {
+      console.error('[managerService] Error fetching manager departments:', error);
       if (toast) toast.error('Server error. Please try reloading or try later.');
       return []; // Return empty array instead of throwing
     }

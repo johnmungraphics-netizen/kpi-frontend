@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../../context/AuthContext';
+import { useAppDispatch, useAppSelector } from '../../../store/hooks';
+import { selectCompany as selectCompanyAction } from '../../../store/slices/authSlice';
 import { FiHome, FiLogOut, FiCheckCircle } from 'react-icons/fi';
 
 const CompanySelection: React.FC = () => {
-  const { companies, selectCompany } = useAuth();
+  const dispatch = useAppDispatch();
+  const { companies, isLoading: reduxLoading } = useAppSelector((state) => state.auth);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
@@ -13,10 +15,10 @@ const CompanySelection: React.FC = () => {
     try {
       setLoading(true);
       setError('');
-      await selectCompany(companyId);
+      await dispatch(selectCompanyAction(companyId)).unwrap();
       navigate('/hr/dashboard');
     } catch (err: any) {
-      setError(err.message || 'Failed to select company');
+      setError(err || 'Failed to select company');
     } finally {
       setLoading(false);
     }

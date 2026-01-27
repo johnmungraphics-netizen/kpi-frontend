@@ -23,7 +23,7 @@ export const useEmployeeReviews = () => {
     fetchReviewPendingKPIs();
   }, []);
 
-  // Helper: Check if self-rating is enabled for a specific KPI based on its period
+  // Helper: Check if self-rating is enabled for a specific KPI based on its period and department features
   const isSelfRatingEnabledForKPI = (kpi: KPI): boolean => {
     if (kpi.id && kpiDeptFeaturesCache[kpi.id]) {
       const features = kpiDeptFeaturesCache[kpi.id];
@@ -48,13 +48,9 @@ export const useEmployeeReviews = () => {
         api.get('/kpi-review'),
       ]);
 
-    
-
       // Fix: Backend returns data in response.data.data.kpis or response.data.kpis
       const allKpis = kpisRes.data.data?.kpis || kpisRes.data.kpis || [];
       const reviewsList = reviewsRes.data.reviews || [];
-
-   
 
       // Filter KPIs that need employee action based on the same logic as dashboard
       const needReviewKPIs = allKpis.filter((kpi: KPI) => {

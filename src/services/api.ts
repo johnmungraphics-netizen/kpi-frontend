@@ -14,7 +14,8 @@ const api = axios.create({
   timeout: 15000,
 });
 
-let csrfToken: string | null = null;
+// Initialize CSRF token from sessionStorage (persists across page refreshes)
+let csrfToken: string | null = sessionStorage.getItem('csrfToken');
 let isRefreshing = false;
 let failedQueue: Array<{
   resolve: (value?: any) => void;
@@ -34,6 +35,11 @@ const processQueue = (error: any, token: string | null = null) => {
 
 export const setCSRFToken = (token: string | null) => {
   csrfToken = token;
+  if (token) {
+    sessionStorage.setItem('csrfToken', token);
+  } else {
+    sessionStorage.removeItem('csrfToken');
+  }
 };
 
 export const getCSRFToken = (): string | null => {
@@ -42,10 +48,12 @@ export const getCSRFToken = (): string | null => {
 
 export const clearAuthCookies = () => {
   setCSRFToken(null);
+  sessionStorage.removeItem('csrfToken');
 };
 
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
+ 
     if (csrfToken && config.headers && config.method !== 'get') {
       config.headers['x-csrf-token'] = csrfToken;
     }

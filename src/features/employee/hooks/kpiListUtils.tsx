@@ -8,7 +8,7 @@ export interface KPIStageInfo {
   icon: React.ReactNode;
 }
 
-export const getKPIStage = (kpi: KPI, reviews: KPIReview[]): KPIStageInfo => {
+export const getKPIStage = (kpi: KPI, reviews: KPIReview[], isSelfRatingEnabled: boolean = true): KPIStageInfo => {
   // Find review for this KPI
   const review = reviews.find(r => r.kpi_id === kpi.id);
 
@@ -21,6 +21,14 @@ export const getKPIStage = (kpi: KPI, reviews: KPIReview[]): KPIStageInfo => {
   }
 
   if (kpi.status === 'acknowledged' && !review) {
+    // If self-rating is disabled, show Manager Will Initiate Review
+    if (!isSelfRatingEnabled) {
+      return {
+        stage: 'Manager Will Initiate Review',
+        color: 'bg-blue-100 text-blue-700',
+        icon: <FiClock className="inline" />
+      };
+    }
     return {
       stage: 'KPI Acknowledged - Review Pending',
       color: 'bg-blue-100 text-blue-700',

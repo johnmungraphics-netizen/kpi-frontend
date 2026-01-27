@@ -46,7 +46,6 @@ export const useHRDashboard = () => {
 
   // Initial data fetch
   useEffect(() => {
-
     dispatch(fetchKPIs({}));
     dispatch(fetchDepartmentStatistics(filters));
     dispatch(fetchDepartments());

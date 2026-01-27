@@ -1,19 +1,19 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { FiTarget, FiClock, FiCheckCircle, FiEye, FiFileText, FiSearch, FiBell, FiEdit, FiInfo } from 'react-icons/fi';
 import PasswordChangeModal from '../../../components/PasswordChangeModal';
 import { StatsCard, StatusCard, Button } from '../../../components/common';
 import { useEmployeeDashboard } from '../hooks';
 import { DashboardKPIRow } from '../components';
 import { KPI, KPIReview } from '../../../types';
-import { useCompanyFeatures } from '../../../hooks/useCompanyFeatures';
+import { DepartmentFeatures } from '../../../hooks/useDepartmentFeatures';
+import api from '../../../services/api';
 
 interface EmployeeDashboardProps {
   sharedKpis?: KPI[];
   sharedReviews?: KPIReview[];
-  sharedDepartmentFeatures?: any;
 }
 
-const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({ sharedKpis, sharedReviews, sharedDepartmentFeatures }) => {
+const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({ sharedKpis, sharedReviews }) => {
 
   const {
     filteredKpis,
@@ -43,25 +43,100 @@ const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({ sharedKpis, share
     initialReviews: sharedReviews,
   });
 
- 
-  const { features, loading: featuresLoading } = useCompanyFeatures(undefined, sharedDepartmentFeatures);
+  // Cache for department features per KPI
+  const [kpiDeptFeaturesCache, setKpiDeptFeaturesCache] = useState<Record<number, DepartmentFeatures>>({});
+  const [featuresLoading, setFeaturesLoading] = useState(true);
+
+  // Fetch department features for all KPIs
+  useEffect(() => {
+    const fetchDepartmentFeatures = async () => {
+      if (filteredKpis.length === 0) {
+        setFeaturesLoading(false);
+        return;
+      }
+
+      const newCache: Record<number, DepartmentFeatures> = {};
+      await Promise.all(
+        filteredKpis.map(async (kpi: KPI) => {
+          if (kpi.id) {
+            try {
+              const response = await api.get(`/department-features/kpi/${kpi.id}`);
+              if (response.data) {
+                newCache[kpi.id] = response.data;
+              }
+            } catch (err) {
+              // Set default features on error
+              newCache[kpi.id] = {
+                department_id: 0,
+                company_id: 0,
+                use_goal_weight_yearly: false,
+                use_goal_weight_quarterly: false,
+                use_actual_values_yearly: false,
+                use_actual_values_quarterly: false,
+                use_normal_calculation: true,
+                enable_employee_self_rating_quarterly: true,
+                enable_employee_self_rating_yearly: true,
+                is_default: true,
+              };
+            }
+          }
+        })
+      );
+
+      setKpiDeptFeaturesCache(newCache);
+      setFeaturesLoading(false);
+    };
+
+    fetchDepartmentFeatures();
+  }, [filteredKpis.length]);
+
+  // Helper: Check if self-rating is enabled for a specific KPI
+  const isSelfRatingEnabledForKPI = (kpi: KPI): boolean => {
+    if (kpi.id && kpiDeptFeaturesCache[kpi.id]) {
+      const features = kpiDeptFeaturesCache[kpi.id];
+      const kpiPeriod = kpi.period?.toLowerCase() === 'yearly' ? 'yearly' : 'quarterly';
+
+      if (kpiPeriod === 'yearly') {
+        return features.enable_employee_self_rating_yearly !== false;
+      } else {
+        return features.enable_employee_self_rating_quarterly !== false;
+      }
+    }
+    return true; // Default to enabled if features not yet loaded
+  };
+
+  // Helper: Get calculation method for a specific KPI
+  const getCalculationMethod = (kpi: KPI): string => {
+    if (kpi.id && kpiDeptFeaturesCache[kpi.id]) {
+      const features = kpiDeptFeaturesCache[kpi.id];
+      const kpiPeriod = kpi.period?.toLowerCase() === 'yearly' ? 'yearly' : 'quarterly';
+
+      if (kpiPeriod === 'yearly') {
+        if (features.use_actual_values_yearly) return 'Actual vs Target Values';
+        if (features.use_goal_weight_yearly) return 'Goal Weight Calculation';
+      } else {
+        if (features.use_actual_values_quarterly) return 'Actual vs Target Values';
+        if (features.use_goal_weight_quarterly) return 'Goal Weight Calculation';
+      }
+    }
+    return 'Normal Calculation';
+  };
 
 
   if (loading || featuresLoading) {
     return <div className="p-6">Loading...</div>;
   }
 
-  // Check period-specific self-rating settings
-  const quarterlyEnabled = features?.enable_employee_self_rating_quarterly !== false;
-  const yearlyEnabled = features?.enable_employee_self_rating_yearly !== false;
-  const bothDisabled = !quarterlyEnabled && !yearlyEnabled;
-  const mixedSettings = quarterlyEnabled !== yearlyEnabled;
+  // Check if any KPIs have self-rating disabled
+  const kpisWithDisabledSelfRating = filteredKpis.filter(kpi => !isSelfRatingEnabledForKPI(kpi));
+  const allDisabled = kpisWithDisabledSelfRating.length === filteredKpis.length && filteredKpis.length > 0;
+  const someDisabled = kpisWithDisabledSelfRating.length > 0 && kpisWithDisabledSelfRating.length < filteredKpis.length;
 
 
   return (
     <div className="space-y-6">
       {/* Self-Rating Status Notice */}
-      {bothDisabled && (
+      {allDisabled && (
         <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
           <div className="flex items-start space-x-3">
             <FiInfo className="text-blue-600 text-lg flex-shrink-0 mt-0.5" />
@@ -73,17 +148,14 @@ const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({ sharedKpis, share
           </div>
         </div>
       )}
-      {mixedSettings && (
+      {someDisabled && (
         <div className="bg-purple-50 border border-purple-200 rounded-xl p-4">
           <div className="flex items-start space-x-3">
             <FiInfo className="text-purple-600 text-lg flex-shrink-0 mt-0.5" />
             <div>
               <p className="text-sm text-purple-800">
-                <strong>Mixed Review Process:</strong>
-                {!quarterlyEnabled && ' Quarterly KPIs: Manager-led.'}
-                {!yearlyEnabled && ' Yearly KPIs: Manager-led.'}
-                {quarterlyEnabled && ' Quarterly KPIs: Self-rating enabled.'}
-                {yearlyEnabled && ' Yearly KPIs: Self-rating enabled.'}
+                <strong>Mixed Review Process:</strong> Some KPIs have self-rating disabled and will be manager-led.
+                Check individual KPI badges for details.
               </p>
             </div>
           </div>
@@ -302,6 +374,8 @@ const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({ sharedKpis, share
                 filteredKpis.map((kpi: KPI) => {
                   const review = reviews.find((r: KPIReview) => r.kpi_id === kpi.id);
                   const stageInfo = getDashboardKPIStage(kpi, reviews);
+                  const selfRatingEnabled = isSelfRatingEnabledForKPI(kpi);
+                  const calcMethod = getCalculationMethod(kpi);
 
                   return (
                     <DashboardKPIRow
@@ -314,7 +388,8 @@ const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({ sharedKpis, share
                       onReview={handleReviewKPI}
                       onConfirm={handleConfirmReview}
                       onEdit={handleEditReview}
-                      features={features}
+                      isSelfRatingEnabled={selfRatingEnabled}
+                      calculationMethod={calcMethod}
                     />
                   );
                 })

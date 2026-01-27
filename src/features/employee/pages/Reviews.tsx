@@ -1,5 +1,5 @@
 import React from 'react';
-import { FiCheckCircle, FiInfo, FiSearch, FiFileText, FiEdit, FiBell, FiEye } from 'react-icons/fi';
+import { FiCheckCircle, FiInfo, FiFileText, FiEdit, FiBell, FiEye } from 'react-icons/fi';
 import { useEmployeeReviews } from '../hooks';
 import { Button } from '../../../components/common';
 import { KPI } from '../../../types';
