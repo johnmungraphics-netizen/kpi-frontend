@@ -249,8 +249,10 @@ const Sidebar: React.FC<SidebarProps> = ({
           </div>
 
           {/* Navigation */}
-          <nav className={`flex-1 overflow-y-auto overflow-x-visible ${isCollapsed ? 'px-2 py-3' : 'p-4'}`}>
-            <div>
+          <nav className={`flex-1 ${isCollapsed ? 'px-2 py-3' : 'p-4'} ${
+            isCollapsed ? 'overflow-y-visible' : 'overflow-y-auto'
+          }`}>
+            <div className={isCollapsed ? 'space-y-1' : ''}>
               {!isCollapsed && (
                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 px-3">
                   MAIN
@@ -271,7 +273,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                           isCollapsed 
                             ? 'justify-center w-14 h-14 mx-auto' 
                             : 'justify-between px-3 py-2.5'
-                        } rounded-lg mb-1 transition-colors relative group ${
+                        } rounded-lg ${isCollapsed ? 'mb-1' : 'mb-1'} transition-colors relative group ${
                           active
                             ? 'bg-purple-100 text-purple-700'
                             : 'text-gray-700 hover:bg-gray-100'
@@ -305,12 +307,11 @@ const Sidebar: React.FC<SidebarProps> = ({
                         )}
                       </Link>
                       
-                      {/* Tooltip - Positioned outside the link */}
+                      {/* Tooltip */}
                       {isCollapsed && (
                         <div className="absolute left-full top-1/2 -translate-y-1/2 ml-3 px-3 py-2 bg-gray-900 text-white text-sm rounded-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-[9999] shadow-lg">
                           {item.label}
                           {item.badge && <span className="ml-2 text-xs">({item.badge})</span>}
-                          {/* Arrow */}
                           <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-gray-900"></div>
                         </div>
                       )}
