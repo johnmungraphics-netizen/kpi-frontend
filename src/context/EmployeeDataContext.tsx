@@ -1,4 +1,8 @@
-import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
+import { useAuth } from './AuthContext';
+import { isEmployee } from '../utils/roleUtils';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
+import { fetchKPIsAndReviews, selectAllKPIs, selectAllReviews, selectKPILoading } from '../store/slices/kpiSlice';
 import api from '../services/api';
 import { KPI, KPIReview } from '../types';
 
@@ -70,8 +74,8 @@ export const EmployeeDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
   return (
     <EmployeeDataContext.Provider
       value={{
-        sharedKpis,
-        sharedReviews,
+        sharedKpis: kpis,
+        sharedReviews: reviews,
         sharedDepartmentFeatures,
         dataFetched,
         loading,

@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { useAppSelector } from '../store/hooks';
+import { selectAllKPIs, selectAllReviews } from '../store/slices/kpiSlice';
 import api from '../services/api';
 import { isManager, isEmployee, isHR, isSuperAdmin } from '../utils/roleUtils';
 import {
@@ -41,6 +43,11 @@ const Sidebar: React.FC<SidebarProps> = ({
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  
+  // Get KPIs and reviews from Redux store
+  const reduxKpis = useAppSelector(selectAllKPIs);
+  const reduxReviews = useAppSelector(selectAllReviews);
+  
   const [pendingReviewsCount, setPendingReviewsCount] = useState<number>(0);
   const [pendingAcknowledgementsCount, setPendingAcknowledgementsCount] = useState<number>(0);
   const [pendingEmployeeReviewsCount, setPendingEmployeeReviewsCount] = useState<number>(0);
@@ -68,11 +75,12 @@ const Sidebar: React.FC<SidebarProps> = ({
       location.pathname === '/employee/acknowledge' || 
       location.pathname === '/employee/reviews'
     )) {
-      // Use initial data if available, otherwise fetch
-      if (initialKpis && initialReviews) {
-        calculateEmployeeCounts(initialKpis, initialReviews);
-      } else {
-        fetchEmployeeCounts();
+      // Use Redux data for calculations
+      const kpis = reduxKpis.length > 0 ? reduxKpis : (initialKpis || []);
+      const reviews = reduxReviews.length > 0 ? reduxReviews : (initialReviews || []);
+      
+      if (kpis.length > 0) {
+        calculateEmployeeCounts(kpis, reviews);
       }
     }
   }, []);
