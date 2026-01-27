@@ -8,7 +8,7 @@ const SESSION_REFRESH_THRESHOLD = 10 * 60 * 1000;
 export const useSessionManagement = () => {
   const dispatch = useAppDispatch();
   const { isAuthenticated, sessionExpiry } = useAppSelector((state) => state.auth);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<number | null>(null);
   const handleSessionCheck = useCallback(async () => {
     if (!isAuthenticated || !sessionExpiry) return;
     const now = Date.now();
@@ -21,7 +21,7 @@ export const useSessionManagement = () => {
       try {
         await dispatch(refreshSession()).unwrap();
       } catch (error) {
-        console.error('Failed to refresh session:', error);
+        // Session expired - user will be logged out
         await dispatch(logout());
       }
     }

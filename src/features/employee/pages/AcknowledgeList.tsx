@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useToast } from '../../../context/ToastContext';
 import api from '../../../services/api';
 import { KPI } from '../../../types';
 import { FiClock, FiEye, FiCheckCircle } from 'react-icons/fi';
@@ -7,6 +8,7 @@ import { Button } from '../../../components/common';
 
 const AcknowledgeList: React.FC = () => {
   const navigate = useNavigate();
+  const toast = useToast();
   const [kpis, setKpis] = useState<KPI[]>([]);
   const [loading, setLoading] = useState(true);
 

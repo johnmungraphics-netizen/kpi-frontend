@@ -100,19 +100,13 @@ export const useUserManagement = () => {
 
   const handleSaveUser = async (userId: number, data: UserUpdateData) => {
     try {
-      const targetUser = users.find(u => u.id === userId);
-      if (!targetUser?.company_id) {
-        toast.error('User company ID not found');
-        return;
-      }
-
-      const updatedUser = await userManagementService.updateUser(userId, targetUser.company_id, data);
+      await userManagementService.updateUser(userId, data);
       
-      setUsers(users.map(u => u.id === userId ? { ...u, ...updatedUser } : u));
       toast.success('User updated successfully');
       setEditingUser(null);
+      fetchUsers(); // Refresh the list
     } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Failed to update user');
+      toast.error(error.response?.data?.message || error.response?.data?.error || 'Failed to update user');
       throw error;
     }
   };
@@ -134,21 +128,12 @@ export const useUserManagement = () => {
     }
   };
 
-  const handleToggleStatus = async (userId: number, currentStatus: boolean, companyId?: number) => {
+  const handleToggleStatus = async (userId: number, currentStatus: boolean) => {
     try {
       setActionLoading(userId);
       const newStatus = !currentStatus;
       
-      // Use the user's company_id or first available company
-      const targetUser = users.find(u => u.id === userId);
-      const targetCompanyId = companyId || targetUser?.company_id || companies[0]?.id;
-      
-      if (!targetCompanyId) {
-        toast.error('No company ID available for this user');
-        return;
-      }
-      
-      await userManagementService.toggleUserStatus(userId, newStatus, targetCompanyId);
+      await userManagementService.toggleUserStatus(userId, newStatus);
       
       // Update local state
       setUsers(users.map(user => 
@@ -157,7 +142,7 @@ export const useUserManagement = () => {
       
       toast.success(`User ${newStatus ? 'activated' : 'deactivated'} successfully`);
     } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Failed to update user status');
+      toast.error(error.response?.data?.message || error.response?.data?.error || 'Failed to update user status');
     } finally {
       setActionLoading(null);
     }

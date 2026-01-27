@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import { FiSearch, FiBell, FiMenu, FiLogOut, FiUser, FiHome } from 'react-icons/fi';
 import { RiMenuFold3Fill, RiMenuFold2Line } from 'react-icons/ri';
 import { getRoleDisplayName } from '../utils/roleUtils';
@@ -30,6 +31,7 @@ const Header: React.FC<HeaderProps> = ({
 }) => {
   const { user, logout, companies, hasMultipleCompanies, selectedCompany, selectCompany } = useAuth();
   const navigate = useNavigate();
+  const toast = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -40,7 +42,7 @@ const Header: React.FC<HeaderProps> = ({
     try {
       await logout();
     } catch (error) {
-      console.error('Logout error:', error);
+      toast.error('Unable to logout. Please try again or refresh the page.');
     }
     navigate('/login');
   };

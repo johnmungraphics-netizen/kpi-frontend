@@ -27,13 +27,14 @@ export interface DashboardData {
 let cachedRequest: Promise<DashboardData> | null = null;
 
 function calculateStats(companies: Company[]): DashboardStats {
-  return {
+  const stats = {
     totalCompanies: companies.length,
     totalHRUsers: companies.reduce((sum, c) => sum + (Number(c.total_hr) || 0), 0),
     totalManagers: companies.reduce((sum, c) => sum + (Number(c.total_managers) || 0), 0),
     totalEmployees: companies.reduce((sum, c) => sum + (Number(c.total_employees) || 0), 0),
     totalDepartments: companies.reduce((sum, c) => sum + (Number(c.total_departments) || 0), 0),
   };
+  return stats;
 }
 
 function getRecentCompanies(companies: Company[], limit: number = 5): Company[] {

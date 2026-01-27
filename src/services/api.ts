@@ -52,7 +52,7 @@ api.interceptors.request.use(
     return config;
   },
   (error: AxiosError) => {
-    console.error('Request configuration error:', error.message);
+    // Request configuration error - will be handled by response interceptor
     return Promise.reject(error);
   }
 );
@@ -108,11 +108,11 @@ api.interceptors.response.use(
     }
 
     if (error.response?.status === 403) {
-      console.error('CSRF validation failed');
+      // CSRF error - page will reload on next request
     }
 
     if (!error.response) {
-      console.error('Network error:', error.message);
+      // Network error - will be handled by calling component
     }
 
     return Promise.reject(error);

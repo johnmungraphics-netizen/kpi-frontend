@@ -35,18 +35,17 @@ export const EmployeeDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
             api.get('/department-features/my-department')
           ]);
 
-          const kpisData = kpisRes.data;
-          const reviewsData = reviewsRes.data;
-          const deptFeaturesData = deptFeaturesRes.data;
+         
 
-          const kpis = kpisData.data?.kpis || kpisData.kpis || [];
-          const reviews = reviewsData.reviews || [];
+          const kpis = kpisRes.data.data?.kpis || kpisRes.data.kpis || [];
+          const reviews = reviewsRes.data.reviews || [];
 
           setSharedKpis(kpis);
           setSharedReviews(reviews);
-          setSharedDepartmentFeatures(deptFeaturesData);
+          setSharedDepartmentFeatures(deptFeaturesRes.data);
           setDataFetched(true);
         } catch (error) {
+          // Silently fail - data will be fetched again on next load
           fetchingRef.current = false;
         } finally {
           setIsLoading(false);

@@ -5,12 +5,15 @@ export interface User {
   name: string;
   email: string;
   role: 'hr' | 'manager' | 'employee';
+  role_id?: number;
   company_name?: string;
   company_id?: number;
   department?: string;
+  department_id?: number;
   position?: string;
   payroll_number?: string;
   national_id?: string;
+  phone_number?: string;
   employment_date?: string;
   created_at: string;
   is_active?: boolean;
@@ -19,9 +22,9 @@ export interface User {
 export interface UserUpdateData {
   name: string;
   email: string;
+  phone_number?: string;
   payroll_number?: string;
   national_id?: string;
-  department?: string;
   position?: string;
   employment_date?: string;
 }
@@ -70,19 +73,16 @@ export const userManagementService = {
     }
   },
 
-  toggleUserStatus: async (userId: number, isActive: boolean, companyId: number): Promise<void> => {
-    // Use PUT endpoint with is_active field
-    await api.put(`/users/${userId}?companyId=${companyId}`, { is_active: isActive });
+  toggleUserStatus: async (userId: number, isActive: boolean): Promise<void> => {
+    await api.put(`/users/${userId}/status`, { is_active: isActive });
   },
 
-  deleteUser: async (_userId: number): Promise<void> => {
-    // Note: Backend doesn't have delete endpoint yet
-    // This will need to be implemented in the backend first
-    throw new Error('Delete user functionality not yet implemented in backend');
+  deleteUser: async (userId: number): Promise<void> => {
+    await api.delete(`/users/${userId}`);
   },
 
-  updateUser: async (userId: number, companyId: number, data: UserUpdateData): Promise<User> => {
-    const response = await api.put(`/users/${userId}?companyId=${companyId}`, data);
+  updateUser: async (userId: number, data: UserUpdateData): Promise<User> => {
+    const response = await api.put(`/users/${userId}`, data);
     return response.data.user;
   },
 

@@ -130,10 +130,7 @@ const DepartmentCalculationSettings: React.FC = () => {
     try {
       setSaving(true);
       
-      await api.put(
-        `/department-features/${departmentId}`,
-        features
-      );
+      await api.put(`/department-features/${departmentId}`, features);
 
       // Reload departments to get updated data
       await loadDepartments();
