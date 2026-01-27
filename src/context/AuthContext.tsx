@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useToast } from '../context/ToastContext';
 import { User, Company } from '../types/index';
 import api, { clearAuthCookies } from '../services/api';
 
@@ -24,29 +23,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [hasMultipleCompanies, setHasMultipleCompanies] = useState(false);
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const toast = useToast();
 
+  // Auth initialization is now handled by Redux (initializeAuth in App.tsx)
+  // AuthContext just manages local state that syncs from Redux via App.tsx
   useEffect(() => {
-    // Fetch current session from server using cookies
-    const fetchSession = async () => {
-      try {
-        const response = await api.get('/auth/session');
-        const { user: sessionUser, companies: sessionCompanies, selectedCompany: sessionSelectedCompany } = response.data;
-        
-        if (sessionUser) {
-          setUser(sessionUser);
-          setCompanies(sessionCompanies || []);
-          setHasMultipleCompanies(sessionCompanies?.length > 1);
-          setSelectedCompany(sessionSelectedCompany || null);
-        }
-      } catch (error) {
-        // No active session - user needs to login
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchSession();
+    setIsLoading(false);
   }, []);
 
   const login = async (payrollNumber: string, password: string) => {

@@ -9,6 +9,7 @@ interface EmployeeDataContextType {
   sharedDepartmentFeatures: any | null;
   dataFetched: boolean;
   isLoading: boolean;
+  refreshData: () => Promise<void>;
 }
 
 const EmployeeDataContext = createContext<EmployeeDataContextType | undefined>(undefined);
@@ -22,41 +23,58 @@ export const EmployeeDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const [isLoading, setIsLoading] = useState(false);
   const fetchingRef = useRef(false);
 
-  useEffect(() => {
-    const fetchSharedData = async () => {
-      if (isEmployee(user) && !dataFetched && !fetchingRef.current) {
-        fetchingRef.current = true;
-        setIsLoading(true);
-        
-        try {
-          const [kpisRes, reviewsRes, deptFeaturesRes] = await Promise.all([
-            api.get('/kpis'),
-            api.get('/kpi-review'),
-            api.get('/department-features/my-department')
-          ]);
 
-         
-
-          const kpis = kpisRes.data.data?.kpis || kpisRes.data.kpis || [];
-          const reviews = reviewsRes.data.reviews || [];
-
-          
-
-          setSharedKpis(kpis);
-          setSharedReviews(reviews);
-          setSharedDepartmentFeatures(deptFeaturesRes.data);
-          setDataFetched(true);
-        } catch (error) {
-          // Silently fail - data will be fetched again on next load
-          fetchingRef.current = false;
-        } finally {
-          setIsLoading(false);
-        }
+  const fetchSharedData = async (forceRefresh = false) => {
+    
+    if (isEmployee(user) && !fetchingRef.current) {
+      // Skip if data already fetched and not forcing refresh
+      if (!forceRefresh && dataFetched) {
+        return;
       }
-    };
+      
+      fetchingRef.current = true;
+      setIsLoading(true);
+      
+      
+      try {
+        const [kpisRes, reviewsRes, deptFeaturesRes] = await Promise.all([
+          api.get('/kpis'),
+          api.get('/kpi-review'),
+          api.get('/department-features/my-department')
+        ]);
 
-    fetchSharedData();
-  }, [user]);
+
+        const kpis = kpisRes.data.data?.kpis || kpisRes.data.kpis || [];
+        const reviews = reviewsRes.data.reviews || [];
+
+
+        setSharedKpis(kpis);
+        setSharedReviews(reviews);
+        setSharedDepartmentFeatures(deptFeaturesRes.data);
+        setDataFetched(true);
+        
+      } catch (error) {
+        setDataFetched(false);
+      } finally {
+        setIsLoading(false);
+        fetchingRef.current = false;
+      }
+    } else {
+    }
+  };
+
+  const refreshData = async () => {
+    setDataFetched(false);
+    fetchingRef.current = false;
+    await fetchSharedData(true);
+  };
+
+  useEffect(() => {
+    
+    if (!dataFetched && user) {
+      fetchSharedData();
+    }
+  }, [user, dataFetched]);
 
   return (
     <EmployeeDataContext.Provider
@@ -66,6 +84,7 @@ export const EmployeeDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
         sharedDepartmentFeatures,
         dataFetched,
         isLoading,
+        refreshData,
       }}
     >
       {children}
