@@ -18,13 +18,10 @@ const AcknowledgeList: React.FC<AcknowledgeListProps> = ({ sharedKpis }) => {
   const sourceKpis = sharedKpis || contextKpis;
   const loading = contextLoading;
 
-  console.log('[AcknowledgeList] Render - sharedKpis prop:', sharedKpis?.length, 'contextKpis:', contextKpis.length, 'loading:', loading);
 
   useEffect(() => {
-    console.log('[AcknowledgeList] Processing KPIs from shared data...');
     
     if (!sourceKpis || !Array.isArray(sourceKpis)) {
-      console.warn('[AcknowledgeList] Invalid KPI data');
       setKpis([]);
       return;
     }
@@ -34,7 +31,6 @@ const AcknowledgeList: React.FC<AcknowledgeListProps> = ({ sharedKpis }) => {
       (kpi: KPI) => kpi.status === 'pending'
     );
     
-    console.log('[AcknowledgeList] Filtered pending KPIs:', pendingKPIs.length, 'out of', sourceKpis.length);
     setKpis(pendingKPIs);
   }, [sourceKpis]);
 

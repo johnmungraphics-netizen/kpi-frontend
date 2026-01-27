@@ -2,7 +2,6 @@ import React from 'react';
 import { KPI, KPIReview } from '../../../types';
 import { Button } from '../../../components/common';
 import { DashboardStageInfo } from '../hooks/dashboardUtils';
-import { CompanyFeatures } from '../../../hooks/useCompanyFeatures';
 
 interface DashboardKPIRowProps {
   kpi: KPI;
@@ -13,7 +12,8 @@ interface DashboardKPIRowProps {
   onReview: (kpiId: number) => void;
   onConfirm: (reviewId: number) => void;
   onEdit: (kpiId: number) => void;
-  features?: CompanyFeatures | null;
+  isSelfRatingEnabled?: boolean;
+  calculationMethod?: string;
 }
 
 export const DashboardKPIRow: React.FC<DashboardKPIRowProps> = ({
@@ -25,23 +25,20 @@ export const DashboardKPIRow: React.FC<DashboardKPIRowProps> = ({
   onReview,
   onConfirm,
   onEdit,
-  features,
+  isSelfRatingEnabled = true,
+  calculationMethod = 'Normal Calculation',
 }) => {
   
   // Backend may send either 'status' or 'review_status' field
   const reviewStatus = (review as any)?.status || review?.review_status;
   
-  // Check if self-rating is enabled for this KPI based on its period
-  const kpiPeriod = kpi.period?.toLowerCase() === 'yearly' ? 'yearly' : 'quarterly';
+  // Use the passed prop for self-rating status
   const kpiPeriodLabel = kpi.period?.toLowerCase() === 'yearly' ? 'Yearly' : 'Quarterly';
-  const isSelfRatingEnabled = kpiPeriod === 'yearly' 
-    ? features?.enable_employee_self_rating_yearly !== false 
-    : features?.enable_employee_self_rating_quarterly !== false;
   
   const isPending = kpi.status === 'pending';
-  const needsReview = kpi.status === 'acknowledged' && (!review || reviewStatus === 'pending');
+  const needsReview = kpi.status === 'acknowledged' && (!review || reviewStatus === 'pending') && isSelfRatingEnabled;
   const needsConfirmation = review && (reviewStatus === 'manager_submitted' || reviewStatus === 'awaiting_employee_confirmation');
-  const canEdit = review && reviewStatus === 'employee_submitted';
+  const canEdit = review && reviewStatus === 'employee_submitted' && isSelfRatingEnabled;
 
   return (
     <tr className="hover:bg-gray-50">
@@ -69,6 +66,8 @@ export const DashboardKPIRow: React.FC<DashboardKPIRowProps> = ({
             {kpiPeriodLabel} - Self-rating disabled
           </span>
         )}
+        {/* Show calculation method */}
+        <p className="text-xs text-gray-500 mt-1">{calculationMethod}</p>
       </td>
       <td className="px-6 py-4">
         <span className={`px-3 py-1 rounded-full text-xs font-medium flex items-center space-x-1 w-fit ${stageInfo.color}`}>

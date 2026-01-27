@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { FiArrowLeft, FiInfo } from 'react-icons/fi';
 import { Button } from '../../../components/common';
 import { useEmployeeKPIList } from '../hooks';
 import { KPIListRow } from '../components';
-import { useCompanyFeatures } from '../../../hooks/useCompanyFeatures';
+import { DepartmentFeatures } from '../../../hooks/useDepartmentFeatures';
+import api from '../../../services/api';
+import { KPI } from '../../../types';
 
 const KPIList: React.FC = () => {
   const {
@@ -19,13 +21,92 @@ const KPIList: React.FC = () => {
     navigate,
   } = useEmployeeKPIList();
 
-  const { features, loading: featuresLoading } = useCompanyFeatures();
+  // Cache for department features per KPI
+  const [kpiDeptFeaturesCache, setKpiDeptFeaturesCache] = useState<Record<number, DepartmentFeatures>>({});
+  const [featuresLoading, setFeaturesLoading] = useState(true);
+
+  // Fetch department features for all KPIs
+  useEffect(() => {
+    const fetchDepartmentFeatures = async () => {
+      if (kpis.length === 0) {
+        setFeaturesLoading(false);
+        return;
+      }
+
+      const newCache: Record<number, DepartmentFeatures> = {};
+      await Promise.all(
+        kpis.map(async (kpi: KPI) => {
+          if (kpi.id) {
+            try {
+              const response = await api.get(`/department-features/kpi/${kpi.id}`);
+              if (response.data) {
+                newCache[kpi.id] = response.data;
+              }
+            } catch (err) {
+              newCache[kpi.id] = {
+                department_id: 0,
+                company_id: 0,
+                use_goal_weight_yearly: false,
+                use_goal_weight_quarterly: false,
+                use_actual_values_yearly: false,
+                use_actual_values_quarterly: false,
+                use_normal_calculation: true,
+                enable_employee_self_rating_quarterly: true,
+                enable_employee_self_rating_yearly: true,
+                is_default: true,
+              };
+            }
+          }
+        })
+      );
+
+      setKpiDeptFeaturesCache(newCache);
+      setFeaturesLoading(false);
+    };
+
+    fetchDepartmentFeatures();
+  }, [kpis.length]);
+
+  // Helper: Check if self-rating is enabled for a specific KPI
+  const isSelfRatingEnabledForKPI = (kpi: KPI): boolean => {
+    if (kpi.id && kpiDeptFeaturesCache[kpi.id]) {
+      const features = kpiDeptFeaturesCache[kpi.id];
+      const kpiPeriod = kpi.period?.toLowerCase() === 'yearly' ? 'yearly' : 'quarterly';
+
+      if (kpiPeriod === 'yearly') {
+        return features.enable_employee_self_rating_yearly !== false;
+      } else {
+        return features.enable_employee_self_rating_quarterly !== false;
+      }
+    }
+    return true;
+  };
+
+  // Helper: Get calculation method for a specific KPI
+  const getCalculationMethod = (kpi: KPI): string => {
+    if (kpi.id && kpiDeptFeaturesCache[kpi.id]) {
+      const features = kpiDeptFeaturesCache[kpi.id];
+      const kpiPeriod = kpi.period?.toLowerCase() === 'yearly' ? 'yearly' : 'quarterly';
+
+      if (kpiPeriod === 'yearly') {
+        if (features.use_actual_values_yearly) return 'Actual vs Target Values';
+        if (features.use_goal_weight_yearly) return 'Goal Weight Calculation';
+      } else {
+        if (features.use_actual_values_quarterly) return 'Actual vs Target Values';
+        if (features.use_goal_weight_quarterly) return 'Goal Weight Calculation';
+      }
+    }
+    return 'Normal Calculation';
+  };
 
   if (loading || featuresLoading) {
     return <div className="p-6">Loading...</div>;
   }
 
-  const isSelfRatingEnabled = features?.enable_employee_self_rating_quarterly !== false;
+  // Check if any KPIs have self-rating disabled
+  const kpisWithDisabledSelfRating = kpis.filter(kpi => !isSelfRatingEnabledForKPI(kpi));
+  const allDisabled = kpisWithDisabledSelfRating.length === kpis.length && kpis.length > 0;
+  const someDisabled = kpisWithDisabledSelfRating.length > 0 && kpisWithDisabledSelfRating.length < kpis.length;
 
   return (
     <div className="space-y-6">
@@ -44,7 +125,7 @@ const KPIList: React.FC = () => {
       </div>
 
       {/* Self-Rating Disabled Notice */}
-      {!isSelfRatingEnabled && (
+      {allDisabled && (
         <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
           <div className="flex items-start space-x-3">
             <FiInfo className="text-blue-600 text-lg flex-shrink-0 mt-0.5" />
@@ -52,6 +133,19 @@ const KPIList: React.FC = () => {
               <p className="text-sm text-blue-800">
                 <strong>Manager-Led Review:</strong> Your organization uses a manager-led review process. 
                 You can view your KPIs, but reviews will be initiated by your manager.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+      {someDisabled && (
+        <div className="bg-purple-50 border border-purple-200 rounded-xl p-4">
+          <div className="flex items-start space-x-3">
+            <FiInfo className="text-purple-600 text-lg flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm text-purple-800">
+                <strong>Mixed Review Process:</strong> Some KPIs have self-rating disabled and will be manager-led.
+                Check individual KPI badges for details.
               </p>
             </div>
           </div>
@@ -86,7 +180,9 @@ const KPIList: React.FC = () => {
               ) : (
                 kpis.map((kpi) => {
                   const review = reviews.find(r => r.kpi_id === kpi.id);
-                  const stageInfo = getKPIStage(kpi, reviews);
+                  const isSelfRatingEnabled = isSelfRatingEnabledForKPI(kpi);
+                  const calculationMethod = getCalculationMethod(kpi);
+                  const stageInfo = getKPIStage(kpi, reviews, isSelfRatingEnabled);
                   const primaryAction = getPrimaryAction(kpi, review, navigate);
                   const showEditButton = canEditReview(review);
 
@@ -99,6 +195,8 @@ const KPIList: React.FC = () => {
                       showEditButton={showEditButton}
                       onView={handleViewKPI}
                       onEdit={handleEditReview}
+                      isSelfRatingEnabled={isSelfRatingEnabled}
+                      calculationMethod={calculationMethod}
                     />
                   );
                 })

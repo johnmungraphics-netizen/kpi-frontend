@@ -1,8 +1,7 @@
 import React from 'react';
-import { FiCheckCircle, FiInfo, FiSearch, FiFileText, FiEdit, FiBell, FiEye } from 'react-icons/fi';
+import { FiCheckCircle, FiInfo, FiFileText, FiEdit, FiBell, FiEye } from 'react-icons/fi';
 import { useEmployeeReviews } from '../hooks';
 import { Button } from '../../../components/common';
-import { useCompanyFeatures } from '../../../hooks/useCompanyFeatures';
 import { KPI } from '../../../types';
 
 const Reviews: React.FC = () => {
@@ -18,9 +17,7 @@ const Reviews: React.FC = () => {
     handleConfirmReview,
   } = useEmployeeReviews();
 
-  const { features, loading: featuresLoading } = useCompanyFeatures();
-
-  if (loading || featuresLoading) {
+  if (loading) {
     return <div className="p-6">Loading...</div>;
   }
 
