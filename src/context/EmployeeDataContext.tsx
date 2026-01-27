@@ -79,7 +79,7 @@ export const EmployeeDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
     if (!dataFetched && user) {
       fetchSharedData();
     }
-  }, [dataFetched, user, fetchSharedData]);
+  }, [dataFetched]);
 
   return (
     <EmployeeDataContext.Provider

@@ -3,7 +3,7 @@ import { useToast } from '../../../context/ToastContext';
 import { useNavigate } from 'react-router-dom';
 import { KPI, KPIReview } from '../../../types';
 import api from '../../../services/api';
-import { useCompanyFeatures } from '../../../hooks/useCompanyFeatures';
+import { DepartmentFeatures } from '../../../hooks/useDepartmentFeatures';
 
 interface ReviewStatusInfo {
   stage: string;
@@ -16,7 +16,7 @@ export const useEmployeeReviews = () => {
   const [reviews, setReviews] = useState<KPIReview[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { features } = useCompanyFeatures();
+  const [kpiDeptFeaturesCache, setKpiDeptFeaturesCache] = useState<Record<number, DepartmentFeatures>>({});
 
   const toast = useToast();
   useEffect(() => {
@@ -25,15 +25,17 @@ export const useEmployeeReviews = () => {
 
   // Helper: Check if self-rating is enabled for a specific KPI based on its period
   const isSelfRatingEnabledForKPI = (kpi: KPI): boolean => {
-    if (!features) return true; // Default to enabled if features not loaded
-    
-    const kpiPeriod = kpi.period?.toLowerCase() === 'yearly' ? 'yearly' : 'quarterly';
-    
-    if (kpiPeriod === 'yearly') {
-      return features.enable_employee_self_rating_yearly !== false;
-    } else {
-      return features.enable_employee_self_rating_quarterly !== false;
+    if (kpi.id && kpiDeptFeaturesCache[kpi.id]) {
+      const features = kpiDeptFeaturesCache[kpi.id];
+      const kpiPeriod = kpi.period?.toLowerCase() === 'yearly' ? 'yearly' : 'quarterly';
+      
+      if (kpiPeriod === 'yearly') {
+        return features.enable_employee_self_rating_yearly !== false;
+      } else {
+        return features.enable_employee_self_rating_quarterly !== false;
+      }
     }
+    return true;
   };
 
   const fetchReviewPendingKPIs = async () => {
@@ -79,8 +81,35 @@ export const useEmployeeReviews = () => {
         return false;
       });
 
-    
-
+      const newCache: Record<number, DepartmentFeatures> = {};
+      await Promise.all(
+        needReviewKPIs.map(async (kpi: KPI) => {
+          if (kpi.id) {
+            try {
+              const response = await api.get(`/department-features/kpi/${kpi.id}`);
+              if (response.data) {
+                newCache[kpi.id] = response.data;
+              }
+            } catch (err) {
+              toast.error(`Failed to fetch department features for KPI ${kpi.id}:`, err);
+              newCache[kpi.id] = {
+                department_id: 0,
+                company_id: 0,
+                use_goal_weight_yearly: false,
+                use_goal_weight_quarterly: false,
+                use_actual_values_yearly: false,
+                use_actual_values_quarterly: false,
+                use_normal_calculation: true,
+                enable_employee_self_rating_quarterly: true,
+                enable_employee_self_rating_yearly: true,
+                is_default: true,
+              };
+            }
+          }
+        })
+      );
+      
+      setKpiDeptFeaturesCache(newCache);
       setKpis(needReviewKPIs);
       setReviews(reviewsList);
     } catch (err) {

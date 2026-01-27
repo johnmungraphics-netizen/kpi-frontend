@@ -27,7 +27,7 @@ export const useEmployeeKPIList = () => {
         api.get('/kpi-review'),
       ]);
 
-      setKpis(kpisRes.data.kpis || []);
+      setKpis(kpisRes?.data?.data?.kpis || []);
       setReviews(reviewsRes.data.reviews || []);
     } catch (error) {
       toast.error('Could not fetch your KPIs. Please try again.');
