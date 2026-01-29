@@ -42,7 +42,13 @@ const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, logout, selectedCompany } = useAuth();
+  
+  // Get Redux auth state
+  const reduxSelectedCompany = useAppSelector((state) => state.auth.selectedCompany);
+  
+  // Use Redux selectedCompany if AuthContext one is null
+  const activeSelectedCompany = selectedCompany || reduxSelectedCompany;
   
   // Get KPIs and reviews from Redux store
   const reduxKpis = useAppSelector(selectAllKPIs);
@@ -173,7 +179,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const hrNavItems: NavItem[] = [
     { path: '/hr/dashboard', label: 'Dashboard', icon: FiHome },
     { path: '/hr/employees', label: 'Employees', icon: FiUsers },
-    { path: '/hr/departments', label: 'Departments', icon: FiUsers },
+    { path: '/hr/departments', label: 'Department Analytics', icon: FiUsers },
     { path: '/hr/kpi-list', label: 'KPI Overview', icon: FiTarget },
     { path: '/hr/rejected-kpis', label: 'Rejected KPIs', icon: FiAlertTriangle },
     { path: '/hr/kpi-setting-completed', label: 'KPI Setting Completed', icon: FiFlag },
@@ -221,27 +227,45 @@ const Sidebar: React.FC<SidebarProps> = ({
       )}
 
       {/* Sidebar */}
-      <aside
+on the       <aside
         className={`fixed left-0 top-0 h-full bg-gray-50 border-r border-gray-200 transition-all duration-300 ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         } lg:translate-x-0 ${isCollapsed ? 'w-24' : 'w-64'}`}
         style={{ zIndex: 50 }}
       >
         <div className="flex flex-col h-full overflow-hidden">
-          {/* Logo Section - Always show logo */}
-          <div className={`${isCollapsed ? 'p-4' : 'p-6'} bg-gray-50 border-b border-gray-200 flex items-center justify-center transition-all duration-300 flex-shrink-0`}>
+          {/* Company Logo Section - Top */}
+          <div className={`${isCollapsed ? 'p-4' : 'p-6'} bg-white border-b border-gray-200 flex flex-col items-center transition-all duration-300 flex-shrink-0`}>
             {isCollapsed ? (
               <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden">
-                <img src="/ICTA.jpeg" alt="ICTA Logo" className="w-full h-full object-contain" />
+                {activeSelectedCompany?.logo_url ? (
+                  <img 
+                    src={`${import.meta.env.VITE_API_URL?.replace('/api/v1', '')}${activeSelectedCompany.logo_url}`} 
+                    alt={`${activeSelectedCompany.name} logo`} 
+                    className="w-full h-full object-contain" 
+                  />
+                ) : (
+                  <FiHome className="text-gray-400 text-xl" />
+                )}
               </div>
             ) : (
-              <div className="flex items-center space-x-2 min-w-0">
-                <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
-                  <img src="/ICTA.jpeg" alt="ICTA Logo" className="w-full h-full object-contain" />
-                </div>
-                <div className="min-w-0">
-                  <h1 className="text-gray-800 font-bold text-lg truncate">KPI Manager</h1>
-                  <p className="text-gray-500 text-xs truncate">Performance System</p>
+              <div className="w-full">
+                {/* Company Logo and Name */}
+                <div className="flex flex-col items-center">
+                  {activeSelectedCompany?.logo_url ? (
+                    <img 
+                      src={`${import.meta.env.VITE_API_URL?.replace('/api/v1', '')}${activeSelectedCompany.logo_url}`} 
+                      alt={`${activeSelectedCompany.name} logo`}
+                      className="max-w-full h-16 object-contain mb-2"
+                    />
+                  ) : (
+                    <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center mb-2">
+                      <FiHome className="text-gray-400 text-2xl" />
+                    </div>
+                  )}
+                  {activeSelectedCompany && (
+                    <h2 className="text-lg font-bold text-gray-800 text-center">{activeSelectedCompany.name}</h2>
+                  )}
                 </div>
               </div>
             )}
@@ -321,6 +345,25 @@ const Sidebar: React.FC<SidebarProps> = ({
             </div>
 
           </nav>
+
+          {/* ICT Africa Branding - Bottom */}
+          <div className={`${isCollapsed ? 'px-2 py-3' : 'p-4'} bg-white border-t border-gray-200 flex-shrink-0`}>
+            {isCollapsed ? (
+              <div className="flex justify-center">
+                <img src="/ICTA.jpeg" alt="ICT Africa" className="w-8 h-8 object-contain" />
+              </div>
+            ) : (
+              <div className="text-center">
+                <div className="flex items-center justify-center mb-2">
+                  <img src="/ICTA.jpeg" alt="ICT Africa" className="w-8 h-8 object-contain" />
+                </div>
+                <p className="text-[10px] text-gray-500 leading-tight">
+                  KPI Management Process<br />
+                  <span className="font-semibold text-gray-600">Designed by ICT Africa</span>
+                </p>
+              </div>
+            )}
+          </div>
 
           {/* Logout - Only for HR and Super Admin */}
           {(isHR(user) || isSuperAdmin(user)) && (

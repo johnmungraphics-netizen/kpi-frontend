@@ -68,6 +68,16 @@ interface KPIFormTableProps {
   managerSignature?: string;
   onSignatureChange?: (signature: string) => void;
 
+  // Physical Meeting Confirmation - Manager (optional - only for KPI Setting)
+  managerMeetingConfirmed?: boolean;
+  onManagerMeetingConfirmedChange?: (confirmed: boolean) => void;
+  managerMeetingLocation?: string;
+  onManagerMeetingLocationChange?: (location: string) => void;
+  managerMeetingDate?: string;
+  onManagerMeetingDateChange?: (date: string) => void;
+  managerMeetingTime?: string;
+  onManagerMeetingTimeChange?: (time: string) => void;
+
   // Text Modal
   textModal: TextModalState;
   setTextModal: (modal: TextModalState) => void;
@@ -102,6 +112,15 @@ export const KPIFormTable: React.FC<KPIFormTableProps> = ({
   handleRemoveRow,
   managerSignature,
   onSignatureChange,
+  // Physical Meeting Fields
+  managerMeetingConfirmed,
+  onManagerMeetingConfirmedChange,
+  managerMeetingLocation,
+  onManagerMeetingLocationChange,
+  managerMeetingDate,
+  onManagerMeetingDateChange,
+  managerMeetingTime,
+  onManagerMeetingTimeChange,
   textModal,
   setTextModal,
   mode = 'setting',
@@ -498,6 +517,77 @@ export const KPIFormTable: React.FC<KPIFormTableProps> = ({
             </table>
           </div>
         </div>
+
+        {/* Physical Meeting Confirmation - Manager */}
+        {mode === 'setting' && onManagerMeetingConfirmedChange && (
+          <div className="mt-6 border-t border-gray-200 pt-6">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <label className="flex items-start space-x-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={managerMeetingConfirmed || false}
+                  onChange={(e) => onManagerMeetingConfirmedChange(e.target.checked)}
+                  className="w-5 h-5 text-purple-600 rounded focus:ring-purple-500 mt-0.5"
+                />
+                <div className="flex-1">
+                  <span className="text-sm font-semibold text-gray-900">
+                    I confirm that a physical meeting will be held for this KPI setting
+                  </span>
+                  <p className="text-xs text-gray-600 mt-1">
+                    Please confirm that you had or will have a physical meeting with the employee to discuss these KPIs
+                  </p>
+                </div>
+              </label>
+
+              {/* Conditional Meeting Details Fields */}
+              {managerMeetingConfirmed && (
+                <div className="mt-4 pl-8 space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Meeting Location *
+                    </label>
+                    <input
+                      type="text"
+                      value={managerMeetingLocation || ''}
+                      onChange={(e) => onManagerMeetingLocationChange?.(e.target.value)}
+                      placeholder="e.g., Conference Room A, Manager's Office"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      required
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Meeting Date *
+                      </label>
+                      <input
+                        type="date"
+                        value={managerMeetingDate || ''}
+                        onChange={(e) => onManagerMeetingDateChange?.(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        required
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Meeting Time *
+                      </label>
+                      <input
+                        type="time"
+                        value={managerMeetingTime || ''}
+                        onChange={(e) => onManagerMeetingTimeChange?.(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        required
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Manager Signature - Only in Setting mode */}
         {mode === 'setting' && managerSignature !== undefined && onSignatureChange && (

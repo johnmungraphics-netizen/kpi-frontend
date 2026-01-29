@@ -9,6 +9,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import api from '../../../services/api';
 import { useToast } from '../../../context/ToastContext';
+import { useConfirm } from '../../../hooks/useConfirm';
 import { useCompanyFeatures } from '../../../hooks/useCompanyFeatures';
 import type { KPI, KPIReview, Accomplishment } from '../../../types';
 import {
@@ -80,6 +81,12 @@ interface UseManagerKPIReviewReturn {
   employeeRatingPercentage: number | null;
   employeeFinalRatingPercentage: number | null;
   managerFinalRatingPercentage: number | null;
+  // Physical Meeting Confirmation - Manager Review + Overall Manager Rating
+  managerReviewMeetingConfirmed: boolean;
+  managerReviewMeetingLocation: string;
+  managerReviewMeetingDate: string;
+  managerReviewMeetingTime: string;
+  overallManagerRating: number;
   
   // Actions
   setManagerRatings: (ratings: ItemRatingsMap) => void;
@@ -105,12 +112,23 @@ interface UseManagerKPIReviewReturn {
   handleSubmit: () => Promise<void>;
   handleBack: () => void;
   getRatingLabel: (rating: number) => string;
+  // Physical Meeting Actions + Overall Rating
+  setManagerReviewMeetingConfirmed: (confirmed: boolean) => void;
+  setManagerReviewMeetingLocation: (location: string) => void;
+  setManagerReviewMeetingDate: (date: string) => void;
+  setManagerReviewMeetingTime: (time: string) => void;
+  setOverallManagerRating: (rating: number) => void;
+  // Confirm dialog
+  confirmState: any;
+  handleConfirm: () => void;
+  handleCancel: () => void;
 }
 
 export const useManagerKPIReview = (): UseManagerKPIReviewReturn => {
   const { reviewId, kpiId } = useParams<{ reviewId?: string; kpiId?: string }>();
   const navigate = useNavigate();
   const toast = useToast();
+  const { confirm, confirmState, handleConfirm, handleCancel } = useConfirm();
   
  
   
@@ -144,6 +162,13 @@ export const useManagerKPIReview = (): UseManagerKPIReviewReturn => {
     title: '',
     value: '',
   });
+  
+  // Physical Meeting Confirmation - Manager Review + Overall Manager Rating
+  const [managerReviewMeetingConfirmed, setManagerReviewMeetingConfirmed] = useState(false);
+  const [managerReviewMeetingLocation, setManagerReviewMeetingLocation] = useState('');
+  const [managerReviewMeetingDate, setManagerReviewMeetingDate] = useState('');
+  const [managerReviewMeetingTime, setManagerReviewMeetingTime] = useState('');
+  const [overallManagerRating, setOverallManagerRating] = useState<number>(5);
 
   // Get calculation method from department features
   const { getCalculationMethodName } = useCompanyFeatures(kpi?.id);
@@ -596,6 +621,35 @@ export const useManagerKPIReview = (): UseManagerKPIReviewReturn => {
       return;
     }
 
+    // Physical meeting validation
+    if (managerReviewMeetingConfirmed) {
+      if (!managerReviewMeetingLocation?.trim()) {
+        toast.error('Please enter the meeting location');
+        return;
+      }
+      if (!managerReviewMeetingDate) {
+        toast.error('Please select the meeting date');
+        return;
+      }
+      if (!managerReviewMeetingTime) {
+        toast.error('Please select the meeting time');
+        return;
+      }
+    }
+
+    // Warning if physical meeting is NOT confirmed
+    if (!managerReviewMeetingConfirmed) {
+      const confirmProceed = await confirm({
+        title: 'No Physical Meeting Confirmed',
+        message: 'Are you sure you did not have a physical meeting? HR will be notified about this.',
+        variant: 'warning',
+        confirmText: 'Continue Without Meeting',
+        cancelText: 'Go Back'
+      });
+      if (!confirmProceed) {
+        return;
+      }
+    }
 
     // Calculate and round average rating (including accomplishments)
     const averageRating = calculateAverageRating(kpi.items, managerRatings, accomplishments);
@@ -661,6 +715,12 @@ export const useManagerKPIReview = (): UseManagerKPIReviewReturn => {
           accomplishments: accomplishments,
           average_manager_rating: roundedRating, // Include rounded average for kpi_reviews table
           manager_final_rating_percentage: managerFinalRatingPercentage, // ⭐ Send calculated percentage from frontend
+          // Physical meeting confirmation fields + Overall Manager Rating
+          manager_review_meeting_confirmed: managerReviewMeetingConfirmed,
+          manager_review_meeting_location: managerReviewMeetingConfirmed ? managerReviewMeetingLocation : null,
+          manager_review_meeting_date: managerReviewMeetingConfirmed ? managerReviewMeetingDate : null,
+          manager_review_meeting_time: managerReviewMeetingConfirmed ? managerReviewMeetingTime : null,
+          overall_manager_rating: overallManagerRating,
         };
 
         
@@ -863,6 +923,12 @@ export const useManagerKPIReview = (): UseManagerKPIReviewReturn => {
     employeeRatingPercentage,
     employeeFinalRatingPercentage,
     managerFinalRatingPercentage,
+    // Physical Meeting Confirmation - Manager Review + Overall Manager Rating
+    managerReviewMeetingConfirmed,
+    managerReviewMeetingLocation,
+    managerReviewMeetingDate,
+    managerReviewMeetingTime,
+    overallManagerRating,
     
     // Actions
     setManagerRatings,
@@ -888,5 +954,15 @@ export const useManagerKPIReview = (): UseManagerKPIReviewReturn => {
     handleSubmit,
     handleBack,
     getRatingLabel,
+    // Physical Meeting Actions + Overall Rating
+    setManagerReviewMeetingConfirmed,
+    setManagerReviewMeetingLocation,
+    setManagerReviewMeetingDate,
+    setManagerReviewMeetingTime,
+    setOverallManagerRating,
+    // Confirm dialog
+    confirmState,
+    handleConfirm,
+    handleCancel,
   };
 };

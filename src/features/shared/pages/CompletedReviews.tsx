@@ -129,7 +129,7 @@ const CompletedReviews: React.FC = () => {
   const handleDownloadPDF = async (kpi: KPI) => {
     setDownloading(kpi.id);
     try {
-      const response = await api.get(`/kpis/${kpi.id}/review-download-pdf`, {
+      const response = await api.get(`/kpis/${kpi.id}/download-review-pdf`, {
         responseType: 'blob',
       });
 

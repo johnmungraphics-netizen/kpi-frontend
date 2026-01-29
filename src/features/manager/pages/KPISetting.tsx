@@ -26,6 +26,11 @@ const ManagerKPISetting: React.FC = () => {
     departments,
     employeesLoading,
     selectedEmployeeIds,
+    // Physical Meeting Confirmation - Manager
+    managerMeetingConfirmed,
+    managerMeetingLocation,
+    managerMeetingDate,
+    managerMeetingTime,
     //
     setKpiRows,
     setPeriod,
@@ -49,6 +54,11 @@ const ManagerKPISetting: React.FC = () => {
     // Template mode handlers
     handleSubmitToEmployees,
     handleEmployeeSelectionChange,
+    // Physical Meeting Actions
+    setManagerMeetingConfirmed,
+    setManagerMeetingLocation,
+    setManagerMeetingDate,
+    setManagerMeetingTime,
     // Template titles
     templateTitles,
     isDepartmentTemplateEnabled,
@@ -183,6 +193,15 @@ const ManagerKPISetting: React.FC = () => {
         handleRemoveRow={handleRemoveRow}
         managerSignature={managerSignature}
         onSignatureChange={setManagerSignature}
+        // Physical Meeting Confirmation Props
+        managerMeetingConfirmed={managerMeetingConfirmed}
+        onManagerMeetingConfirmedChange={setManagerMeetingConfirmed}
+        managerMeetingLocation={managerMeetingLocation}
+        onManagerMeetingLocationChange={setManagerMeetingLocation}
+        managerMeetingDate={managerMeetingDate}
+        onManagerMeetingDateChange={setManagerMeetingDate}
+        managerMeetingTime={managerMeetingTime}
+        onManagerMeetingTimeChange={setManagerMeetingTime}
         textModal={textModal}
         setTextModal={setTextModal}
         templateTitles={templateTitles}

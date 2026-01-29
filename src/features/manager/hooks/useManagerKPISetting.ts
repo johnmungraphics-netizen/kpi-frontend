@@ -58,6 +58,11 @@ interface UseManagerKPISettingReturn {
   templateTitles: any[];
   isDepartmentTemplateEnabled: boolean;
   employeeDepartmentId: number | null;
+  // Physical Meeting Confirmation - Manager
+  managerMeetingConfirmed: boolean;
+  managerMeetingLocation: string;
+  managerMeetingDate: string;
+  managerMeetingTime: string;
   
   // Actions
   setKpiRows: (rows: KPIRow[]) => void;
@@ -82,6 +87,11 @@ interface UseManagerKPISettingReturn {
   // Template mode handlers
   handleSubmitToEmployees: (selectedEmployeeIds: number[]) => Promise<void>;
   handleEmployeeSelectionChange: (employeeIds: number[]) => void;
+  // Physical Meeting Actions
+  setManagerMeetingConfirmed: (confirmed: boolean) => void;
+  setManagerMeetingLocation: (location: string) => void;
+  setManagerMeetingDate: (date: string) => void;
+  setManagerMeetingTime: (time: string) => void;
 }
 
 export const useManagerKPISetting = (): UseManagerKPISettingReturn => {
@@ -109,6 +119,12 @@ export const useManagerKPISetting = (): UseManagerKPISettingReturn => {
     title: '',
     value: '',
   });
+  
+  // Physical Meeting Confirmation - Manager
+  const [managerMeetingConfirmed, setManagerMeetingConfirmed] = useState(false);
+  const [managerMeetingLocation, setManagerMeetingLocation] = useState('');
+  const [managerMeetingDate, setManagerMeetingDate] = useState('');
+  const [managerMeetingTime, setManagerMeetingTime] = useState('');
   
   // Template mode state
   const [employees, setEmployees] = useState<any[]>([]);
@@ -347,6 +363,36 @@ const handleSubmit = async () => {
     return;
   }
 
+  // Physical meeting validation
+  if (managerMeetingConfirmed) {
+    if (!managerMeetingLocation?.trim()) {
+      toast.error('Please enter the meeting location');
+      return;
+    }
+    if (!managerMeetingDate) {
+      toast.error('Please select the meeting date');
+      return;
+    }
+    if (!managerMeetingTime) {
+      toast.error('Please select the meeting time');
+      return;
+    }
+  }
+
+  // Warning if physical meeting is NOT confirmed
+  if (!managerMeetingConfirmed) {
+    const confirmProceed = await confirm({
+      title: 'No Physical Meeting Confirmed',
+      message: 'Are you sure you did not have a physical meeting? HR will be notified about this.',
+      variant: 'warning',
+      confirmText: 'Continue Without Meeting',
+      cancelText: 'Go Back'
+    });
+    if (!confirmProceed) {
+      return;
+    }
+  }
+
     // Goal weights validation
   const weightValidation = validateGoalWeights(kpiRows);
   if (!weightValidation.isValid) {
@@ -379,6 +425,11 @@ const handleSubmit = async () => {
       year,
       meeting_date: meetingDate?.toISOString().split('T')[0],
       manager_signature: managerSignature,
+      // Physical meeting confirmation fields
+      manager_meeting_confirmed: managerMeetingConfirmed,
+      manager_meeting_location: managerMeetingConfirmed ? managerMeetingLocation : null,
+      manager_meeting_date: managerMeetingConfirmed ? managerMeetingDate : null,
+      manager_meeting_time: managerMeetingConfirmed ? managerMeetingTime : null,
       kpi_items: validKpiRows.map(kpi => ({
         title: kpi.title,
         description: kpi.description,
@@ -508,6 +559,36 @@ const handleSubmitToEmployees = async (selectedEmployeeIds: number[]) => {
     return;
   }
 
+  // Physical meeting validation
+  if (managerMeetingConfirmed) {
+    if (!managerMeetingLocation?.trim()) {
+      toast.error('Please enter the meeting location');
+      return;
+    }
+    if (!managerMeetingDate) {
+      toast.error('Please select the meeting date');
+      return;
+    }
+    if (!managerMeetingTime) {
+      toast.error('Please select the meeting time');
+      return;
+    }
+  }
+
+  // Warning if physical meeting is NOT confirmed
+  if (!managerMeetingConfirmed) {
+    const confirmProceed = await confirm({
+      title: 'No Physical Meeting Confirmed',
+      message: 'Are you sure you did not have a physical meeting? HR will be notified about this.',
+      variant: 'warning',
+      confirmText: 'Continue Without Meeting',
+      cancelText: 'Go Back'
+    });
+    if (!confirmProceed) {
+      return;
+    }
+  }
+
     // Goal weights validation
   const weightValidation = validateGoalWeights(kpiRows);
   if (!weightValidation.isValid) {
@@ -542,6 +623,11 @@ const handleSubmitToEmployees = async (selectedEmployeeIds: number[]) => {
         year,
         meeting_date: meetingDate?.toISOString().split('T')[0],
         manager_signature: managerSignature,
+        // Physical meeting confirmation fields
+        manager_meeting_confirmed: managerMeetingConfirmed,
+        manager_meeting_location: managerMeetingConfirmed ? managerMeetingLocation : null,
+        manager_meeting_date: managerMeetingConfirmed ? managerMeetingDate : null,
+        manager_meeting_time: managerMeetingConfirmed ? managerMeetingTime : null,
         kpi_items: validKpiRows.map(kpi => ({
           title: kpi.title,
           description: kpi.description,
@@ -597,6 +683,11 @@ const handleSubmitToEmployees = async (selectedEmployeeIds: number[]) => {
     templateTitles,
     isDepartmentTemplateEnabled,
     employeeDepartmentId,
+    // Physical Meeting Confirmation - Manager
+    managerMeetingConfirmed,
+    managerMeetingLocation,
+    managerMeetingDate,
+    managerMeetingTime,
     
     // Actions
     setKpiRows,
@@ -621,5 +712,10 @@ const handleSubmitToEmployees = async (selectedEmployeeIds: number[]) => {
     // Template mode handlers
     handleSubmitToEmployees,
     handleEmployeeSelectionChange,
+    // Physical Meeting Actions
+    setManagerMeetingConfirmed,
+    setManagerMeetingLocation,
+    setManagerMeetingDate,
+    setManagerMeetingTime,
   };
 };

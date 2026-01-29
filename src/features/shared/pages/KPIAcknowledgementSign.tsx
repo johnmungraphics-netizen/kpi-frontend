@@ -6,15 +6,17 @@ import SignatureField from '../../../components/SignatureField';
 import DatePicker from '../../../components/DatePicker';
 import TextModal from '../../../components/TextModal';
 import { useToast } from '../../../context/ToastContext';
-import { useEmployeeData } from '../../../context/EmployeeDataContext';
+import { useAuth } from '../../../context/AuthContext';
+import { useConfirm } from '../../../hooks/useConfirm';
 import { FiCheckCircle, FiClock } from 'react-icons/fi';
-import { Button } from '../../../components/common';
+import { Button, ConfirmDialog } from '../../../components/common';
 
 const KPIAcknowledgement: React.FC = () => {
   const { kpiId } = useParams<{ kpiId: string }>();
   const navigate = useNavigate();
   const toast = useToast();
-  const { refreshData } = useEmployeeData();
+  const { user } = useAuth();
+  const { confirm, confirmState, handleConfirm, handleCancel } = useConfirm();
   const [kpi, setKpi] = useState<KPI | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -25,6 +27,12 @@ const KPIAcknowledgement: React.FC = () => {
     title: '',
     value: '',
   });
+  
+  // Physical Meeting Confirmation - Employee
+  const [employeeMeetingConfirmed, setEmployeeMeetingConfirmed] = useState(false);
+  const [employeeMeetingLocation, setEmployeeMeetingLocation] = useState('');
+  const [employeeMeetingDate, setEmployeeMeetingDate] = useState('');
+  const [employeeMeetingTime, setEmployeeMeetingTime] = useState('');
 
 
   useEffect(() => {
@@ -59,6 +67,36 @@ const KPIAcknowledgement: React.FC = () => {
       return;
     }
 
+    // Physical meeting validation
+    if (employeeMeetingConfirmed) {
+      if (!employeeMeetingLocation?.trim()) {
+        toast.error('Please enter the meeting location');
+        return;
+      }
+      if (!employeeMeetingDate) {
+        toast.error('Please select the meeting date');
+        return;
+      }
+      if (!employeeMeetingTime) {
+        toast.error('Please select the meeting time');
+        return;
+      }
+    }
+
+    // Warning if physical meeting is NOT confirmed
+    if (!employeeMeetingConfirmed) {
+      const confirmProceed = await confirm({
+        title: 'No Physical Meeting Confirmed',
+        message: 'Are you sure you did not have a physical meeting? HR will be notified about this.',
+        variant: 'warning',
+        confirmText: 'Continue Without Meeting',
+        cancelText: 'Go Back'
+      });
+      if (!confirmProceed) {
+        return;
+      }
+    }
+
     setSubmitting(true);
     try {
       // CORRECT ENDPOINT: /kpis/:kpiId/acknowledge (not /kpi-acknowledgement/:kpiId)
@@ -66,16 +104,27 @@ const KPIAcknowledgement: React.FC = () => {
       
       const payload = {
         employee_signature: employeeSignature,
+        // Physical meeting confirmation fields
+        employee_meeting_confirmed: employeeMeetingConfirmed,
+        employee_meeting_location: employeeMeetingConfirmed ? employeeMeetingLocation : null,
+        employee_meeting_date: employeeMeetingConfirmed ? employeeMeetingDate : null,
+        employee_meeting_time: employeeMeetingConfirmed ? employeeMeetingTime : null,
       };
 
       const response = await api.post(url, payload);
 
       toast.success(response.data.message || 'KPI acknowledged successfully');
       
-      // Refresh the shared data to update sidebar counts
-      await refreshData();
-      
-      navigate('/employee/dashboard');
+      // Navigate based on user role
+      if (user?.role === 'employee') {
+        navigate('/employee/dashboard');
+      } else if (user?.role === 'manager') {
+        navigate('/manager/kpi-setting-completed');
+      } else if (user?.role === 'hr') {
+        navigate('/hr/kpi-setting-completed');
+      } else {
+        navigate(-1); // Go back to previous page
+      }
     } catch (error: any) {
       
       
@@ -369,6 +418,75 @@ const KPIAcknowledgement: React.FC = () => {
             </div>
           </div>
 
+          {/* Physical Meeting Confirmation - Employee */}
+          <div className="mt-6 pt-6 border-t border-gray-200">
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <label className="flex items-start space-x-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={employeeMeetingConfirmed}
+                  onChange={(e) => setEmployeeMeetingConfirmed(e.target.checked)}
+                  className="w-5 h-5 text-purple-600 rounded focus:ring-purple-500 mt-0.5"
+                />
+                <div className="flex-1">
+                  <span className="text-sm font-semibold text-gray-900">
+                    I confirm that a physical meeting was held for this KPI setting
+                  </span>
+                  <p className="text-xs text-gray-600 mt-1">
+                    Please confirm that you had a physical meeting with your manager to discuss these KPIs
+                  </p>
+                </div>
+              </label>
+
+              {/* Conditional Meeting Details Fields */}
+              {employeeMeetingConfirmed && (
+                <div className="mt-4 pl-8 space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Meeting Location *
+                    </label>
+                    <input
+                      type="text"
+                      value={employeeMeetingLocation}
+                      onChange={(e) => setEmployeeMeetingLocation(e.target.value)}
+                      placeholder="e.g., Conference Room A, Manager's Office"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      required
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Meeting Date *
+                      </label>
+                      <input
+                        type="date"
+                        value={employeeMeetingDate}
+                        onChange={(e) => setEmployeeMeetingDate(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        required
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Meeting Time *
+                      </label>
+                      <input
+                        type="time"
+                        value={employeeMeetingTime}
+                        onChange={(e) => setEmployeeMeetingTime(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        required
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
           {/* Employee Signature */}
           <div className="mt-6 pt-6 border-t border-gray-200">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Employee Confirmation</h3>
@@ -420,6 +538,18 @@ const KPIAcknowledgement: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Confirm Dialog */}
+      <ConfirmDialog
+        isOpen={confirmState.isOpen}
+        onClose={handleCancel}
+        onConfirm={handleConfirm}
+        title={confirmState.title}
+        message={confirmState.message}
+        variant={confirmState.variant}
+        confirmText={confirmState.confirmText}
+        cancelText={confirmState.cancelText}
+      />
 
       {/* Text Modal */}
       <TextModal

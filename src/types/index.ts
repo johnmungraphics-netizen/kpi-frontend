@@ -73,6 +73,16 @@ export interface KPI {
   manager_signed_at?: string;
   employee_signature?: string;
   employee_signed_at?: string;
+  // Physical meeting fields - Manager (KPI Setting phase)
+  manager_meeting_confirmed?: boolean;
+  manager_meeting_location?: string;
+  manager_meeting_date?: string;
+  manager_meeting_time?: string;
+  // Physical meeting fields - Employee (Acknowledgement phase)
+  employee_meeting_confirmed?: boolean;
+  employee_meeting_location?: string;
+  employee_meeting_date?: string;
+  employee_meeting_time?: string;
   created_at: string;
   updated_at: string;
   employee_name?: string;
@@ -116,12 +126,23 @@ export interface KPIReview {
   improvement_needed_manager_comment?: string;
   overall_comment?: string;
   overall_manager_comment?: string;  // Overall manager comments on the review
+  overall_manager_rating?: number;   // NEW: Overall manager rating (separate from item-level ratings)
   future_plan?: string;  // NEW: Employee's future plans
   accomplishments?: Accomplishment[];  // NEW: Structured accomplishments
   manager_signed_at?: string;
   employee_rejection_note?: string;
   employee_confirmation_status?: string;
   employee_confirmation_signed_at?: string;
+  // Physical meeting fields - Manager (Review phase)
+  manager_review_meeting_confirmed?: boolean;
+  manager_review_meeting_location?: string;
+  manager_review_meeting_date?: string;
+  manager_review_meeting_time?: string;
+  // Physical meeting fields - Employee (Confirmation phase)
+  employee_confirmation_meeting_confirmed?: boolean;
+  employee_confirmation_meeting_location?: string;
+  employee_confirmation_meeting_date?: string;
+  employee_confirmation_meeting_time?: string;
   
   // Correct rejection field names from database (not prefixed with employee_)
   rejection_note?: string;  // Actual database column name
@@ -223,6 +244,7 @@ export interface Company {
   id: number;
   name: string;
   domain?: string;
+  logo_url?: string;
   is_primary?: boolean;
 }
 

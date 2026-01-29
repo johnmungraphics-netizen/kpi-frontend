@@ -13,6 +13,10 @@ export const useUserManagement = () => {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<number | null>(null);
   
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(25);
+  
   // Filters - default to 'employee' role (ID: 4)
   const [roleFilter, setRoleFilter] = useState<string>('4');
   const [companyFilter, setCompanyFilter] = useState<string>('');
@@ -27,6 +31,7 @@ export const useUserManagement = () => {
   }, []);
 
   useEffect(() => {
+    setCurrentPage(1); // Reset to page 1 when filters change
     fetchUsers();
   }, [roleFilter, companyFilter, searchQuery]);
 
@@ -35,6 +40,17 @@ export const useUserManagement = () => {
       fetchDepartments();
     }
   }, [companyFilter]);
+
+  // Calculate pagination
+  const totalPages = Math.ceil(users.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedUsers = users.slice(startIndex, endIndex);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   const fetchInitialData = async () => {
     try {
@@ -194,10 +210,15 @@ export const useUserManagement = () => {
 
   return {
     users,
+    paginatedUsers,
     companies,
     departments,
     loading,
     actionLoading,
+    currentPage,
+    totalPages,
+    itemsPerPage,
+    handlePageChange,
     roleFilter,
     setRoleFilter,
     companyFilter,

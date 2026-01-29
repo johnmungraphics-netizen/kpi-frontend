@@ -48,7 +48,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (userCompanies && userCompanies.length > 0) {
         const primary = userCompanies.find((c: Company) => c.is_primary) || userCompanies[0];
         setSelectedCompany(primary);
-      } else {
       }
       
       return { hasMultipleCompanies: multiple || false, passwordChangeRequired: passwordChangeRequired || false };

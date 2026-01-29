@@ -3,6 +3,7 @@ import api from '../../services/api';
 
 // Types
 interface DepartmentStatistic {
+  department_id: number;
   department: string;
   total_employees: number;
   categories: {

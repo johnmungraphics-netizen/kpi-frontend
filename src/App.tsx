@@ -52,6 +52,9 @@ import {
   ReviewReport,
 } from './features/hr';
 
+// Analytics Pages
+import { DepartmentAnalytics } from './features/analytics';
+
 // Shared Pages
 import {
   AcknowledgedKPIs,
@@ -826,6 +829,16 @@ function AppRoutes() {
           <ProtectedRoute allowedRoles={[ROLE_IDS.HR]}>
             <Layout>
               <DepartmentDashboard />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/hr/departments/:departmentId/analytics"
+        element={
+          <ProtectedRoute allowedRoles={[ROLE_IDS.HR]}>
+            <Layout>
+              <DepartmentAnalytics />
             </Layout>
           </ProtectedRoute>
         }

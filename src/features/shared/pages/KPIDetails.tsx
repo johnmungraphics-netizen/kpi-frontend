@@ -932,6 +932,151 @@ const ManagerKPIDetails: React.FC = () => {
         </div>
       </div>
 
+      {/* Physical Meeting Confirmations */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">Physical Meeting Information</h2>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Manager - KPI Setting Meeting */}
+          <div className="border border-gray-200 rounded-lg overflow-hidden">
+            <div className="bg-blue-50 px-4 py-2 border-b border-blue-200">
+              <p className="font-semibold text-gray-900 text-sm">KPI Setting Meeting (Manager)</p>
+            </div>
+            <div className="p-4">
+              {kpi.manager_meeting_confirmed ? (
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2 text-green-600">
+                    <FiCheckCircle />
+                    <span className="text-sm font-medium">Meeting Confirmed</span>
+                  </div>
+                  <div className="text-sm text-gray-600 space-y-1 mt-3">
+                    <p><span className="font-medium">Location:</span> {kpi.manager_meeting_location || 'N/A'}</p>
+                    <p><span className="font-medium">Date:</span> {kpi.manager_meeting_date ? new Date(kpi.manager_meeting_date).toLocaleDateString() : 'N/A'}</p>
+                    <p><span className="font-medium">Time:</span> {kpi.manager_meeting_time || 'N/A'}</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center space-x-2 text-gray-400">
+                  <FiClock />
+                  <span className="text-sm">No meeting information provided</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Employee - KPI Acknowledgement Meeting */}
+          <div className="border border-gray-200 rounded-lg overflow-hidden">
+            <div className="bg-green-50 px-4 py-2 border-b border-green-200">
+              <p className="font-semibold text-gray-900 text-sm">KPI Acknowledgement Meeting (Employee)</p>
+            </div>
+            <div className="p-4">
+              {kpi.employee_meeting_confirmed ? (
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2 text-green-600">
+                    <FiCheckCircle />
+                    <span className="text-sm font-medium">Meeting Confirmed</span>
+                  </div>
+                  <div className="text-sm text-gray-600 space-y-1 mt-3">
+                    <p><span className="font-medium">Location:</span> {kpi.employee_meeting_location || 'N/A'}</p>
+                    <p><span className="font-medium">Date:</span> {kpi.employee_meeting_date ? new Date(kpi.employee_meeting_date).toLocaleDateString() : 'N/A'}</p>
+                    <p><span className="font-medium">Time:</span> {kpi.employee_meeting_time || 'N/A'}</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center space-x-2 text-gray-400">
+                  <FiClock />
+                  <span className="text-sm">No meeting information provided</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Manager - Performance Review Meeting */}
+          {review && (
+            <div className="border border-gray-200 rounded-lg overflow-hidden">
+              <div className="bg-purple-50 px-4 py-2 border-b border-purple-200">
+                <p className="font-semibold text-gray-900 text-sm">Performance Review Meeting (Manager)</p>
+              </div>
+              <div className="p-4">
+                {review.manager_review_meeting_confirmed ? (
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2 text-green-600">
+                      <FiCheckCircle />
+                      <span className="text-sm font-medium">Meeting Confirmed</span>
+                    </div>
+                    <div className="text-sm text-gray-600 space-y-1 mt-3">
+                      <p><span className="font-medium">Location:</span> {review.manager_review_meeting_location || 'N/A'}</p>
+                      <p><span className="font-medium">Date:</span> {review.manager_review_meeting_date ? new Date(review.manager_review_meeting_date).toLocaleDateString() : 'N/A'}</p>
+                      <p><span className="font-medium">Time:</span> {review.manager_review_meeting_time || 'N/A'}</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center space-x-2 text-gray-400">
+                    <FiClock />
+                    <span className="text-sm">No meeting information provided</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Employee - Confirmation Meeting */}
+          {review && (
+            <div className="border border-gray-200 rounded-lg overflow-hidden">
+              <div className="bg-yellow-50 px-4 py-2 border-b border-yellow-200">
+                <p className="font-semibold text-gray-900 text-sm">Review Confirmation Meeting (Employee)</p>
+              </div>
+              <div className="p-4">
+                {review.employee_confirmation_meeting_confirmed ? (
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2 text-green-600">
+                      <FiCheckCircle />
+                      <span className="text-sm font-medium">Meeting Confirmed</span>
+                    </div>
+                    <div className="text-sm text-gray-600 space-y-1 mt-3">
+                      <p><span className="font-medium">Location:</span> {review.employee_confirmation_meeting_location || 'N/A'}</p>
+                      <p><span className="font-medium">Date:</span> {review.employee_confirmation_meeting_date ? new Date(review.employee_confirmation_meeting_date).toLocaleDateString() : 'N/A'}</p>
+                      <p><span className="font-medium">Time:</span> {review.employee_confirmation_meeting_time || 'N/A'}</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center space-x-2 text-gray-400">
+                    <FiClock />
+                    <span className="text-sm">No meeting information provided</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Overall Manager Rating */}
+      {review && review.overall_manager_rating && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Overall Manager Rating</h2>
+          <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
+            <div className="flex items-center space-x-3">
+              <div className="text-4xl font-bold text-purple-600">
+                {review.overall_manager_rating}
+              </div>
+              <div className="flex-1">
+                <div className="text-sm font-medium text-gray-700">
+                  {review.overall_manager_rating === 5 ? 'Outstanding Performance' :
+                   review.overall_manager_rating === 4 ? 'Exceeds Expectations' :
+                   review.overall_manager_rating === 3 ? 'Meets Expectations' :
+                   review.overall_manager_rating === 2 ? 'Below Expectations' :
+                   'Poor Performance'}
+                </div>
+                <div className="text-xs text-gray-500 mt-1">
+                  Overall assessment by manager (1-5 scale)
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Overall Manager Comments */}
       {review && review.overall_manager_comment && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useToast } from '../../../context/ToastContext';
 import { FiCheckCircle, FiX, FiAlertCircle } from 'react-icons/fi';
-import { Button } from '../../../components/common';
+import { Button, ConfirmDialog } from '../../../components/common';
 import SignatureField from '../../../components/SignatureField';
 import TextModal from '../../../components/TextModal';
 import { useEmployeeKPIConfirmation } from '../hooks';
@@ -34,6 +34,19 @@ const KPIConfirmation: React.FC = () => {
     openTextModal,
     closeTextModal,
     navigate,
+    // Physical Meeting Confirmation
+    employeeConfirmationMeetingConfirmed,
+    setEmployeeConfirmationMeetingConfirmed,
+    employeeConfirmationMeetingLocation,
+    setEmployeeConfirmationMeetingLocation,
+    employeeConfirmationMeetingDate,
+    setEmployeeConfirmationMeetingDate,
+    employeeConfirmationMeetingTime,
+    setEmployeeConfirmationMeetingTime,
+    // Confirm dialog
+    confirmState,
+    handleConfirm,
+    handleCancel,
   } = useEmployeeKPIConfirmation();
   const toast = useToast();
 
@@ -981,6 +994,75 @@ const KPIConfirmation: React.FC = () => {
             </div>
           )}
 
+          {/* Physical Meeting Confirmation - Employee (Only when approving) */}
+          {action === 'approve' && (
+            <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+              <label className="flex items-start space-x-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={employeeConfirmationMeetingConfirmed}
+                  onChange={(e) => setEmployeeConfirmationMeetingConfirmed(e.target.checked)}
+                  className="w-5 h-5 text-purple-600 rounded focus:ring-purple-500 mt-0.5"
+                />
+                <div className="flex-1">
+                  <span className="text-sm font-semibold text-gray-900">
+                    I confirm that a physical meeting was held for this performance review
+                  </span>
+                  <p className="text-xs text-gray-600 mt-1">
+                    Please confirm that you had a physical meeting with your manager to discuss this performance review
+                  </p>
+                </div>
+              </label>
+
+              {/* Conditional Meeting Details Fields */}
+              {employeeConfirmationMeetingConfirmed && (
+                <div className="mt-4 pl-8 space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Meeting Location *
+                    </label>
+                    <input
+                      type="text"
+                      value={employeeConfirmationMeetingLocation}
+                      onChange={(e) => setEmployeeConfirmationMeetingLocation(e.target.value)}
+                      placeholder="e.g., Conference Room A, Manager's Office"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      required
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Meeting Date *
+                      </label>
+                      <input
+                        type="date"
+                        value={employeeConfirmationMeetingDate}
+                        onChange={(e) => setEmployeeConfirmationMeetingDate(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        required
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Meeting Time *
+                      </label>
+                      <input
+                        type="time"
+                        value={employeeConfirmationMeetingTime}
+                        onChange={(e) => setEmployeeConfirmationMeetingTime(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        required
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Signature Field */}
           {action === 'approve' && (
             <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
@@ -1020,6 +1102,18 @@ const KPIConfirmation: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Confirm Dialog */}
+      <ConfirmDialog
+        isOpen={confirmState.isOpen}
+        onClose={handleCancel}
+        onConfirm={handleConfirm}
+        title={confirmState.title}
+        message={confirmState.message}
+        variant={confirmState.variant}
+        confirmText={confirmState.confirmText}
+        cancelText={confirmState.cancelText}
+      />
 
       {/* Text Modal */}
       <TextModal

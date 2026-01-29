@@ -28,6 +28,11 @@ interface ReviewReportData {
   self_rating_enabled: boolean;
   manager_percentage_rating: number | null;
   manager_percentage_column_used: string;
+  // Physical Meeting Confirmation
+  manager_meeting_confirmed: boolean;
+  employee_meeting_confirmed: boolean;
+  manager_review_meeting_confirmed: boolean;
+  employee_confirmation_meeting_confirmed: boolean;
 }
 
 const ReviewReport: React.FC = () => {
@@ -296,7 +301,7 @@ const ReviewReport: React.FC = () => {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[1200px]">
+            <table className="w-full min-w-[1400px]">
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
@@ -322,6 +327,12 @@ const ReviewReport: React.FC = () => {
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
                     Manager Rating %
+                  </th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">
+                    Manager Meeting
+                  </th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">
+                    Employee Meeting
                   </th>
                 </tr>
               </thead>
@@ -369,6 +380,28 @@ const ReviewReport: React.FC = () => {
                             ? `${record.manager_percentage_rating.toFixed(2)}%`
                             : 'N/A'}
                         </span>
+                      </td>
+                      <td className="px-4 py-4 text-sm text-center">
+                        {record.manager_meeting_confirmed || record.manager_review_meeting_confirmed ? (
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            ✓ Yes
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                            ✗ No
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-4 py-4 text-sm text-center">
+                        {record.employee_meeting_confirmed || record.employee_confirmation_meeting_confirmed ? (
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            ✓ Yes
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                            ✗ No
+                          </span>
+                        )}
                       </td>
                     </tr>
                   );
@@ -439,7 +472,7 @@ const ReviewReport: React.FC = () => {
       {reportData.length > 0 && (
         <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl shadow-sm border border-purple-200 p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Summary Statistics</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             <div className="bg-white rounded-lg p-4 border border-purple-200">
               <p className="text-sm text-gray-600 mb-1">Total Records</p>
               <p className="text-2xl font-bold text-purple-600">{reportData.length}</p>
@@ -454,6 +487,18 @@ const ReviewReport: React.FC = () => {
               <p className="text-sm text-gray-600 mb-1">Departments</p>
               <p className="text-2xl font-bold text-purple-600">
                 {new Set(reportData.map(r => r.department)).size}
+              </p>
+            </div>
+            <div className="bg-white rounded-lg p-4 border border-purple-200">
+              <p className="text-sm text-gray-600 mb-1">Manager Meetings Held</p>
+              <p className="text-2xl font-bold text-green-600">
+                {reportData.filter(r => r.manager_meeting_confirmed || r.manager_review_meeting_confirmed).length}
+              </p>
+            </div>
+            <div className="bg-white rounded-lg p-4 border border-purple-200">
+              <p className="text-sm text-gray-600 mb-1">Employee Meetings Held</p>
+              <p className="text-2xl font-bold text-green-600">
+                {reportData.filter(r => r.employee_meeting_confirmed || r.employee_confirmation_meeting_confirmed).length}
               </p>
             </div>
           </div>

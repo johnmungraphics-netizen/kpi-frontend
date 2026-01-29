@@ -4,6 +4,7 @@ export interface Company {
   id: number;
   name: string;
   domain?: string;
+  logo_url?: string;
   created_at: string;
   total_employees: number;
   total_managers: number;
@@ -30,8 +31,20 @@ export const companyService = {
     }
   },
 
-  updateCompany: async (id: number, data: CompanyFormData): Promise<Company> => {
-    const response = await api.put(`/companies/${id}`, data);
+  updateCompany: async (id: number, data: CompanyFormData, logoFile?: File | null): Promise<Company> => {
+    const formData = new FormData();
+    formData.append('name', data.name);
+    formData.append('domain', data.domain || '');
+    
+    if (logoFile) {
+      formData.append('logo', logoFile);
+    }
+    
+    const response = await api.put(`/companies/${id}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
     return response.data.company;
   },
 };

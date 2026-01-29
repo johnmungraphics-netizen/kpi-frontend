@@ -61,16 +61,14 @@ export const managerService = {
 
   /**
    * Fetch all employees for current manager
-   * Gets employees assigned to manager's departments
+   * Backend automatically filters to show only employees in departments assigned to this manager
+   * via manager_departments table
    */
   fetchEmployees: async (): Promise<Employee[]> => {
     try {
-
-      
-      // For now, get all users and filter - backend should implement department-based filtering
+      // Backend /users/list endpoint automatically filters employees by manager's departments
+      // when request comes from a manager role (checks manager_departments table)
       const usersResponse = await api.get('/users/list');
-
-      
       // Parse response - backend returns: { success: true, data: { users: [...], pagination: {...} } }
       let allUsers = [];
       if (usersResponse.data.data && usersResponse.data.data.users && Array.isArray(usersResponse.data.data.users)) {
@@ -82,14 +80,11 @@ export const managerService = {
       } else if (Array.isArray(usersResponse.data)) {
         allUsers = usersResponse.data;
       }
-      
 
-      
       // Filter employees (exclude superadmin=1, managers=2, hr=3)
       const employees = allUsers.filter((user: any) => 
         user.role_id !== 1 && user.role_id !== 2 && user.role_id !== 3
       );
-      
 
       return employees;
     } catch (error) {
@@ -132,6 +127,46 @@ export const managerService = {
     } catch (error) {
       if (toast) toast.error('Server error. Please try reloading or try later.');
       throw error;
+    }
+  },
+
+  /**
+   * Fetch KPIs by department and category
+   */
+  fetchKPIsByCategory: async (
+    department: string,
+    category: string,
+    period?: string
+  ): Promise<any[]> => {
+    try {
+      const params = period ? { period } : {};
+      const response = await api.get(
+        `/departments/kpis/${department}/${category}`,
+        { params }
+      );
+      
+      // Backend returns { success: true, data: { kpis: [...] } }
+      const kpis = response.data.data?.kpis || response.data.kpis || [];
+      return kpis;
+    } catch (error) {
+      if (toast) toast.error('Server error. Please try reloading or try later.');
+      return [];
+    }
+  },
+
+  /**
+   * Fetch recent KPIs (Setting Completed + Reviews Completed) for dashboard card
+   */
+  fetchRecentKPIs: async (limit: number = 10): Promise<any[]> => {
+    try {
+      const response = await api.get('/departments/recent-kpis', { 
+        params: { limit } 
+      });
+      const kpis = response.data.data?.kpis || response.data.kpis || [];
+      return kpis;
+    } catch (error) {
+      if (toast) toast.error('Server error. Please try reloading or try later.');
+      return [];
     }
   },
 

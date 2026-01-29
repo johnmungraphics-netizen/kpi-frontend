@@ -15,6 +15,13 @@ interface UploadResult {
   successCount: number;
   skipCount: number;
   errors: string[];
+  failedRows?: Array<{
+    row: number;
+    name: string;
+    email: string;
+    payroll_number: string;
+    reason: string;
+  }>;
 }
 
 const BulkUploadEmployeesModal: React.FC<BulkUploadEmployeesModalProps> = ({
@@ -55,23 +62,37 @@ const BulkUploadEmployeesModal: React.FC<BulkUploadEmployeesModalProps> = ({
         'Name': 'John Doe',
         'Email': 'john.doe@example.com',
         'Payroll Number': 'EMP001',
-        'National ID': '12345678',
-        'Position': 'Software Engineer',
+        'Phone Number': '0711234567',
         'Department ID': '1',
         'Manager ID': '5',
         'Role ID': '4',
+        'National ID': '12345678',
+        'Position': 'Software Engineer',
         'Password': 'TempPass123',
       },
       {
         'Name': 'Jane Smith',
         'Email': 'jane.smith@example.com',
         'Payroll Number': 'EMP002',
-        'National ID': '87654321',
-        'Position': 'Sales Manager',
+        'Phone Number': '0722334455',
         'Department ID': '2',
         'Manager ID': '6',
         'Role ID': '4',
+        'National ID': '87654321',
+        'Position': 'Sales Manager',
         'Password': 'TempPass456',
+      },
+      {
+        'Name': 'Bob Wilson',
+        'Email': 'N/A',
+        'Payroll Number': 'EMP003',
+        'Phone Number': '0733445566',
+        'Department ID': '1',
+        'Manager ID': '5',
+        'Role ID': '4',
+        'National ID': '',
+        'Position': '',
+        'Password': 'TempPass789',
       },
     ];
 
@@ -115,6 +136,7 @@ const BulkUploadEmployeesModal: React.FC<BulkUploadEmployeesModalProps> = ({
         headers: {
           'Content-Type': 'multipart/form-data',
         },
+        timeout: 120000, // 2 minutes timeout for large uploads
       });
 
 
@@ -122,11 +144,13 @@ const BulkUploadEmployeesModal: React.FC<BulkUploadEmployeesModalProps> = ({
       const successCount = result.data?.imported || 0;
       const skipCount = result.data?.skipped || 0;
       const errors = result.data?.errors || [];
+      const failedRows = result.data?.failedRows || [];
       
       setUploadResult({
         successCount,
         skipCount,
         errors,
+        failedRows,
       });
 
       if (successCount > 0) {
@@ -195,8 +219,10 @@ const BulkUploadEmployeesModal: React.FC<BulkUploadEmployeesModalProps> = ({
                 Excel File Requirements
               </h4>
               <ul className="text-sm text-blue-800 space-y-1 ml-6 list-disc">
-                <li><strong>Required columns:</strong> Name, Email, Payroll Number, Role ID</li>
-                <li><strong>Optional columns:</strong> National ID, Position, Department ID, Manager ID, Password</li>
+                <li><strong>Required columns:</strong> Name, Payroll Number, Phone Number, Role ID</li>
+                <li><strong>Optional columns:</strong> Email (can be N/A or blank), Department ID, Manager ID, Password, National ID, Position</li>
+                <li><strong>Column order:</strong> Name, Email, Payroll Number, Phone Number, Department ID, Manager ID, Role ID, National ID, Position, Password</li>
+                <li><strong>Email:</strong> Can be left blank or marked as "N/A" for users without email</li>
                 <li><strong>Role ID:</strong> Use 4 for Employee, 2 for Manager, 3 for HR</li>
                 <li><strong>Department ID & Manager ID:</strong> Use numeric IDs from the system</li>
                 <li><strong>Password:</strong> If not provided, default password "Africa.1" will be used</li>
@@ -277,12 +303,43 @@ const BulkUploadEmployeesModal: React.FC<BulkUploadEmployeesModalProps> = ({
 
                 {uploadResult.errors.length > 0 && (
                   <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                    <h5 className="font-semibold text-red-900 mb-2">Errors:</h5>
-                    <ul className="text-sm text-red-800 space-y-1 max-h-40 overflow-y-auto">
-                      {uploadResult.errors.map((error, index) => (
-                        <li key={index}>• {error}</li>
-                      ))}
-                    </ul>
+                    <h5 className="font-semibold text-red-900 mb-3 flex items-center">
+                      <FiAlertCircle className="mr-2" />
+                      Failed Rows ({uploadResult.errors.length})
+                    </h5>
+                    
+                    {uploadResult.failedRows && uploadResult.failedRows.length > 0 ? (
+                      <div className="overflow-x-auto">
+                        <table className="min-w-full text-sm">
+                          <thead>
+                            <tr className="bg-red-100 border-b border-red-200">
+                              <th className="px-3 py-2 text-left text-red-900 font-semibold">Row #</th>
+                              <th className="px-3 py-2 text-left text-red-900 font-semibold">Name</th>
+                              <th className="px-3 py-2 text-left text-red-900 font-semibold">Email</th>
+                              <th className="px-3 py-2 text-left text-red-900 font-semibold">Payroll Number</th>
+                              <th className="px-3 py-2 text-left text-red-900 font-semibold">Reason</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-red-200">
+                            {uploadResult.failedRows.map((failedRow, index) => (
+                              <tr key={index} className="hover:bg-red-50">
+                                <td className="px-3 py-2 text-red-800 font-medium">{failedRow.row}</td>
+                                <td className="px-3 py-2 text-red-800">{failedRow.name}</td>
+                                <td className="px-3 py-2 text-red-800">{failedRow.email}</td>
+                                <td className="px-3 py-2 text-red-800">{failedRow.payroll_number}</td>
+                                <td className="px-3 py-2 text-red-800">{failedRow.reason}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <ul className="text-sm text-red-800 space-y-1 max-h-40 overflow-y-auto">
+                        {uploadResult.errors.map((error, index) => (
+                          <li key={index}>• {error}</li>
+                        ))}
+                      </ul>
+                    )}
                   </div>
                 )}
               </div>

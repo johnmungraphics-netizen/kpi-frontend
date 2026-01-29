@@ -53,6 +53,26 @@ export const hrService = {
   },
 
   /**
+   * Fetch KPIs by department and category
+   */
+  fetchKPIsByCategory: async (
+    department: string, 
+    category: string,
+    period?: string
+  ): Promise<any[]> => {
+    const params = period ? { period } : {};
+    const response = await api.get(
+      `/departments/kpis/${department}/${category}`,
+      { params }
+    );
+   
+    
+    // Backend returns { success: true, data: { kpis: [...] } }
+    const kpis = response.data.data?.kpis || response.data.kpis || [];
+    return kpis;
+  },
+
+  /**
    * Fetch list of managers
    */
   fetchManagers: async (): Promise<Manager[]> => {
@@ -62,6 +82,30 @@ export const hrService = {
     // Backend returns { success: true, data: { managers: [...] } }
     const managers = response.data.data?.managers || response.data.managers || [];
     return managers;
+  },
+
+  /**
+   * Fetch all employees
+   */
+  fetchEmployees: async (): Promise<Employee[]> => {
+    const response = await api.get('/users/list');
+    
+    // Parse response - backend returns: { success: true, data: { users: [...], pagination: {...} } }
+    let allUsers = [];
+    if (response.data.data && response.data.data.users && Array.isArray(response.data.data.users)) {
+      allUsers = response.data.data.users;
+    } else if (response.data.users && Array.isArray(response.data.users)) {
+      allUsers = response.data.users;
+    } else if (response.data.data && Array.isArray(response.data.data)) {
+      allUsers = response.data.data;
+    }
+    
+    // Filter employees (exclude superadmin=1, managers=2, hr=3)
+    const employees = allUsers.filter((user: any) => 
+      user.role_id !== 1 && user.role_id !== 2 && user.role_id !== 3
+    );
+    
+    return employees;
   },
 
   /**

@@ -150,4 +150,9 @@ export interface ConfirmationSubmission {
   confirmation_status: 'approved' | 'rejected';
   rejection_note: string | null;
   signature: string | null;
+  // Physical Meeting Confirmation - Employee
+  employee_confirmation_meeting_confirmed?: boolean;
+  employee_confirmation_meeting_location?: string | null;
+  employee_confirmation_meeting_date?: string | null;
+  employee_confirmation_meeting_time?: string | null;
 }

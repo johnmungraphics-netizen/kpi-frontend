@@ -4,7 +4,7 @@ import DatePicker from '../../../components/DatePicker';
 import TextModal from '../../../components/TextModal';
 import AccomplishmentsTable from '../../../components/AccomplishmentsTable';
 import { FiArrowLeft, FiSave, FiSend, FiExternalLink } from 'react-icons/fi';
-import { Button } from '../../../components/common';
+import { Button, ConfirmDialog } from '../../../components/common';
 import { useManagerKPIReview } from '../hooks';
 import { useCompanyFeatures } from '../../../hooks/useCompanyFeatures';
 
@@ -42,6 +42,12 @@ const ManagerKPIReview: React.FC = () => {
     employeeRatingPercentage,
     employeeFinalRatingPercentage,
     managerFinalRatingPercentage,
+    // Physical Meeting Confirmation + Overall Manager Rating
+    managerReviewMeetingConfirmed,
+    managerReviewMeetingLocation,
+    managerReviewMeetingDate,
+    managerReviewMeetingTime,
+    overallManagerRating,
     setQualitativeRatings,
     setQualitativeComments,
     setOverallComment,
@@ -62,6 +68,16 @@ const ManagerKPIReview: React.FC = () => {
     handleSubmit,
     handleBack,
     getRatingLabel,
+    // Physical Meeting Actions + Overall Rating
+    setManagerReviewMeetingConfirmed,
+    setManagerReviewMeetingLocation,
+    setManagerReviewMeetingDate,
+    setManagerReviewMeetingTime,
+    setOverallManagerRating,
+    // Confirm dialog
+    confirmState,
+    handleConfirm,
+    handleCancel,
   } = useManagerKPIReview();
 
   // Department feature detection for conditional rendering
@@ -1058,6 +1074,97 @@ const ManagerKPIReview: React.FC = () => {
               <p className="text-xs text-gray-500 mt-2">Select the date of this performance review</p>
             </div>
             
+            {/* Overall Manager Rating */}
+            <div className="pt-4 border-t border-gray-200">
+              <label className="block text-sm font-semibold text-gray-700 mb-3">
+                Overall Manager Rating (1-5 Scale) <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={overallManagerRating}
+                onChange={(e) => setOverallManagerRating(Number(e.target.value))}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                required
+              >
+                <option value={1}>1 - Poor Performance</option>
+                <option value={2}>2 - Below Expectations</option>
+                <option value={3}>3 - Meets Expectations</option>
+                <option value={4}>4 - Exceeds Expectations</option>
+                <option value={5}>5 - Outstanding Performance</option>
+              </select>
+              <p className="text-xs text-gray-500 mt-2">
+                This is your overall assessment of the employee's performance, independent of individual KPI item ratings
+              </p>
+            </div>
+
+            {/* Physical Meeting Confirmation - Manager Review */}
+            <div className="pt-4 border-t border-gray-200">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <label className="flex items-start space-x-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={managerReviewMeetingConfirmed}
+                    onChange={(e) => setManagerReviewMeetingConfirmed(e.target.checked)}
+                    className="w-5 h-5 text-purple-600 rounded focus:ring-purple-500 mt-0.5"
+                  />
+                  <div className="flex-1">
+                    <span className="text-sm font-semibold text-gray-900">
+                      I confirm that a physical meeting was held for this performance review
+                    </span>
+                    <p className="text-xs text-gray-600 mt-1">
+                      Please confirm that you had a physical meeting with the employee to discuss this performance review
+                    </p>
+                  </div>
+                </label>
+
+                {/* Conditional Meeting Details Fields */}
+                {managerReviewMeetingConfirmed && (
+                  <div className="mt-4 pl-8 space-y-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Meeting Location *
+                      </label>
+                      <input
+                        type="text"
+                        value={managerReviewMeetingLocation}
+                        onChange={(e) => setManagerReviewMeetingLocation(e.target.value)}
+                        placeholder="e.g., Conference Room A, Manager's Office"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        required
+                      />
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Meeting Date *
+                        </label>
+                        <input
+                          type="date"
+                          value={managerReviewMeetingDate}
+                          onChange={(e) => setManagerReviewMeetingDate(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                          required
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Meeting Time *
+                        </label>
+                        <input
+                          type="time"
+                          value={managerReviewMeetingTime}
+                          onChange={(e) => setManagerReviewMeetingTime(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                          required
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+            
             <div className="pt-2">
               <label className="block text-sm font-semibold text-gray-700 mb-3">
                 Manager Digital Signature <span className="text-red-500">*</span>
@@ -1117,6 +1224,18 @@ const ManagerKPIReview: React.FC = () => {
           </Button>
         </div>
       </div>
+
+      {/* Confirm Dialog */}
+      <ConfirmDialog
+        isOpen={confirmState.isOpen}
+        onClose={handleCancel}
+        onConfirm={handleConfirm}
+        title={confirmState.title}
+        message={confirmState.message}
+        variant={confirmState.variant}
+        confirmText={confirmState.confirmText}
+        cancelText={confirmState.cancelText}
+      />
 
       {/* Text Modal */}
       <TextModal
