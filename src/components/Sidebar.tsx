@@ -57,22 +57,21 @@ const Sidebar: React.FC<SidebarProps> = ({
   const [pendingReviewsCount, setPendingReviewsCount] = useState<number>(0);
   const [pendingAcknowledgementsCount, setPendingAcknowledgementsCount] = useState<number>(0);
   const [pendingEmployeeReviewsCount, setPendingEmployeeReviewsCount] = useState<number>(0);
-  
+  const toast = useToast();
+
   const isActive = (path: string) => location.pathname === path;
 
   useEffect(() => {
     if (isManager(user)) {
       fetchPendingReviewsCount();
     } else if (isEmployee(user)) {
-      // Use Redux data if available, fallback to initial props
-      const kpis = reduxKpis.length > 0 ? reduxKpis : (initialKpis || []);
-      const reviews = reduxReviews.length > 0 ? reduxReviews : (initialReviews || []);
-      
-      if (kpis.length > 0) {
-        calculateEmployeeCounts(kpis, reviews);
+      if (initialKpis && initialReviews) {
+        calculateEmployeeCounts(initialKpis, initialReviews);
+      } else {
+        fetchEmployeeCounts();
       }
     }
-  }, [user, reduxKpis, reduxReviews, initialKpis, initialReviews]);
+  }, [user?.id]);
 
   // Refresh count when navigating to/from relevant pages
   useEffect(() => {
@@ -90,25 +89,16 @@ const Sidebar: React.FC<SidebarProps> = ({
         calculateEmployeeCounts(kpis, reviews);
       }
     }
-  }, [location.pathname, user, reduxKpis, reduxReviews, initialKpis, initialReviews]);
+  }, []);
 
   const calculateEmployeeCounts = (kpis: any[], reviews: any[]) => {
-  
-
-    // Count pending acknowledgements
     const pendingAcknowledgements = kpis.filter((kpi: any) => kpi.status === 'pending').length;
-    
     setPendingAcknowledgementsCount(pendingAcknowledgements);
-
-    // Count KPIs needing employee review
     const acknowledgedKPIs = kpis.filter((kpi: any) => kpi.status === 'acknowledged');
-    
-    
     const needReview = acknowledgedKPIs.filter((kpi: any) => {
       const review = reviews.find((r: any) => r.kpi_id === kpi.id);
       return !review || review.review_status === 'pending';
     }).length;
-    
     setPendingEmployeeReviewsCount(needReview);
   };
 
@@ -121,9 +111,20 @@ const Sidebar: React.FC<SidebarProps> = ({
     }
   };
 
-  // Removed fetchEmployeeCounts - now using Redux data directly
-
-  const toast = useToast();
+  const fetchEmployeeCounts = async () => {
+    try {
+      const [kpisRes, reviewsRes] = await Promise.all([
+        api.get('/kpis'),
+        api.get('/kpi-review'),
+      ]);
+      const kpis = kpisRes.data.data?.kpis || kpisRes.data.kpis || [];
+      const reviews = reviewsRes.data.data?.reviews || reviewsRes.data.reviews || [];
+      calculateEmployeeCounts(kpis, reviews);
+    } catch (error) {
+      setPendingAcknowledgementsCount(0);
+      setPendingEmployeeReviewsCount(0);
+    }
+  };
   
   const handleLogout = async () => {
     onClose();
@@ -272,78 +273,72 @@ on the       <aside
           </div>
 
           {/* Navigation */}
-          <nav className={`flex-1 ${isCollapsed ? 'px-2 py-3' : 'p-4'} ${
-            isCollapsed ? 'overflow-y-visible' : 'overflow-y-auto'
-          }`}>
-            <div className={isCollapsed ? 'space-y-1' : ''}>
+          <nav className={`flex-1 ${isCollapsed ? 'px-2 py-3' : 'p-4'} overflow-y-auto`}>
+            <div className={isCollapsed ? 'space-y-1' : 'space-y-1'}>
               {!isCollapsed && (
                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 px-3">
                   MAIN
                 </p>
               )}
-              {(() => {
-                const navItems = getNavItems();
-                return navItems.map((item) => {
-                  const Icon = item.icon;
-                  const active = isActive(item.path);
-                  return (
-                    <div key={item.path} className="relative">
-                      <Link
-                        to={item.path}
-                        onClick={onClose}
-                        title={isCollapsed ? item.label : ''}
-                        className={`flex items-center ${
-                          isCollapsed 
-                            ? 'justify-center w-14 h-14 mx-auto' 
-                            : 'justify-between px-3 py-2.5'
-                        } rounded-lg ${isCollapsed ? 'mb-1' : 'mb-1'} transition-colors relative group ${
-                          active
-                            ? 'bg-purple-100 text-purple-700'
-                            : 'text-gray-700 hover:bg-gray-100'
-                        }`}
-                      >
-                        {isCollapsed ? (
-                          <>
-                            <Icon className={`text-xl flex-shrink-0 ${active ? 'text-purple-600' : ''}`} />
-                            {item.badge && (
-                              <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-                            )}
-                          </>
-                        ) : (
-                          <>
-                            <div className="flex items-center space-x-3 min-w-0">
-                              <Icon className={`text-lg flex-shrink-0 ${active ? 'text-purple-600' : ''}`} />
-                              <span className="font-medium truncate">{item.label}</span>
-                            </div>
-                            {item.badge && (
-                              <span
-                                className={`px-2 py-0.5 text-xs rounded-full flex-shrink-0 ${
-                                  active
-                                    ? 'bg-purple-200 text-purple-700'
-                                    : 'bg-gray-200 text-gray-600'
-                                }`}
-                              >
-                                {item.badge}
-                              </span>
-                            )}
-                          </>
-                        )}
-                      </Link>
-                      
-                      {/* Tooltip */}
-                      {isCollapsed && (
-                        <div className="absolute left-full top-1/2 -translate-y-1/2 ml-3 px-3 py-2 bg-gray-900 text-white text-sm rounded-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-[9999] shadow-lg">
-                          {item.label}
-                          {item.badge && <span className="ml-2 text-xs">({item.badge})</span>}
-                          <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-gray-900"></div>
-                        </div>
+              {getNavItems().map((item) => {
+                const Icon = item.icon;
+                const active = isActive(item.path);
+                return (
+                  <div key={item.path} className="relative">
+                    <Link
+                      to={item.path}
+                      onClick={onClose}
+                      title={isCollapsed ? item.label : ''}
+                      className={`flex items-center ${
+                        isCollapsed 
+                          ? 'justify-center w-14 h-14 mx-auto' 
+                          : 'justify-between px-3 py-2.5'
+                      } rounded-lg mb-1 transition-colors relative group ${
+                        active
+                          ? 'bg-purple-100 text-purple-700'
+                          : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      {isCollapsed ? (
+                        <>
+                          <Icon className={`text-xl flex-shrink-0 ${active ? 'text-purple-600' : ''}`} />
+                          {item.badge && (
+                            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          <div className="flex items-center space-x-3 min-w-0">
+                            <Icon className={`text-lg flex-shrink-0 ${active ? 'text-purple-600' : ''}`} />
+                            <span className="font-medium truncate">{item.label}</span>
+                          </div>
+                          {item.badge && (
+                            <span
+                              className={`px-2 py-0.5 text-xs rounded-full flex-shrink-0 ${
+                                active
+                                  ? 'bg-purple-200 text-purple-700'
+                                  : 'bg-gray-200 text-gray-600'
+                              }`}
+                            >
+                              {item.badge}
+                            </span>
+                          )}
+                        </>
                       )}
-                    </div>
-                  );
-                });
-              })()}
+                    </Link>
+                    
+                    {/* Tooltip */}
+                    {isCollapsed && (
+                      <div className="absolute left-full top-1/2 -translate-y-1/2 ml-3 px-3 py-2 bg-gray-900 text-white text-sm rounded-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-[9999] shadow-lg">
+                        {item.label}
+                        {item.badge && <span className="ml-2 text-xs">({item.badge})</span>}
+                        <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-gray-900"></div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
-
           </nav>
 
           {/* ICT Africa Branding - Bottom */}

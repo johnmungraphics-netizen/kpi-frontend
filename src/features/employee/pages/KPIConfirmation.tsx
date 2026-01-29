@@ -805,7 +805,7 @@ const KPIConfirmation: React.FC = () => {
             {/* Detailed Rating Breakdown for Normal Calculation - From Backend Database */}
             {calculationMethodName === 'Normal Calculation' && (
               <div className="mt-6 border-t border-purple-200 pt-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">📊 Detailed Rating Breakdown (From Backend)</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">📊 Detailed Rating Breakdown</h3>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Left Column - Manager Ratings */}

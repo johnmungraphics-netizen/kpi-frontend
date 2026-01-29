@@ -4,6 +4,7 @@ import { useAuth } from '../../../context/AuthContext';
 import api from '../../../services/api';
 import { KPI, KPIReview } from '../../../types';
 import { FiArrowLeft, FiEye, FiUser, FiSearch, FiFilter, FiAlertCircle, FiCheckCircle } from 'react-icons/fi';
+import { useToast } from '../../../context/ToastContext';
 
 interface PeriodSetting {
   id: number;
@@ -23,6 +24,7 @@ const RejectedKPIManagement: React.FC = () => {
   const [kpiType, setKpiType] = useState<'quarterly' | 'yearly'>('quarterly');
   const [selectedPeriodId, setSelectedPeriodId] = useState<number | null>(null);
   const [availablePeriods, setAvailablePeriods] = useState<PeriodSetting[]>([]);
+  const toast = useToast();
 
   useEffect(() => {
     fetchData();

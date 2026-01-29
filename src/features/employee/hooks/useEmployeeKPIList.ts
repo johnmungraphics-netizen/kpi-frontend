@@ -1,38 +1,56 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useToast } from '../../../context/ToastContext';
 import { useNavigate } from 'react-router-dom';
-import { useAppDispatch, useAppSelector } from '../../../store/hooks';
-import { fetchKPIsAndReviews, selectAllKPIs, selectAllReviews, selectKPILoading } from '../../../store/slices/kpiSlice';
 import { KPI, KPIReview } from '../../../types';
 import { getKPIStage, getPrimaryAction, canEditReview } from './kpiListUtils';
+import api from '../../../services/api';
 
 export const useEmployeeKPIList = () => {
   const navigate = useNavigate();
-  const dispatch = useAppDispatch();
+  const toast = useToast();
   
-  // Get data from Redux store
-  const kpis = useAppSelector(selectAllKPIs);
-  const reviews = useAppSelector(selectAllReviews);
-  const loading = useAppSelector(selectKPILoading);
-  
+  const [kpis, setKpis] = useState<KPI[]>([]);
+  const [reviews, setReviews] = useState<KPIReview[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPeriod, setSelectedPeriod] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
-
-  const toast = useToast();
   
+  const hasFetchedRef = useRef(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
+
   useEffect(() => {
-    // Only fetch if we don't have data yet
-    if (kpis.length === 0 && reviews.length === 0 && !loading) {
-      fetchData();
+    if (hasFetchedRef.current) {
+      return;
     }
+    fetchData();
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
   }, []);
 
   const fetchData = async () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    abortControllerRef.current = new AbortController();
+    const signal = abortControllerRef.current.signal;
     try {
-      await dispatch(fetchKPIsAndReviews()).unwrap();
+      setLoading(true); 
+      const [kpisRes, reviewsRes] = await Promise.all([
+        api.get('/kpis', { signal }),
+        api.get('/kpi-review', { signal }),
+      ]);
+
+      setKpis(kpisRes?.data?.data?.kpis || []);
+      setReviews(reviewsRes.data.reviews || []);
+      hasFetchedRef.current = true;
     } catch (error) {
-      toast.error('Could not fetch your KPIs. Please try again.');
+        toast.error('Could not fetch your KPIs. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -56,12 +74,10 @@ export const useEmployeeKPIList = () => {
     navigate(`/employee/self-rating/${kpiId}`);
   };
 
-  // ADD: handleBack function
   const handleBack = () => {
     navigate(-1);
   };
 
-  // Filter logic
   const filteredKpis = kpis.filter((kpi) => {
     const matchesSearch =
       !searchTerm ||
@@ -70,7 +86,6 @@ export const useEmployeeKPIList = () => {
 
     const period = `${kpi.quarter} ${kpi.year}`;
     const matchesPeriod = !selectedPeriod || period === selectedPeriod;
-
     const matchesStatus = !selectedStatus || kpi.status === selectedStatus;
 
     return matchesSearch && matchesPeriod && matchesStatus;
@@ -97,10 +112,10 @@ export const useEmployeeKPIList = () => {
     handleReviewKPI,
     handleConfirmReview,
     handleEditReview,
-    handleBack, // ADD: Export handleBack
+    handleBack,
     getKPIStage,
     getPrimaryAction,
     canEditReview,
-    navigate, // ADD: Export navigate for use in components
+    navigate,
   };
 };
